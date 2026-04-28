@@ -1,0 +1,62 @@
+// Adapta datos entre formulario de producto y payload para la API externa.
+// No se envía slug porque la base lo genera automáticamente.
+
+export const initialProductFormData = {
+  categoria_id: '',
+  nombre: '',
+  descripcion_corta: '',
+  descripcion_larga: '',
+  marca: '',
+  linea: '',
+  material_base: '',
+  tipo_producto: 'fisico',
+  mostrar_precio: true,
+  vender_sin_stock: false,
+  destacado: false,
+  es_personalizable: false,
+  requiere_cotizacion: false,
+  tiempo_preparacion_dias: '',
+  seo_titulo: '',
+  seo_descripcion: '',
+  es_activo: true,
+};
+
+export const productToFormData = (product = {}) => ({
+  categoria_id: product.categoria_id || '',
+  nombre: product.nombre || '',
+  descripcion_corta: product.descripcion_corta || '',
+  descripcion_larga: product.descripcion_larga || '',
+  marca: product.marca || '',
+  linea: product.linea || '',
+  material_base: product.material_base || '',
+  tipo_producto: product.tipo_producto || 'fisico',
+  mostrar_precio: Boolean(product.mostrar_precio),
+  vender_sin_stock: Boolean(product.vender_sin_stock),
+  destacado: Boolean(product.destacado),
+  es_personalizable: Boolean(product.es_personalizable),
+  requiere_cotizacion: Boolean(product.requiere_cotizacion),
+  tiempo_preparacion_dias: product.tiempo_preparacion_dias ?? '',
+  seo_titulo: product.seo_titulo || '',
+  seo_descripcion: product.seo_descripcion || '',
+  es_activo: Boolean(product.es_activo),
+});
+
+export const formDataToProductPayload = (formData) => ({
+  categoria_id: formData.categoria_id || null,
+  nombre: formData.nombre.trim(),
+  descripcion_corta: formData.descripcion_corta.trim() || null,
+  descripcion_larga: formData.descripcion_larga.trim() || null,
+  marca: formData.marca.trim() || null,
+  linea: formData.linea.trim() || null,
+  material_base: formData.material_base.trim() || null,
+  tipo_producto: formData.tipo_producto || 'fisico',
+  mostrar_precio: formData.mostrar_precio,
+  vender_sin_stock: formData.vender_sin_stock,
+  destacado: formData.destacado,
+  es_personalizable: formData.es_personalizable,
+  requiere_cotizacion: formData.requiere_cotizacion,
+  tiempo_preparacion_dias: formData.tiempo_preparacion_dias ? Number(formData.tiempo_preparacion_dias) : null,
+  seo_titulo: formData.seo_titulo.trim() || null,
+  seo_descripcion: formData.seo_descripcion.trim() || null,
+  es_activo: formData.es_activo,
+});
