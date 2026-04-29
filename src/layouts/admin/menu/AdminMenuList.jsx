@@ -7,7 +7,7 @@
  * - No conoce autenticación ni lógica de roles; recibe el menú ya filtrado.
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
 import {
@@ -51,8 +51,9 @@ export const AdminMenuList = ({
   collapsed = false,
   onItemClick,
 }) => {
-  const [openGroups, setOpenGroups] = useState(() =>
-    getInitialOpenGroups(groups),
+ 
+  const [openGroupTitle, setOpenGroupTitle] = useState(() => 
+    groups[0]?.title ?? null
   );
 
   const flatItems = useMemo(
@@ -60,11 +61,9 @@ export const AdminMenuList = ({
     [groups],
   );
 
+  
   const toggleGroup = (groupTitle) => {
-    setOpenGroups((prev) => ({
-      ...prev,
-      [groupTitle]: !prev[groupTitle],
-    }));
+    setOpenGroupTitle((prev) => (prev === groupTitle ? null : groupTitle));
   };
 
   if (collapsed) {
@@ -106,7 +105,7 @@ export const AdminMenuList = ({
   return (
     <Box sx={{ overflowY: 'auto', pr: 0.5 }}>
       {groups.map((group) => {
-        const isOpen = openGroups[group.title] ?? false;
+        const isOpen = openGroupTitle === group.title;
 
         return (
           <Box key={group.title} sx={{ mb: 1 }}>
