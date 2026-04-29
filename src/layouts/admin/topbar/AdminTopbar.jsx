@@ -89,10 +89,10 @@ export const AdminTopbar = ({
             {/* Stack vertical para el nombre y cargo */}
             <Stack spacing={0}>
               <Typography variant="subtitle2" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
-                {user?.nombreCompleto || 'Invitado'}
+                {user?.nombreCompleto || 'Usuario'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {user?.rol || 'Administrador'}
+                {user?.rol?.[0]?.toUpperCase() + user?.rol?.slice(1) || 'Sin rol'}
               </Typography>
             </Stack>
           </Stack>

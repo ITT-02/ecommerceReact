@@ -52,7 +52,7 @@ export const AdminUserMenu = ({
           {user?.email || 'Sin correo'}
         </Typography>
         <Typography variant="caption" color="primary.main" sx={{ display: 'block' }}>
-          {user?.rol || 'Sin rol'}
+          {user?.rol?.[0]?.toUpperCase() + user?.rol?.slice(1) || 'Sin rol'}
         </Typography>
       </Box>
 
