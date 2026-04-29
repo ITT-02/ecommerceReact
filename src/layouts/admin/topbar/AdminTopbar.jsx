@@ -9,15 +9,17 @@
  */
 
 import {
+  Stack,
   AppBar,
   Avatar,
   Box,
+  Button,
   IconButton,
   Toolbar,
   Typography,
 } from '@mui/material';
 
-import { DarkMode, LightMode, Menu as MenuIcon } from '@mui/icons-material';
+import { DarkMode, LightMode, KeyboardArrowDown as KeyboardArrowDownIcon, Menu as MenuIcon } from '@mui/icons-material';
 
 import { AdminUserMenu } from './AdminUserMenu';
 
@@ -66,18 +68,35 @@ export const AdminTopbar = ({
           {mode === 'light' ? <DarkMode /> : <LightMode />}
         </IconButton>
 
-        <IconButton onClick={onOpenAccountMenu} aria-label="Abrir menú de usuario">
-          <Avatar
-            sx={{
-              width: 36,
-              height: 36,
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-            }}
-          >
-            {user?.nombreCompleto?.[0]?.toUpperCase() || 'A'}
-          </Avatar>
-        </IconButton>
+        <Button 
+          onClick={onOpenAccountMenu}
+          color="inherit"
+          sx={{ textTransform: 'none', textAlign: 'left', p: 0.5 }}
+          endIcon={<KeyboardArrowDownIcon />}
+        >
+          <Stack direction="row" spacing={1} align-items="center">
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+              }}
+            >
+              {user?.nombreCompleto?.[0]?.toUpperCase() || 'I'}
+            </Avatar>
+            
+            {/* Stack vertical para el nombre y cargo */}
+            <Stack spacing={0}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
+                {user?.nombreCompleto || 'Invitado'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {user?.rol || 'Administrador'}
+              </Typography>
+            </Stack>
+          </Stack>
+        </Button>
 
         <AdminUserMenu
           user={user}
