@@ -97,7 +97,7 @@ export const RegisterPage = () => {
           position: 'relative'
         }}
       >
-        <Box sx={{ position: 'absolute', top: 32, right: { xs: 32, sm: 64, md: 80 } }}>
+        <Box sx={{ position: 'absolute', top: 32, right: { xs: 32, sm: 64, md: 80 }, display: { xs: 'none', md: 'block' } }}>
           <Typography variant="body2" color="text.secondary">
             ¿Ya tienes cuenta?{' '}
             <Link component={RouterLink} to="/login" color="primary.main" fontWeight={700} underline="none">
@@ -106,10 +106,18 @@ export const RegisterPage = () => {
           </Typography>
         </Box>
 
-        <Box sx={{ maxWidth: 450, width: '100%', m: 'auto' }}>
+        <Box sx={{ maxWidth: 450, width: '100%', m: 'auto', py: 4 }}>
           <Typography variant="h3" fontWeight={800} gutterBottom>
             Crear cuenta
           </Typography>
+          <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              ¿Ya tienes cuenta?{' '}
+              <Link component={RouterLink} to="/login" color="primary.main" fontWeight={700} underline="none">
+                Inicia sesión
+              </Link>
+            </Typography>
+          </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
             Regístrate con tus datos o con tu email
           </Typography>
