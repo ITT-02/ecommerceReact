@@ -15,10 +15,10 @@ export const authResponseToSession = (data) => {
 export const initialRegisterFormData = {
   nombres: '',
   apellidos: '',
+  telefono: '',
   email: '',
   password: '',
-  confirmPassword: '',
-  telefono: '',
+  confirmPassword: ''
 };
 
 export const registerFormToAuthPayload = (formData) => ({
