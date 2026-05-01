@@ -29,13 +29,6 @@ import { getDefaultPathByRoles } from '../../utils/access/menuByRole';
 import { AuthPageShell } from './components/AuthPageShell';
 import { colors} from '../../styles/theme';
 
-// Luego úsalos directamente:
-<Box sx={{
-  color: colors.primary[500],
-  borderRadius: (theme) => theme.palette.custom.radius.md,
-  width: (theme) => theme.palette.custom.layout.sidebarWidth,
-}} />
-
 export const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState(null);
@@ -80,9 +73,10 @@ export const LoginPage = () => {
     <Box component="section" sx={{display:'flex', minHeight:'100vh' }}>
      
       <Box sx={{
-        width: '40%', minWidth: 300,
+        width: { md: '40%' },
+        minWidth: { md: 300 },
         background:(theme)=> `linear-gradient(155deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-        display: 'flex', flexDirection: 'column',
+        display: { xs: 'none', md: 'flex' }, flexDirection: 'column',
         p: 6, gap: 4,
       }}>
           {/* Logo */}
@@ -106,19 +100,19 @@ export const LoginPage = () => {
                     justifyContent:'center', gap: 2
           }}>
             <Typography variant='h4' fontWeight={700} sx={{color :colors.primary[50] }}>
-              Gestion y tienda online para empaques
+              Tu plataforma de empaques, en un solo lugar
             </Typography>
             <Typography sx={{lineHeight:1.8, color : colors.primary[50] }}>
-              Administra productos, inventario, pedidos y pagos.
+              Accede a tus productos,pedidos y cuenta desde cualquier dispositivo
             </Typography>
           </Box>
           {/* Feature pills */}
-          {['Inventario en tiempo real',
-          'Pedidos y facturación',
-          'Tienda online integrada'].map(feat => (
+          {['Catalogo de productos',
+          'Seguimiento de pedidos',
+          'Pagos y facturacion'].map(feat => (
           <Box key={feat} sx={{
             display: 'flex', alignItems: 'center', gap: 1.5,
-            bgcolor: colors.primary[400],
+            bgcolor: (theme)=>theme.palette.primary.dark,
             borderRadius: 2, px: 1, py: 1.5,
           }}>
             {/* Punto decorativo */}
@@ -133,16 +127,39 @@ export const LoginPage = () => {
       </Box>
       {/* Panel derecho */}
       <Box sx={{
-        flex:1,display:'flex',
-        alignItems: 'center', justifyContent:'center',
-        p:{xs:3, md:6},
+        flex:1, display:'flex', flexDirection:'column',
+        alignItems: 'center',
+        p:{xs:3, md:'0 40px'},
       }}>
+        {/* Barra superior con logo y ayuda */}
+        <Box sx={{
+          width: '100%', maxWidth: 400,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          py: 3.5, borderBottom: '1px solid', borderColor: 'divider',
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{
+              width: 28, height: 28, borderRadius: 1.5,
+              bgcolor: 'primary.main',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <InventoryIcon sx={{ fontSize: 15, color: 'primary.contrastText' }} />
+            </Box>
+            <Typography fontWeight={700} fontSize={16}>Aliqora</Typography>
+          </Box>
+          <Typography fontSize={12} color="text.secondary">
+            ¿Necesitas ayuda?{' '}
+            <Link href="/contacto" underline="hover" fontWeight={600} fontSize={12}>
+              Contáctanos
+            </Link>
+          </Typography>
+        </Box>
+        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: 400 }}>
         <Box
           component="form"
           onSubmit={handleSubmit}
           sx={{
             width: '100%',
-            maxWidth: 400,
             display: 'flex',
             flexDirection: 'column',
             gap: 3,
@@ -225,62 +242,8 @@ export const LoginPage = () => {
             </Link>
           </Typography>
         </Box>
+        </Box>
       </Box>
     </Box>
-
-    // <Card>
-    //   <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-    //     <Stack spacing={2.5} sx={{ alignItems: 'center' }}>
-    //       {error && (
-    //         <Alert severity="error" sx={{ width: '100%' }}>
-    //           {error}
-    //         </Alert>
-    //       )}
-
-    //       <AuthPageShell
-    //         title="Iniciar sesión"
-    //         subtitle="Ingresa con tu usuario registrado."
-    //       >
-    //         <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-    //           <Stack spacing={2}>
-    //             <TextField
-    //               name="email"
-    //               label="Correo electrónico"
-    //               type="email"
-    //               value={formData.email}
-    //               onChange={handleChange}
-    //               required
-    //             />
-
-    //             <TextField
-    //               name="password"
-    //               label="Contraseña"
-    //               type="password"
-    //               value={formData.password}
-    //               onChange={handleChange}
-    //               required
-    //             />
-
-    //             <Button
-    //               type="submit"
-    //               variant="contained"
-    //               size="large"
-    //               disabled={loading}
-    //             >
-    //               {loading ? 'Ingresando...' : 'Ingresar'}
-    //             </Button>
-    //           </Stack>
-    //         </Box>
-
-    //         <Typography variant="body2" color="text.secondary">
-    //           ¿Eres cliente nuevo?{' '}
-    //           <Link component={RouterLink} to="/registro" underline="hover">
-    //             Crear cuenta
-    //           </Link>
-    //         </Typography>
-    //       </AuthPageShell>
-    //     </Stack>
-    //   </CardContent>
-    // </Card>
   );
 };
