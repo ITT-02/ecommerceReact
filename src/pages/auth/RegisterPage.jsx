@@ -80,7 +80,7 @@ export const RegisterPage = () => {
         }}
       >
         <img 
-          //src="public\image.png"
+          src="packages.png"
           alt="Banner de registro" 
           style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
         />
@@ -134,7 +134,7 @@ export const RegisterPage = () => {
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PersonOutlinedIcon sx={{ color: 'text.secondary' }} />
+                          <PersonOutlinedIcon sx={{ color: 'text.second ary' }} />
                         </InputAdornment>
                       ),
                     }
