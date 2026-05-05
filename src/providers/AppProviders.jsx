@@ -7,6 +7,8 @@ import { AppThemeProvider } from './AppThemeProvider';
 import { AuthProvider } from './AuthProvider';
 import { QueryProvider } from './QueryProvider';
 
+
+
 validateEnv();
 
 export const AppProviders = ({ children }) => {
