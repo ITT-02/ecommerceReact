@@ -23,7 +23,7 @@ export const PlaceholderPage = ({
   children,
 }) => {
   return (
-    <Stack spacing={3}>
+    <Stack spacing={2}>
       <PageHeader title={title} description={description} />
 
       <Card>
