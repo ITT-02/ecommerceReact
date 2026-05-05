@@ -9,9 +9,10 @@ import {
   FormControlLabel,
   Alert,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { TextFieldController } from '../forms/TextFieldController';
 import { FormActions } from '../forms/FormActions';
-import { colors } from '../../styles/theme';
+
 
 export const WarehouseForm = ({
   formData,
@@ -19,9 +20,13 @@ export const WarehouseForm = ({
   onSubmit,
   onCancel,
   isEditing,
+  loading: externalLoading = false,
 }) => {
+  const theme = useTheme();
   const [error, setError] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
+  const [localLoading, setLocalLoading] = React.useState(false);
+  const effectiveLoading = externalLoading || localLoading;
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,7 +35,7 @@ export const WarehouseForm = ({
       return;
     }
     setError('');
-    setLoading(true);
+    setLocalLoading(true);
     const dataToSubmit = {
       ...formData,
       descripcion: formData.descripcion?.trim() || null,
@@ -41,7 +46,7 @@ export const WarehouseForm = ({
       setError(err?.message || 'Error al guardar');
       console.error('Error en formulario:', err);
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
@@ -60,10 +65,11 @@ export const WarehouseForm = ({
   };
 
   return (
-    <Paper sx={{ p: 3, maxWidth: 600, mx: 'auto', backgroundColor: colors.neutral[50], borderRadius: 2 }}>
-      <Typography variant="h6" sx={{ mb: 3, color: colors.primary[700] }}>
+    <Paper sx={{ p: 3, maxWidth: 600, mx: 'auto', borderRadius: 2 }}>
+      <Typography variant="h6" sx={{ mb: 3, color: theme.palette.primary.main }}>
         {isEditing ? 'Editar almacén' : 'Agregar almacén'}
       </Typography>
+
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <form onSubmit={handleSubmit}>
         <Stack spacing={3}>
@@ -89,15 +95,15 @@ export const WarehouseForm = ({
               <Checkbox
                 checked={formData.es_activo || false}
                 onChange={handleCheckboxChange}
-                sx={{ color: colors.primary[500], '&.Mui-checked': { color: colors.primary[600] } }}
               />
             }
             label="Activo"
           />
         </Stack>
+
         <FormActions
           editing={isEditing}
-          loading={loading}
+          loading={effectiveLoading}
           onCancel={onCancel}
         />
       </form>

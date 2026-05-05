@@ -1,4 +1,4 @@
-// Tabla para mostrar almacenes.
+// Tabla para mostrar almacenes
 
 import React from 'react';
 import {
@@ -10,31 +10,36 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { TableActions } from '../tables/TableActions';
 import { EmptyState } from '../common/EmptyState';
 import { StatusChip } from '../common/StatusChip';
-import { colors } from '../../styles/theme';
 
-export const WarehouseTable = ({ warehouses, onEdit, onDeactivate }) => {
+
+export const WarehouseTable = ({ warehouses, onEdit, onDeactivate, onDelete }) => {
+  const theme = useTheme();
+
   if (!warehouses || warehouses.length === 0) {
     return <EmptyState title="No hay almacenes" description="Aún no se han registrado almacenes." />;
   }
 
   return (
-    <TableContainer component={Paper} sx={{ backgroundColor: colors.neutral[50] }}>
+    <TableContainer component={Paper}>
+
       <Table size="small">
-        <TableHead sx={{ backgroundColor: colors.primary[100] }}>
+        <TableHead>
           <TableRow>
-            <TableCell sx={{ fontWeight: 'bold', color: colors.primary[800] }}>Código</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: colors.primary[800] }}>Nombre</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: colors.primary[800] }}>Descripción</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: colors.primary[800] }}>Estado</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: colors.primary[800] }}>Acciones</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>Código</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>Nombre</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>Descripción</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>Estado</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>Acciones</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {warehouses.map((warehouse) => (
-            <TableRow key={warehouse.id} hover sx={{ '&:hover': { backgroundColor: colors.neutral[100] } }}>
+            <TableRow key={warehouse.id} hover>
+
               <TableCell>{warehouse.codigo}</TableCell>
               <TableCell>{warehouse.nombre}</TableCell>
               <TableCell>{warehouse.descripcion || '-'}</TableCell>
@@ -47,8 +52,10 @@ export const WarehouseTable = ({ warehouses, onEdit, onDeactivate }) => {
               <TableCell>
                 <TableActions
                   onEdit={() => onEdit(warehouse)}
-                  onDelete={() => onDeactivate(warehouse)}
+                  onDelete={onDelete ? () => onDelete(warehouse) : undefined}
+                  onDeactivate={onDeactivate ? () => onDeactivate(warehouse) : undefined}
                 />
+
               </TableCell>
             </TableRow>
           ))}
