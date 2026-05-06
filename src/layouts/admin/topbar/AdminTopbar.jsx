@@ -68,33 +68,31 @@ export const AdminTopbar = ({
           {mode === 'light' ? <DarkMode /> : <LightMode />}
         </IconButton>
 
-        <Button 
+        {/* Botón usuario: 
+          móvil y desktop*/}
+        <Button
           onClick={onOpenAccountMenu}
           color="inherit"
-          sx={{ textTransform: 'none', textAlign: 'left', p: 0.5 }}
-          endIcon={<KeyboardArrowDownIcon />}
+          endIcon={<KeyboardArrowDownIcon fontSize="small" />}
+          sx={{ minWidth: 'auto', px: 1, py: 0.5, borderRadius: 2, textTransform: 'none' }}
         >
-          <Stack direction="row" spacing={1} align-items="center">
-            <Avatar
-              sx={{
-                width: 36,
-                height: 36,
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
-              }}
-            >
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            
+            {/* Avatar */}
+            <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
               {user?.nombreCompleto?.[0]?.toUpperCase() || 'I'}
             </Avatar>
-            
-            {/* Stack vertical para el nombre y cargo */}
-            <Stack spacing={0}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
+
+            {/* Nombre y rol (solo desktop) */}
+            <Stack sx={{ display: { xs: 'none', md: 'flex' } }}>
+              <Typography variant="subtitle2" noWrap>
                 {user?.nombreCompleto || 'Invitado'}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" noWrap>
                 {user?.rol || 'Administrador'}
               </Typography>
             </Stack>
+
           </Stack>
         </Button>
 
