@@ -101,7 +101,7 @@ export const PaymentMethodFormDialog = ({
         </DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="codigo"
                 label="Código"
@@ -113,7 +113,7 @@ export const PaymentMethodFormDialog = ({
                 helperText="Ej: yape_plin"
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="nombre"
                 label="Nombre Visible"
@@ -124,7 +124,7 @@ export const PaymentMethodFormDialog = ({
                 helperText="Ej: Yape / Plin"
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 name="tipo"
@@ -141,7 +141,7 @@ export const PaymentMethodFormDialog = ({
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="moneda"
                 label="Moneda"
@@ -151,7 +151,7 @@ export const PaymentMethodFormDialog = ({
                 required
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 name="titular"
                 label="Titular"
@@ -160,7 +160,7 @@ export const PaymentMethodFormDialog = ({
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="numero_cuenta"
                 label="Número de Cuenta"
@@ -169,7 +169,7 @@ export const PaymentMethodFormDialog = ({
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="telefono"
                 label="Teléfono"
@@ -178,7 +178,7 @@ export const PaymentMethodFormDialog = ({
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 name="instrucciones"
                 label="Instrucciones"
@@ -189,7 +189,7 @@ export const PaymentMethodFormDialog = ({
                 rows={2}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 name="imagen_url"
                 label="URL de Imagen / Logo"
@@ -198,7 +198,7 @@ export const PaymentMethodFormDialog = ({
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="orden_visual"
                 label="Orden Visual"
@@ -209,7 +209,7 @@ export const PaymentMethodFormDialog = ({
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6} display="flex" alignItems="center">
+            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", alignItems: "center" }}>
               <FormControlLabel
                 control={
                   <Switch
