@@ -5,7 +5,8 @@ import { restApi } from '../../api/restApi';
 export const getCategories = async () => {
   const response = await restApi.get('/categorias', {
     params: {
-      select: '*,categoria_padre:categorias!categorias_categoria_padre_id_fkey(id,nombre,slug)',
+      select: '*',
+      categoria_padre_id: 'is.null',
       order: 'orden_visual.asc',
     },
   });
