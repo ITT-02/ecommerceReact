@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react';
 import { Box, Button, CircularProgress, Paper, Typography, Chip } from '@mui/material';
 import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
 import { useAtributoValores } from '../../../../hooks/catalog/useAtributoValores';
-import { ConfirmDialog } from '../../../../components/common/ConfirmDialog'; // <-- IMPORTAMOS EL DIÁLOGO MÁGICO
+import { ConfirmDialog } from '../../../../components/common/ConfirmDialog'; 
 import { ValorForm } from './ValorForm';
 
-export const ValoresList = ({ atributoSeleccionado }) => {
+// NUEVO: Agregamos la propiedad `onChangeEvent`
+export const ValoresList = ({ atributoSeleccionado, onChangeEvent }) => {
   const { valores, loading, fetchValores, create, update, remove } = useAtributoValores(atributoSeleccionado?.id);
   const [openModal, setOpenModal] = useState(false);
   const [valorEditar, setValorEditar] = useState(null);
 
-  // Estados para eliminar valores limpiamente
   const [valorEliminar, setValorEliminar] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -31,6 +31,8 @@ export const ValoresList = ({ atributoSeleccionado }) => {
         await create(formData);
       }
       setOpenModal(false);
+      // NUEVO: Avisamos a la tabla que SÍ hubieron cambios
+      if (onChangeEvent) onChangeEvent(); 
     } catch (error) {
       alert('Error guardando valor');
     }
@@ -42,12 +44,15 @@ export const ValoresList = ({ atributoSeleccionado }) => {
     try {
       await remove(valorEliminar.id);
       setValorEliminar(null);
+      // NUEVO: Avisamos a la tabla que SÍ hubieron cambios
+      if (onChangeEvent) onChangeEvent();
     } catch (error) {
       alert('Error eliminando valor');
     } finally {
       setIsDeleting(false);
     }
   };
+
 
   if (!atributoSeleccionado) return null;
 
