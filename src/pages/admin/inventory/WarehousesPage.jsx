@@ -9,35 +9,44 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
-  Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useWarehouses } from '../../../hooks/inventory/useWarehouses';
 import { WarehouseTable } from '../../../components/admin/WarehouseTable';
 import { WarehouseForm } from '../../../components/admin/WarehouseForm';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { PageHeader } from '../../../components/common/PageHeader';
-import { LoadingScreen } from '../../../components/common/LoadingScreen';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 
-
 export const WarehousesPage = () => {
-  const queryClient = useQueryClient();
+  const theme = useTheme();
+
+  // ── Paginación y filtros ──────────────────────────────────────
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState({ esActivo: '' });
+
+  // ── Hook ─────────────────────────────────────────────────────
   const {
     warehouses,
+    pagination,
     loading,
+    fetching,
     error,
     createWarehouse,
     updateWarehouse,
     deactivateWarehouse,
     deleteWarehouse,
-  } = useWarehouses();
+  } = useWarehouses({
+    pageNumber,
+    pageSize,
+    search,
+    esActivo: filters.esActivo === '' ? null : filters.esActivo === 'true',
+  });
 
-  // Modal states
+  // ── Estados de modales ────────────────────────────────────────
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -52,13 +61,35 @@ export const WarehousesPage = () => {
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // ── Handlers de filtros/búsqueda ──────────────────────────────
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setPageNumber(1);
+  };
+
+  const handleFilterChange = (name, value) => {
+    setFilters((prev) => ({ ...prev, [name]: value }));
+    setPageNumber(1);
+  };
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setFilters({ esActivo: '' });
+    setPageNumber(1);
+  };
+
+  // ── Handlers de formulario ────────────────────────────────────
   const resetForm = () => {
-    setFormData({
-      nombre: '',
-      descripcion: '',
-      es_activo: true,
-    });
+    setFormData({ nombre: '', descripcion: '', es_activo: true });
     setEditingWarehouse(null);
+  };
+
+  const handleDialogClose = () => {
+    setCreateDialogOpen(false);
+    setEditDialogOpen(false);
+    setDeleteDialogOpen(false);
+    setSelectedDeleteWarehouse(null);
+    resetForm();
   };
 
   const handleCreateOpen = () => {
@@ -81,14 +112,7 @@ export const WarehousesPage = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDialogClose = () => {
-    setCreateDialogOpen(false);
-    setEditDialogOpen(false);
-    setDeleteDialogOpen(false);
-    setSelectedDeleteWarehouse(null);
-    resetForm();
-  };
-
+  // ── Handlers de acciones CRUD ─────────────────────────────────
   const handleCreateSubmit = async (data) => {
     setCreateLoading(true);
     try {
@@ -127,10 +151,6 @@ export const WarehousesPage = () => {
     }
   };
 
-  const handleFormChange = (newData) => {
-    setFormData(newData);
-  };
-
   const handleDeactivate = async (warehouse) => {
     const warehouseId = warehouse.id || warehouse.codigo;
     try {
@@ -140,56 +160,84 @@ export const WarehousesPage = () => {
     }
   };
 
-  if (loading) {
-    return <LoadingScreen message="Cargando almacenes..." />;
-  }
-
-  const theme = useTheme();
+  // ── Configuración de tabla ────────────────────────────────────
+  const tableFilters = [
+    {
+      name: 'esActivo',
+      label: 'Estado',
+      type: 'select',
+      width: 170,
+      options: [
+        { label: 'Activos', value: 'true' },
+        { label: 'Inactivos', value: 'false' },
+      ],
+    },
+  ];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4, backgroundColor: theme.palette.background.default, minHeight: '100vh' }}>
-
+    <Container
+      maxWidth="lg"
+      sx={{
+        py: 4,
+        backgroundColor: theme.palette.background.default,
+        minHeight: '100vh',
+      }}
+    >
       <PageHeader
         title="Gestión de Almacenes"
         description="Administra los almacenes del sistema."
       />
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-          <Button
-            variant="contained"
-            onClick={handleCreateOpen}
-            sx={{ 
-              '&:hover': { backgroundColor: theme.palette.primary.dark },
-              minWidth: 140,
-              [theme.breakpoints.down('sm')]: {
-                minWidth: 'auto',
-                padding: '8px 12px',
-              }
-            }}
-          >
-            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }} >Agregar almacén</Box>
-            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }} >+ Almacén</Box>
-          </Button>
-      </Box>
 
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Button
+          variant="contained"
+          onClick={handleCreateOpen}
+          sx={{
+            '&:hover': { backgroundColor: theme.palette.primary.dark },
+            minWidth: 140,
+            [theme.breakpoints.down('sm')]: {
+              minWidth: 'auto',
+              padding: '8px 12px',
+            },
+          }}
+        >
+          <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+            Agregar almacén
+          </Box>
+          <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+            + Almacén
+          </Box>
+        </Button>
+      </Box>
 
       <ErrorMessage message={error} />
 
       <WarehouseTable
-
         warehouses={warehouses}
+        loading={loading}
+        fetching={fetching}
+        pagination={pagination}
+        searchValue={search}
+        filters={tableFilters}
+        filterValues={filters}
         onEdit={handleEditOpen}
         onDeactivate={handleDeactivate}
         onDelete={handleDeleteOpen}
+        onSearchChange={handleSearchChange}
+        onFilterChange={handleFilterChange}
+        onResetFilters={handleResetFilters}
+        onPageChange={setPageNumber}
+        onPageSizeChange={setPageSize}
       />
 
-      {/* Create Modal */}
+      {/* Modal: Crear */}
       <Dialog open={createDialogOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth>
         <DialogTitle>Agregar nuevo almacén</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <WarehouseForm
               formData={formData}
-              setFormData={handleFormChange}
+              setFormData={setFormData}
               onSubmit={handleCreateSubmit}
               onCancel={handleDialogClose}
               isEditing={false}
@@ -204,14 +252,14 @@ export const WarehousesPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Edit Modal */}
+      {/* Modal: Editar */}
       <Dialog open={editDialogOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth>
         <DialogTitle>Editar almacén</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <WarehouseForm
               formData={formData}
-              setFormData={handleFormChange}
+              setFormData={setFormData}
               onSubmit={handleUpdateSubmit}
               onCancel={handleDialogClose}
               isEditing={true}
@@ -226,7 +274,7 @@ export const WarehousesPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirm Dialog */}
+      {/* Modal: Confirmar eliminación */}
       <ConfirmDialog
         open={deleteDialogOpen}
         action="delete"

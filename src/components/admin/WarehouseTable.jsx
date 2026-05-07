@@ -14,9 +14,26 @@ import { useTheme } from '@mui/material/styles';
 import { TableActions } from '../tables/TableActions';
 import { EmptyState } from '../common/EmptyState';
 import { StatusChip } from '../common/StatusChip';
+import { PaginationBar } from '../tables/PaginationBar';
 
+export const WarehouseTable = ({
 
-export const WarehouseTable = ({ warehouses, onEdit, onDeactivate, onDelete }) => {
+  warehouses,
+  onEdit,
+  onDeactivate,
+  onDelete,
+  pagination,
+  loading,
+  fetching,
+  searchValue,
+  filters,
+  filterValues,
+  onSearchChange,
+  onFilterChange,
+  onResetFilters,
+  onPageChange,
+  onPageSizeChange,
+}) => {
   const theme = useTheme();
 
   if (!warehouses || warehouses.length === 0) {
@@ -24,10 +41,10 @@ export const WarehouseTable = ({ warehouses, onEdit, onDeactivate, onDelete }) =
   }
 
   return (
-    <TableContainer component={Paper}>
-
-      <Table size="small">
-        <TableHead>
+    <>
+      <TableContainer component={Paper}>
+        <Table size="small">
+          <TableHead>
           <TableRow>
             <TableCell sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>Código</TableCell>
             <TableCell sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>Nombre</TableCell>
@@ -61,6 +78,13 @@ export const WarehouseTable = ({ warehouses, onEdit, onDeactivate, onDelete }) =
           ))}
         </TableBody>
       </Table>
-    </TableContainer>
+      </TableContainer>
+
+      <PaginationBar
+        page={pagination?.pageNumber ?? 1}
+        count={pagination?.totalPages ?? 1}
+        onChange={(_, nextPage) => onPageChange?.(nextPage)}
+      />
+    </>
   );
 };
