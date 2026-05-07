@@ -131,7 +131,7 @@ const TableActionButton = ({ action, row }) => {
             },
           }}
         >
-          {action.icon ?? iconMap[action.type]}
+          {action.icon ?? iconMap[action.type]} 
         </IconButton>
       </span>
     </Tooltip>
