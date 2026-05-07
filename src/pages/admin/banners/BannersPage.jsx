@@ -1,7 +1,15 @@
 // Pagina administrativa para gestionar banners de la tienda.
 
 import { useState } from 'react';
-import { Container, Typography } from '@mui/material';
+import {
+  Container,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Typography,
+} from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { BannerForm } from '../../../components/admin/banners/BannerForm';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
@@ -69,6 +77,11 @@ export const BannersPage = () => {
     setEditingId(null);
     setIsFormOpen(false);
     setFormError(null);
+  };
+
+  const handleCloseForm = () => {
+    if (saving) return;
+    resetForm();
   };
 
   const handleCreate = () => {
@@ -223,29 +236,6 @@ export const BannersPage = () => {
     },
   ];
 
-  if (isFormOpen) {
-    return (
-      <Container maxWidth="md" sx={{ px: { xs: 2, sm: 3 } }}>
-        <PageHeader
-          title={editingId ? 'Editar banner' : 'Nuevo banner'}
-          description="Completa la informacion del banner que se mostrara en la tienda."
-        />
-
-        <ErrorMessage message={formError || error} />
-
-        <BannerForm
-          editingId={editingId}
-          formData={formData}
-          loading={saving}
-          onCancel={resetForm}
-          onChange={changeInput}
-          onFileChange={changeFileInput}
-          onSubmit={handleSubmit}
-        />
-      </Container>
-    );
-  }
-
   return (
     <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
       <PageHeader
@@ -276,6 +266,61 @@ export const BannersPage = () => {
         emptyDescription="Intenta ajustar los filtros o crea un nuevo banner."
         maxHeight={520}
       />
+
+      <Dialog
+        open={isFormOpen}
+        onClose={handleCloseForm}
+        fullWidth
+        maxWidth="md"
+        scroll="paper"
+        disableRestoreFocus
+        slotProps={{
+          paper: {
+            sx: {
+              position: 'relative',
+              bgcolor: 'background.paper',
+              backgroundImage: 'none',
+            },
+          },
+        }}
+      >
+        <IconButton
+          onClick={handleCloseForm}
+          disabled={saving}
+          size="small"
+          aria-label="Cerrar formulario"
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            zIndex: 1,
+            color: 'text.secondary',
+          }}
+        >
+          <CloseRoundedIcon fontSize="small" />
+        </IconButton>
+
+        <DialogTitle sx={{ pr: 6 }}>
+          {editingId ? 'Editar banner' : 'Nuevo banner'}
+          <Typography variant="body2" color="text.secondary">
+            Completa la informacion del banner que se mostrara en la tienda.
+          </Typography>
+        </DialogTitle>
+
+        <DialogContent dividers>
+          <ErrorMessage message={formError || error} />
+
+          <BannerForm
+            editingId={editingId}
+            formData={formData}
+            loading={saving}
+            onCancel={handleCloseForm}
+            onChange={changeInput}
+            onFileChange={changeFileInput}
+            onSubmit={handleSubmit}
+          />
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={Boolean(confirm)}
