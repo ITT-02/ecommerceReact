@@ -5,7 +5,7 @@ import {
   Paper,
   Typography,
   Stack,
-  Checkbox,
+  Switch,
   FormControlLabel,
   Alert,
 } from '@mui/material';
@@ -92,7 +92,7 @@ export const WarehouseForm = ({
           />
           <FormControlLabel
             control={
-              <Checkbox
+              <Switch
                 checked={formData.es_activo || false}
                 onChange={handleCheckboxChange}
               />

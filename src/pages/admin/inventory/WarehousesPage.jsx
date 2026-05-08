@@ -25,21 +25,25 @@ export const WarehousesPage = () => {
   // ── Paginación y filtros ──────────────────────────────────────
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+
+
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({ esActivo: '' });
+
 
   // ── Hook ─────────────────────────────────────────────────────
   const {
     warehouses,
-    pagination,
+    pagination: _pagination,
+
     loading,
     fetching,
     error,
     createWarehouse,
     updateWarehouse,
-    deactivateWarehouse,
     deleteWarehouse,
   } = useWarehouses({
+
     pageNumber,
     pageSize,
     search,
@@ -77,6 +81,7 @@ export const WarehousesPage = () => {
     setFilters({ esActivo: '' });
     setPageNumber(1);
   };
+
 
   // ── Handlers de formulario ────────────────────────────────────
   const resetForm = () => {
@@ -151,17 +156,11 @@ export const WarehousesPage = () => {
     }
   };
 
-  const handleDeactivate = async (warehouse) => {
-    const warehouseId = warehouse.id || warehouse.codigo;
-    try {
-      await deactivateWarehouse(warehouseId);
-    } catch (err) {
-      console.error('Error desactivando almacén:', err);
-    }
-  };
+
 
   // ── Configuración de tabla ────────────────────────────────────
   const tableFilters = [
+
     {
       name: 'esActivo',
       label: 'Estado',
@@ -216,19 +215,24 @@ export const WarehousesPage = () => {
         warehouses={warehouses}
         loading={loading}
         fetching={fetching}
-        pagination={pagination}
         searchValue={search}
         filters={tableFilters}
         filterValues={filters}
         onEdit={handleEditOpen}
-        onDeactivate={handleDeactivate}
         onDelete={handleDeleteOpen}
         onSearchChange={handleSearchChange}
+
         onFilterChange={handleFilterChange}
         onResetFilters={handleResetFilters}
+        pagination={_pagination}
         onPageChange={setPageNumber}
-        onPageSizeChange={setPageSize}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPageNumber(1);
+        }}
       />
+
+
 
       {/* Modal: Crear */}
       <Dialog open={createDialogOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth>
