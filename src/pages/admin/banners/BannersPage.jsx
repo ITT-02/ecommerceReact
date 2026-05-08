@@ -22,7 +22,7 @@ import {
   initialBannerFormData,
   mapBannerToFormData,
   mapFormDataToBanner,
-} from '../../../utils/bannersMapper';
+} from '../../../adapters/bannersMapper';
 
 export const BannersPage = () => {
   const [formData, setFormData] = useState(initialBannerFormData);
@@ -55,7 +55,7 @@ export const BannersPage = () => {
   });
 
   const actionLoading = saving || deleting;
-
+  
   const changeInput = (event) => {
     const { name, value, type, checked } = event.target;
     setFormError(null);
@@ -65,13 +65,23 @@ export const BannersPage = () => {
     }));
   };
 
-  const changeFileInput = (event) => {
+  const changeFileInput = (file) => {
+      setFormError(null);
+      setFormData((current) => ({
+        ...current,
+        _file: file,
+      }));
+    };
+  const removeFileInput = () => {
+    setFormError(null);
+
     setFormData((current) => ({
       ...current,
-      _file: event.target.files?.[0] || null,
+      _file: null,
+      imagen_url: '',
+      imagen_path: '',
     }));
   };
-
   const resetForm = () => {
     setFormData(initialBannerFormData);
     setEditingId(null);
@@ -119,7 +129,7 @@ export const BannersPage = () => {
     }
 
     try {
-      const bannerData = mapFormDataToBanner(formData);
+      const bannerData = await mapFormDataToBanner(formData);
       await saveBanner(bannerData, editingId);
       resetForm();
     } catch (err) {
@@ -162,6 +172,7 @@ export const BannersPage = () => {
     setPageNumber(1);
   };
 
+  
   const columns = [
     {
       field: 'imagen_url',
@@ -317,6 +328,7 @@ export const BannersPage = () => {
             onCancel={handleCloseForm}
             onChange={changeInput}
             onFileChange={changeFileInput}
+            onFileRemove={removeFileInput}
             onSubmit={handleSubmit}
           />
         </DialogContent>

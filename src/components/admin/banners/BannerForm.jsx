@@ -13,6 +13,8 @@ import {
 import { AdminSectionCard } from '../AdminSectionCard';
 import { ImageUploadField } from '../../forms/ImageUploadField';
 import { TextFieldController } from '../../forms/TextFieldController';
+import {FileUploadField} from '../../common/Field/FileUploadField'
+
 
 export const BannerForm = ({
   editingId,
@@ -20,6 +22,8 @@ export const BannerForm = ({
   loading = false,
   onCancel,
   onChange,
+  onFileChange,
+  onFileRemove,
   onSubmit,
 }) => {
 
@@ -54,9 +58,20 @@ export const BannerForm = ({
                 placeholder="Ver catalogo"
               />
             </Grid>
+            <FileUploadField
+              label="Imagen del banner"
+              accept="image/*"
+              value={formData._file}
+              previewUrl={formData.imagen_url}
+              height={220}
+              helperText="Selecciona una imagen para el banner."
+              onChange={onFileChange}
+              onRemove={onFileRemove}
+            />
+
           </Grid>
         </AdminSectionCard>
-
+        
       
 
         <AdminSectionCard title="Publicacion">

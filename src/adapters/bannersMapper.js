@@ -1,3 +1,7 @@
+import { uploadFile } from "../services/filesService";
+const BANNERS_BUCKET = 'banners'
+const BANNERS_FOLDER = 'home'
+
 export const initialBannerFormData = {
   titulo: '',
   subtitulo: '',
@@ -27,7 +31,9 @@ const toNullableText = (value) => {
   return trimmed || null;
 };
 
-export const mapBannerToFormData = (banner) => ({
+export const mapBannerToFormData = (banner) => (    
+  {
+  
   titulo: banner.titulo || '',
   subtitulo: banner.subtitulo || '',
   imagen_url: banner.imagen_url || '',
@@ -40,14 +46,31 @@ export const mapBannerToFormData = (banner) => ({
   _file: null,
 });
 
-export const mapFormDataToBanner = (formData) => ({
+export const mapFormDataToBanner = async (formData) => {
+  let imagen_url = toNullableText(formData.imagen_url);
+  let url_destino = formData.imagen_path || null;
+
+  if (formData._file) {
+    const uploadedImage = await uploadFile({
+      bucket: BANNERS_BUCKET,
+      folder: BANNERS_FOLDER,
+      file: formData._file,
+    });
+
+    imagen_url = uploadedImage.url;
+    url_destino = uploadedImage.path;
+  }
+
+  
+  return( {
   titulo: toNullableText(formData.titulo),
   subtitulo: toNullableText(formData.subtitulo),
-  imagen_url: toNullableText(formData.imagen_url),
-  url_destino: toNullableText(formData.url_destino),
+  imagen_url,
+  url_destino,
   boton_texto: toNullableText(formData.boton_texto),
   orden_visual: formData.orden_visual === '' ? 0 : Number(formData.orden_visual),
   es_activo: Boolean(formData.es_activo),
   fecha_inicio: toNullableTimestamp(formData.fecha_inicio, 'T00:00:00Z'),
   fecha_fin: toNullableTimestamp(formData.fecha_fin, 'T23:59:59Z'),
-});
+  })
+};

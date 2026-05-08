@@ -1,6 +1,10 @@
 // Servicio para banners de la tienda.
 
 import { restApi } from '../../api/restApi';
+import { deleteFile } from '../filesService';
+
+const BANNERS_BUCKET = 'banners'
+const BANNERS_FOLDER = 'home'
 
 const normalizePaginatedResponse = (data, pageNumber, pageSize) => {
   const value = Array.isArray(data) ? data[0] : data;
@@ -67,6 +71,13 @@ export const deleteBanner = async (id) => {
     params: { id: `eq.${id}`, select: '*' },
     headers: { Prefer: 'return=representation' },
   });
+  let banner = getBannerById(id)
+  if(banner.url_destino){
+    await deleteFile({
+      bucket : BANNERS_BUCKET,
+      path: banner.url_destino,
+    })
+  }
 
   return response.data[0] || null;
 };
