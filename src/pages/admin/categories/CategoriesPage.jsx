@@ -16,6 +16,7 @@ import CloseIcon from '@mui/icons-material/Close';
 
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
+import { ImageUploadField } from '../../../components/forms/ImageUploadField';
 import {useCategories} from '../../../hooks/catalog/useCategories';
 import { useState, useMemo } from 'react';
 
@@ -26,6 +27,7 @@ export const CategoriesPage = () => {
     const [pageNumber, setPageNumber] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [open, setOpen] = useState(false);
+    const [color, setColor] = useState("#262EC3"); // Estado para el color seleccionado
 
     const filteredCategories = useMemo(() => {
         return categories.filter((category) => 
@@ -152,9 +154,9 @@ export const CategoriesPage = () => {
                                 <TextField fullWidth multiline rows={3} sx={inputStyle} defaultValue="Esta es la categoría 1" />
                             </Grid>
 
-                            <Grid item xs={6} size={6}>
-                                <Typography sx={labelStyle}>URL de Imagen</Typography>
-                                <TextField fullWidth sx={inputStyle} defaultValue="categoría1_img.url" />
+                            <Grid item xs={6} size={12}>
+                                <Typography sx={labelStyle}>Archivo de Imagen</Typography>
+                                <ImageUploadField label="Seleccionar imagen" file={null} onChange={() => {}} />
                             </Grid>
                             
                             <Grid item xs={6} size={6}>
@@ -167,10 +169,29 @@ export const CategoriesPage = () => {
                                 <TextField fullWidth sx={inputStyle} defaultValue="Icono Categoria 1" />
                             </Grid>
 
-                            <Grid item xs={6} size={6}>
-                                <Typography sx={labelStyle}>Color</Typography>
-                                <TextField type="color" fullWidth sx={{inputStyle, width: '20%' }} defaultValue="#262EC3" />
+                            <Grid container item xs={12} size={12} spacing={2} sx={{ mt: 1}}>
+                                <Grid item xs={12} size={6} >
+                                    <Typography sx={labelStyle}>Color</Typography>
+                                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
+                                        <TextField
+                                            type="color"
+                                            value={color} // Conectado al estado
+                                            onChange={(e) => setColor(e.target.value)}
+                                            fullWidth sx={{inputStyle, width: '20%' }}
+                                        />
+                                        <TextField
+                                            type='text'
+                                            value={color} // Conectado al mismo estado
+                                            onChange={(e) => setColor(e.target.value)}
+                                            fullWidth
+                                            sx={{ ...inputStyle, width: '70%', mt: 1 }}
+                                        />
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={6} />   
                             </Grid>
+
+                            
                         
                             <Grid item xs={6}>
                                 <Stack spacing={0.5} sx={{ mb: 0.5 }}>
