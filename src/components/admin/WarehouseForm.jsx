@@ -66,10 +66,7 @@ export const WarehouseForm = ({
 
   return (
     <Paper sx={{ p: 3, maxWidth: 600, mx: 'auto', borderRadius: 2 }}>
-      <Typography variant="h6" sx={{ mb: 3, color: theme.palette.primary.main }}>
-        {isEditing ? 'Editar almacén' : 'Agregar almacén'}
-      </Typography>
-
+     
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <form onSubmit={handleSubmit}>
         <Stack spacing={3}>
@@ -97,7 +94,7 @@ export const WarehouseForm = ({
                 onChange={handleCheckboxChange}
               />
             }
-            label="Activo"
+            label={formData.es_activo ? 'Activo' : 'Inactivo'}
           />
         </Stack>
 

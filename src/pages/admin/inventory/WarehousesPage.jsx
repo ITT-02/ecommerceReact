@@ -13,7 +13,9 @@ import {
 import { useTheme } from '@mui/material/styles';
 
 import { useWarehouses } from '../../../hooks/inventory/useWarehouses';
-import { WarehouseTable } from '../../../components/admin/WarehouseTable';
+import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
+import { StatusChip } from '../../../components/common/StatusChip';
+
 import { WarehouseForm } from '../../../components/admin/WarehouseForm';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { PageHeader } from '../../../components/common/PageHeader';
@@ -211,26 +213,78 @@ export const WarehousesPage = () => {
 
       <ErrorMessage message={error} />
 
-      <WarehouseTable
-        warehouses={warehouses}
-        loading={loading}
-        fetching={fetching}
+      <AdminResourceTable
+        rows={(warehouses ?? []).map((w) => ({
+          ...w,
+          id: w.id ?? w.codigo,
+        }))}
+        columns={[
+          {
+            field: 'codigo',
+            headerName: 'Código',
+            width: 140,
+            minWidth: 130,
+          },
+          {
+            field: 'nombre',
+            headerName: 'Nombre',
+            width: 220,
+            minWidth: 190,
+          },
+          {
+            field: 'descripcion',
+            headerName: 'Descripción',
+            width: 260,
+            minWidth: 220,
+            renderCell: (row) => row.descripcion || '-',
+          },
+          {
+            field: 'es_activo',
+            headerName: 'Estado',
+            width: 140,
+            minWidth: 140,
+            renderCell: (row) => (
+              <StatusChip
+                label={row.es_activo ? 'Activo' : 'Inactivo'}
+                color={row.es_activo ? 'success' : 'error'}
+              />
+            ),
+          },
+        ]}
+        actions={[
+          {
+            type: 'edit',
+            label: 'Editar',
+            onClick: (row) => handleEditOpen(row),
+          },
+          {
+            type: 'delete',
+            label: 'Eliminar',
+            onClick: (row) => handleDeleteOpen(row),
+          },
+        ]}
+        loading={Boolean(loading)}
+        pagination={_pagination}
         searchValue={search}
+        searchLabel="Buscar almacén"
         filters={tableFilters}
         filterValues={filters}
-        onEdit={handleEditOpen}
-        onDelete={handleDeleteOpen}
         onSearchChange={handleSearchChange}
-
         onFilterChange={handleFilterChange}
         onResetFilters={handleResetFilters}
-        pagination={_pagination}
         onPageChange={setPageNumber}
         onPageSizeChange={(size) => {
           setPageSize(size);
           setPageNumber(1);
         }}
+        emptyTitle="No hay almacenes"
+        emptyDescription="Aún no se han registrado almacenes."
+        maxHeight={540}
+        primaryActionLabel={undefined}
+        onPrimaryAction={undefined}
       />
+
+
 
 
 
@@ -249,11 +303,6 @@ export const WarehousesPage = () => {
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose} disabled={createLoading}>
-            Cancelar
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Modal: Editar */}
@@ -271,11 +320,6 @@ export const WarehousesPage = () => {
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose} disabled={editLoading}>
-            Cancelar
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Modal: Confirmar eliminación */}
