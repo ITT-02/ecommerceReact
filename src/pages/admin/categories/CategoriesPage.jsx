@@ -10,10 +10,9 @@ import {
     IconButton,
     Grid,
     FormControlLabel,
-    Button
+    Button,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { MuiColorInput } from 'mui-color-input'
 
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
@@ -52,32 +51,34 @@ export const CategoriesPage = () => {
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 780, // Ancho suficiente para que respire el diseño
+        width: 650, // Reducido de 800
+        maxHeight: '90vh', // No ocupa toda la pantalla
+        overflowY: 'auto', // Scroll si el contenido es largo
         bgcolor: '#FFF',
-        borderRadius: '60px', // Bordes muy redondeados del contenedor
-        boxShadow: '0px 10px 40px rgba(0,0,0,0.12)',
-        p: 7,
+        borderRadius: '40px', 
+        boxShadow: '0px 8px 30px rgba(0,0,0,0.1)',
+        p: 4, // Reducido de 7
         outline: 'none',
         border: '2px solid #333'
-        };
+    };
 
     const labelStyle = {
         fontWeight: 'bold',
         color: '#555',
-        mb: 1,
+        mb: 0.5,
         ml: 0.5,
-        fontSize: '1.1rem'
+        fontSize: '0.9rem' // Texto más pequeño
     };
 
     const inputStyle = {
         '& .MuiOutlinedInput-root': {
             bgcolor: '#E0E0E0',
-            borderRadius: '20px',
+            borderRadius: '15px',
             '& fieldset': { border: 'none' },
         },
         '& .MuiInputBase-input': {
-            padding: '14px 20px',
-            fontSize: '1.1rem'
+            padding: '10px 15px', // Padding reducido
+            fontSize: '0.9rem'
         }
     };
 
@@ -128,73 +129,71 @@ export const CategoriesPage = () => {
                 <Modal open={open} onClose={handleCloseEdit}>
                     <Box sx={modalStyle}>
                         
-                        {/* Cabecera: Título y X a la extrema derecha */}
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 5 }}>
-                            <Typography variant="h3" sx={{ fontWeight: 800, color: '#333' }}>
+                        {/* Cabecera reducida */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                            <Typography variant="h5" sx={{ fontWeight: 800, color: '#333' }}>
                                 Detalles de categoría
                             </Typography>
                             <IconButton onClick={handleCloseEdit} sx={{ color: '#333', p: 0 }}>
-                                <CloseIcon sx={{ fontSize: 50 }} />
+                                <CloseIcon sx={{ fontSize: 35 }} />
                             </IconButton>
                         </Box>
 
-                        <Grid container spacing={4}>
-                        {/* Fila 1: Nombre (Izquierda) y Descripción (Derecha) */}
-                            <Grid item xs={6}>
+                        <Grid container spacing={2}>
+                        {/* Nombre (xs=12, pero 50% de ancho) */}
+                            <Grid item xs={12} size={12}>
                                 <Typography sx={labelStyle}>Nombre</Typography>
-                                <TextField fullWidth sx={inputStyle} defaultValue="Categoría 1" />
+                                <TextField sx={{ ...inputStyle, width: '50%' }} defaultValue="Categoría 1" />
                             </Grid>
 
-                            {/* Fila 2: Descripción (Ocupa el ancho total, se mueve abajo automáticamente) */}
-                            <Grid item xs={12}>
+                            {/* Descripción (Ancho total) */}
+                            <Grid item xs={12} size={12}>
                                 <Typography sx={labelStyle}>Descripción</Typography>
-                                <TextField fullWidth multiline rows={4} sx={inputStyle} defaultValue="Esta es la categoría 1" />
+                                <TextField fullWidth multiline rows={3} sx={inputStyle} defaultValue="Esta es la categoría 1" />
                             </Grid>
 
-                        {/* Fila 2: URL Imagen (Izquierda) y Orden (Derecha) */}
-                            <Grid item xs={6}>
+                            <Grid item xs={6} size={6}>
                                 <Typography sx={labelStyle}>URL de Imagen</Typography>
                                 <TextField fullWidth sx={inputStyle} defaultValue="categoría1_img.url" />
                             </Grid>
-                            <Grid item xs={6}>
+                            
+                            <Grid item xs={6} size={6}>
                                 <Typography sx={labelStyle}>Orden Visual</Typography>
                                 <TextField fullWidth sx={inputStyle} defaultValue="1" />
                             </Grid>
 
-                        {/* Fila 3: Nombre Icono y Bloque Color/Checks */}
-                            <Grid item xs={6}>
+                            <Grid item xs={6} size={6}>
                                 <Typography sx={labelStyle}>Nombre de ícono</Typography>
                                 <TextField fullWidth sx={inputStyle} defaultValue="Icono Categoria 1" />
                             </Grid>
-                            
+
+                            <Grid item xs={6} size={6}>
+                                <Typography sx={labelStyle}>Color</Typography>
+                                <TextField type="color" fullWidth sx={{inputStyle, width: '20%' }} defaultValue="#262EC3" />
+                            </Grid>
+                        
                             <Grid item xs={6}>
-                                <Box sx={{ display: 'flex', alignItems: 'flex-end', height: '100%', gap: 3 }}>
-                                {/* Indicador de Color */}
-                                <MuiColorInput format="hex"  />
-                                
-                                {/* Checkboxes alineados */}
-                                <Stack spacing={1} sx={{ mb: 1 }}>
+                                <Stack spacing={0.5} sx={{ mb: 0.5 }}>
                                     <FormControlLabel 
-                                    control={<Checkbox defaultChecked sx={{ color: '#673ab7', '&.Mui-checked': { color: '#673ab7' }, transform: 'scale(1.2)' }} />} 
-                                    label={<Typography sx={{ fontWeight: 'bold', fontSize: '1.2rem' }}>¿Es visible?</Typography>}
+                                        control={<Checkbox defaultChecked size="small" sx={{ color: '#673ab7' }} />} 
+                                        label={<Typography sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>¿Es visible?</Typography>}
                                     />
                                     <FormControlLabel 
-                                    control={<Checkbox defaultChecked sx={{ color: '#673ab7', '&.Mui-checked': { color: '#673ab7' }, transform: 'scale(1.2)' }} />} 
-                                    label={<Typography sx={{ fontWeight: 'bold', fontSize: '1.2rem' }}>¿Está activa?</Typography>}
+                                        control={<Checkbox defaultChecked size="small" sx={{ color: '#673ab7' }} />} 
+                                        label={<Typography sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>¿Está activa?</Typography>}
                                     />
                                 </Stack>
-                                </Box>
                             </Grid>
 
-                            {/* Botones de Acción: Abajo a la izquierda */}
-                            <Grid item xs={12} sx={{ mt: 3 }}>
-                                <Stack direction="row" spacing={4}>
+                            {/* Botones más compactos */}
+                            <Grid item xs={12} sx={{ mt: 2, alignItems: 'end', display: 'flex', justifyContent: 'flex-end' }}>
+                                <Stack direction="row" spacing={2}>
                                     <Button 
                                         variant="contained" 
                                         sx={{ 
-                                        bgcolor: '#E6EE9C', color: '#000', borderRadius: '25px',
-                                        fontWeight: 900, textTransform: 'none', fontSize: '1.3rem',
-                                        px: 6, py: 2.5, '&:hover': { bgcolor: '#D4E157' }
+                                        bgcolor: '#E6EE9C', color: '#000', borderRadius: '15px',
+                                        fontWeight: 'bold', textTransform: 'none', fontSize: '1rem',
+                                        px: 4, py: 1.5, '&:hover': { bgcolor: '#D4E157' }, alignItems: 'end'
                                         }}
                                     >
                                         Guardar Cambios
@@ -202,9 +201,9 @@ export const CategoriesPage = () => {
                                     <Button 
                                         variant="contained" 
                                         sx={{ 
-                                        bgcolor: '#D32F2F', color: '#FFF', borderRadius: '25px',
-                                        fontWeight: 900, textTransform: 'none', fontSize: '1.3rem',
-                                        px: 6, py: 2.5, '&:hover': { bgcolor: '#B71C1C' }
+                                        bgcolor: '#D32F2F', color: '#FFF', borderRadius: '15px',
+                                        fontWeight: 'bold', textTransform: 'none', fontSize: '1rem',
+                                        px: 4, py: 1.5, '&:hover': { bgcolor: '#B71C1C' }
                                         }}
                                     >
                                         Eliminar categoría
