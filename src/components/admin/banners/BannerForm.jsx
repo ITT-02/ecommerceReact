@@ -99,7 +99,13 @@ export const BannerForm = ({
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
-              <TextFieldController fullWidth name="orden_visual" label="Orden visual" type="number" value={formData.orden_visual ?? ''} onChange={onChange} />
+              <TextFieldController fullWidth name="orden_visual" label="Orden visual" type="number" value={formData.orden_visual ?? ''} onChange={onChange}
+               slotProps={{
+                  htmlInput: {
+                    min: 1,
+                    step: 1,
+                  },
+                }}/>
             </Grid>
             <Grid size={{ xs: 12 }}>
               <FormControlLabel
@@ -110,7 +116,7 @@ export const BannerForm = ({
                     onChange={onChange}
                   />
                 }
-                label="Publicar banner"
+                label={formData.es_activo ? "Activo" : "Inactivo"}
               />
             </Grid>
           </Grid>

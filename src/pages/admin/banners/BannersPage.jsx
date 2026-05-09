@@ -15,7 +15,6 @@ import { BannerForm } from '../../../components/admin/banners/BannerForm';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
-import { PageHeader } from '../../../components/common/PageHeader';
 
 import { useBanners } from '../../../hooks/marketing/useBanners';
 import {
@@ -23,6 +22,7 @@ import {
   mapBannerToFormData,
   mapFormDataToBanner,
 } from '../../../adapters/bannersMapper';
+import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 
 export const BannersPage = () => {
   const [formData, setFormData] = useState(initialBannerFormData);
@@ -248,12 +248,8 @@ export const BannersPage = () => {
   ];
 
   return (
-    <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
-      <PageHeader
-        title="Banners"
-        description="Gestiona los banners visibles en la pagina principal de la tienda."
-      />
-
+    <PlaceholderPage title="Banners" description="Gestiona los banners visibles en la pagina principal de la tienda.">
+    
       <ErrorMessage message={error} />
 
       <AdminResourceTable
@@ -343,6 +339,7 @@ export const BannersPage = () => {
         onCancel={() => setConfirm(null)}
         onConfirm={handleConfirm}
       />
-    </Container>
+   
+    </PlaceholderPage>
   );
 };
