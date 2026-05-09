@@ -77,6 +77,8 @@ export const FileUploadField = ({
     const selectedFiles = Array.from(event.target.files || []);
     if (!selectedFiles.length) return;
 
+    document.activeElement?.blur();
+
     if (multiple) {
       const nextFiles = [...files, ...selectedFiles].slice(0, maxFiles);
       onChange(nextFiles);
@@ -92,12 +94,18 @@ export const FileUploadField = ({
     const selectedFile = event.target.files?.[0] || null;
     if (!selectedFile) return;
 
+    document.activeElement?.blur();
+
+    const replacedFile = files[index];
+
     if (multiple) {
       const nextFiles = [...files];
       nextFiles[index] = selectedFile;
       onChange(nextFiles);
+      onRemove?.(index, replacedFile);
     } else {
       onChange(selectedFile);
+      onRemove?.(index, replacedFile);
     }
 
     event.target.value = '';
@@ -107,16 +115,19 @@ export const FileUploadField = ({
   const handleRemove = (event, index) => {
     event.preventDefault();
     event.stopPropagation();
+    document.activeElement?.blur();
+
+    const removedFile = files[index];
 
     if (multiple) {
       const nextFiles = files.filter((_, fileIndex) => fileIndex !== index);
       onChange(nextFiles);
-      onRemove?.(index);
+      onRemove?.(index, removedFile);
       return;
     }
 
     onChange(null);
-    onRemove?.();
+    onRemove?.(index, removedFile);
   };
 
   // Ícono inicial según el tipo permitido.
@@ -144,7 +155,7 @@ export const FileUploadField = ({
 
     return (
       <Box
-        key={`${item.src}-${index}`}
+        key={`${item.src || item.name}-${index}`}
         sx={{
           position: 'relative',
           height,
@@ -289,9 +300,7 @@ export const FileUploadField = ({
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: multiple
-              ? 'repeat(auto-fill, minmax(180px, 1fr))'
-              : '1fr',
+            gridTemplateColumns: multiple ? 'repeat(auto-fill, minmax(180px, 1fr))' : '1fr',
             gap: 1.5,
           }}
         >
@@ -307,19 +316,12 @@ export const FileUploadField = ({
                 placeItems: 'center',
                 overflow: 'hidden',
                 transition: 'background-color 0.2s ease',
-
                 '&:hover': {
                   bgcolor: 'action.selected',
                 },
               }}
             >
-              <Stack
-                spacing={1.4}
-                sx={{
-                  alignItems: 'center',
-                  textAlign: 'center',
-                }}
-              >
+              <Stack spacing={1.4} sx={{ alignItems: 'center', textAlign: 'center' }}>
                 {renderEmptyIcon()}
 
                 <Button
@@ -333,9 +335,7 @@ export const FileUploadField = ({
                     px: 3.5,
                   }}
                 >
-                  {previews.length > 0
-                    ? 'Agregar archivo'
-                    : 'Seleccionar archivo'}
+                  {previews.length > 0 ? 'Agregar archivo' : 'Seleccionar archivo'}
 
                   <input
                     hidden
