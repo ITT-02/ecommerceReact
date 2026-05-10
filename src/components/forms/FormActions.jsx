@@ -10,13 +10,17 @@ export const FormActions = ({ loading = false, onCancel }) => {
       sx={{ justifyContent: 'flex-end', mt: 2 }}
     >
       <Button
-        type="button"
-        variant="outlined"
-        onClick={onCancel}
-        disabled={loading}
-      >
-        Cancelar
-      </Button>
+  type="button"
+  variant="outlined"
+  onMouseDown={(e) => e.preventDefault()}
+  onClick={(e) => {
+    e.currentTarget.blur();
+    onCancel();
+  }}
+  disabled={loading}
+>
+  Cancelar
+</Button>
 
       <Button
         type="submit"

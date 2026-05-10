@@ -90,13 +90,17 @@ export const WarehousesPage = () => {
     setEditingWarehouse(null);
   };
 
-  const handleDialogClose = () => {
+const handleDialogClose = () => {
+  document.activeElement?.blur();
+
+  requestAnimationFrame(() => {
     setCreateDialogOpen(false);
     setEditDialogOpen(false);
     setDeleteDialogOpen(false);
     setSelectedDeleteWarehouse(null);
     resetForm();
-  };
+  });
+};
 
   const handleCreateOpen = () => {
     resetForm();
@@ -104,6 +108,7 @@ export const WarehousesPage = () => {
   };
 
   const handleEditOpen = (warehouse) => {
+    document.activeElement?.blur();
     setEditingWarehouse(warehouse);
     setFormData({
       nombre: warehouse.nombre || '',
@@ -145,7 +150,7 @@ export const WarehousesPage = () => {
   };
 
   const handleDeleteConfirm = async () => {
-    setDeleteLoading(true);
+document.activeElement?.blur(); setDeleteLoading(true);
     try {
       const warehouseId = selectedDeleteWarehouse.id || selectedDeleteWarehouse.codigo;
       await deleteWarehouse(warehouseId);
@@ -262,7 +267,7 @@ export const WarehousesPage = () => {
       />
 
       {/* Modal: Crear */}
-      <Dialog open={createDialogOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth>
+      <Dialog open={createDialogOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth disableRestoreFocus>
         <DialogTitle>Agregar nuevo almacén</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>

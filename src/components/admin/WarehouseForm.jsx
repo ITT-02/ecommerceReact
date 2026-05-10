@@ -30,6 +30,11 @@ export const WarehouseForm = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+     if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+
     if (!formData.nombre?.trim()) {
       setError('El nombre es obligatorio');
       return;
@@ -90,6 +95,7 @@ export const WarehouseForm = ({
           <FormControlLabel
             control={
               <Switch
+                name="es_activo"
                 checked={formData.es_activo || false}
                 onChange={handleCheckboxChange}
               />
