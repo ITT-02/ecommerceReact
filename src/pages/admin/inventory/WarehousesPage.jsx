@@ -1,5 +1,4 @@
 // Página administrativa: Gestión de Almacenes.
-
 import React, { useState } from 'react';
 import {
   Container,
@@ -189,28 +188,6 @@ export const WarehousesPage = () => {
         description="Administra los almacenes del sistema."
       />
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <Button
-          variant="contained"
-          onClick={handleCreateOpen}
-          sx={{
-            '&:hover': { backgroundColor: theme.palette.primary.dark },
-            minWidth: 140,
-            [theme.breakpoints.down('sm')]: {
-              minWidth: 'auto',
-              padding: '8px 12px',
-            },
-          }}
-        >
-          <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-            Agregar almacén
-          </Box>
-          <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-            + Almacén
-          </Box>
-        </Button>
-      </Box>
-
       <ErrorMessage message={error} />
 
       <AdminResourceTable
@@ -280,13 +257,9 @@ export const WarehousesPage = () => {
         emptyTitle="No hay almacenes"
         emptyDescription="Aún no se han registrado almacenes."
         maxHeight={540}
-        primaryActionLabel={undefined}
-        onPrimaryAction={undefined}
+        primaryActionLabel="Agregar Almacén"
+        onPrimaryAction={handleCreateOpen}
       />
-
-
-
-
 
       {/* Modal: Crear */}
       <Dialog open={createDialogOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth>
