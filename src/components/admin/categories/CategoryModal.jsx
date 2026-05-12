@@ -61,31 +61,30 @@ export const CategoryModal = ({
     const initialFormData = useMemo(() => {
         if (category) {
             return {
+                categoria_padre_id: category.categoria_padre_id ?? null,
                 nombre: category.nombre || '',
                 descripcion: category.descripcion || '',
-                slug: category.slug || '',
-                orden_visual: category.orden_visual || '1',
-                icono_nombre: category.icono_nombre || '',
-                visible: category.visible !== false,
-                activa: category.activa !== false,
-                imagen: category.imagen || null,
+                orden_visual: category.orden_visual ?? 1,
+                icono: category.icono || '',
+                es_visible: category.es_visible ?? true,
+                es_activa: category.es_activa ?? true,
+                imagen: category.imagen_url || null,
             };
         }
         return {
+            categoria_padre_id: null,
             nombre: '',
             descripcion: '',
-            slug: '',
-            orden_visual: '1',
-            icono_nombre: '',
-            visible: true,
-            activa: true,
+            orden_visual: 1,
+            icono: '',
+            es_visible: true,
+            es_activa: true,
             imagen: null,
         };
     }, [category]); // Solo recalcula cuando category cambia
 
     const [formData, setFormData] = useState(initialFormData);
-    const [color, setColor] = useState(category?.color || "#262EC3");
-
+    const [color, setColor] = useState(category?.color_hex || "#262EC3");
 
     const handleChange = (field, value) => {
         setFormData(prev => ({
@@ -104,8 +103,15 @@ export const CategoryModal = ({
 
     const handleSave = async () => {
         const dataToSave = {
-            ...formData,
-            color,
+            categoria_padre_id: formData.categoria_padre_id ?? null,
+            nombre: formData.nombre,
+            descripcion: formData.descripcion,
+            imagen_url: formData.imagen ?? null,
+            icono: formData.icono,
+            color_hex: color,
+            orden_visual: Number(formData.orden_visual),
+            es_visible: formData.es_visible,
+            es_activa: formData.es_activa,
             ...(category?.id && { id: category.id })
         };
         await onSave(dataToSave);
@@ -181,8 +187,8 @@ export const CategoryModal = ({
                         <TextField 
                             fullWidth 
                             sx={inputStyle}
-                            value={formData.icono_nombre}
-                            onChange={(e) => handleChange('icono_nombre', e.target.value)}
+                            value={formData.icono}
+                            onChange={(e) => handleChange('icono', e.target.value)}
                         />
                     </Grid>
 
@@ -213,11 +219,11 @@ export const CategoryModal = ({
                     {/* Checkboxes */}
                     <Grid item xs={6} size={12} >
                         <Stack spacing={0.5} sx={{ mb: 0.5 }}>
-                            <FormControlLabel 
+                                    <FormControlLabel 
                                 control={
                                     <Checkbox 
-                                        checked={formData.visible}
-                                        onChange={() => handleCheckboxChange('visible')}
+                                        checked={formData.es_visible}
+                                        onChange={() => handleCheckboxChange('es_visible')}
                                         size="small" 
                                         sx={{ color: '#673ab7' }} 
                                     />
@@ -227,8 +233,8 @@ export const CategoryModal = ({
                             <FormControlLabel 
                                 control={
                                     <Checkbox 
-                                        checked={formData.activa}
-                                        onChange={() => handleCheckboxChange('activa')}
+                                        checked={formData.es_activa}
+                                        onChange={() => handleCheckboxChange('es_activa')}
                                         size="small" 
                                         sx={{ color: '#673ab7' }} 
                                     />

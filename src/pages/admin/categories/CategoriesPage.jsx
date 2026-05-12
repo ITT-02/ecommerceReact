@@ -71,7 +71,8 @@ export const CategoriesPage = () => {
                     rows.push({
                         ...sub,
                         isSubcategory: true, // Bandera para estilo
-                        parentId: category.id
+                        parentId: category.id,
+                        categoria_padre: { nombre: category.nombre },
                     });
                 });
             }
@@ -107,7 +108,6 @@ export const CategoriesPage = () => {
         }
     };
 
-    // eslint-disable-next-line no-unused-vars
     const handleDeleteCategory = async (categoryId) => {
         setIsLoading(true);
         try {
@@ -213,6 +213,7 @@ export const CategoriesPage = () => {
                 />
 
                 <CategoryModal
+                    key={open ? selectedCategory?.id ?? 'new' : 'closed'}
                     open={open}
                     onClose={handleCloseEdit}
                     category={selectedCategory}
