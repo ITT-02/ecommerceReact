@@ -11,9 +11,9 @@ export const useAtributos = () => {
   const [pageSize, setPageSize] = useState(10);
   const [searchValue, setSearchValue] = useState('');
   const [filterValues, setFilterValues] = useState({
-    seUsaEnFiltro: null,
-    seUsaEnVariantes: null,
-    esObligatorio: null
+    seUsaEnFiltro: "",
+    seUsaEnVariantes: "",
+    esObligatorio: ""
   });
   
   const [paginationData, setPaginationData] = useState({

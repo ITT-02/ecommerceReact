@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Button,
-  Checkbox,
+  Switch, 
   Dialog,
   DialogActions,
   DialogContent,
@@ -10,6 +10,7 @@ import {
   TextField,
   Stack,
   Box,
+  Typography 
 } from '@mui/material';
 
 export const ValorForm = ({ open, isEdit, valorInicial, tipoDatoPadre, onClose, onSave }) => {
@@ -37,9 +38,19 @@ export const ValorForm = ({ open, isEdit, valorInicial, tipoDatoPadre, onClose, 
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
+    
+    let processValue;
+    if (type === 'checkbox') {
+      processValue = checked;
+    } else if (type === 'number') {
+      processValue = Math.max(0, Number(value));
+    } else {
+      processValue = value;
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'number' ? Number(value) : value,
+      [name]: processValue,
     }));
   };
 
@@ -49,7 +60,7 @@ export const ValorForm = ({ open, isEdit, valorInicial, tipoDatoPadre, onClose, 
       valor: formData.valor,
       orden_visual: formData.orden_visual,
       es_activo: formData.es_activo,
-      color_hex: isColor ? formData.color_hex : null, // Regla explícita del prompt
+      color_hex: isColor ? formData.color_hex : null,
     };
     onSave(payload);
   };
@@ -70,19 +81,19 @@ export const ValorForm = ({ open, isEdit, valorInicial, tipoDatoPadre, onClose, 
             />
             {isColor && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <input
+                  type="color"
+                  name="color_hex"
+                  value={formData.color_hex}
+                  onChange={handleChange}
+                  style={{ width: 56, height: 56, padding: 0, cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}
+                />
                 <TextField
                   label="Color Hexagonal"
                   name="color_hex"
                   value={formData.color_hex}
                   onChange={handleChange}
                   fullWidth
-                />
-                <input
-                  type="color"
-                  name="color_hex"
-                  value={formData.color_hex}
-                  onChange={handleChange}
-                  style={{ width: 40, height: 40, padding: 0, cursor: 'pointer' }}
                 />
               </Box>
             )}
@@ -93,10 +104,22 @@ export const ValorForm = ({ open, isEdit, valorInicial, tipoDatoPadre, onClose, 
               value={formData.orden_visual}
               onChange={handleChange}
               fullWidth
+              slotProps={{
+                htmlInput: { min: 0 }
+              }}
             />
+            {/* AQUÍ APLICAMOS EL SWITCH ESCALADO */}
             <FormControlLabel
-              control={<Checkbox name="es_activo" checked={formData.es_activo} onChange={handleChange} />}
-              label="Está activo"
+              control={
+                <Switch 
+                  color="success"
+                  name="es_activo" 
+                  checked={formData.es_activo} 
+                  onChange={handleChange}
+                  sx={{ transform: 'scale(1.2)', ml: 1, mr: 1 }} // Escala para hacerlo más "grandesito"
+                />
+              }
+              label={<Typography sx={{ fontWeight: 500 }}>Está activo</Typography>}
             />
           </Stack>
         </DialogContent>

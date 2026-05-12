@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Button,
-  Checkbox,
+  Switch, // Cambiado aquí
   Dialog,
   DialogActions,
   DialogContent,
@@ -11,6 +11,7 @@ import {
   MenuItem,
   TextField,
   Stack,
+  Typography
 } from '@mui/material';
 
 const TIPOS_DATO = ['texto', 'numero', 'booleano', 'color', 'lista'];
@@ -34,7 +35,6 @@ export const AtributoForm = ({ open, isEdit, atributoInicial, onClose, onSave })
         es_obligatorio: atributoInicial.es_obligatorio ?? false,
       });
     } else if (open) {
-      // Estado reseteado para nuevo
       setFormData({
         nombre: '',
         tipo_dato: 'texto',
@@ -88,17 +88,22 @@ export const AtributoForm = ({ open, isEdit, atributoInicial, onClose, onSave })
               ))}
             </TextField>
 
-            <FormGroup>
+            <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: -2 }}>
+              Configuraciones del atributo
+            </Typography>
+
+            {/* AQUÍ REEMPLAZAMOS LOS CHECKBOXES POR SWITCHES ESCALADOS */}
+            <FormGroup sx={{ gap: 1.5, pl: 1 }}>
               <FormControlLabel
-                control={<Checkbox name="se_usa_en_filtro" checked={formData.se_usa_en_filtro} onChange={handleChange} />}
+                control={<Switch color="success" sx={{ transform: 'scale(1.2)', mr: 1 }} name="se_usa_en_filtro" checked={formData.se_usa_en_filtro} onChange={handleChange} />}
                 label="Se usa en filtros"
               />
               <FormControlLabel
-                control={<Checkbox name="se_usa_en_variantes" checked={formData.se_usa_en_variantes} onChange={handleChange} />}
+                control={<Switch color="success" sx={{ transform: 'scale(1.2)', mr: 1 }} name="se_usa_en_variantes" checked={formData.se_usa_en_variantes} onChange={handleChange} />}
                 label="Se usa en variantes"
               />
               <FormControlLabel
-                control={<Checkbox name="es_obligatorio" checked={formData.es_obligatorio} onChange={handleChange} />}
+                control={<Switch color="warning" sx={{ transform: 'scale(1.2)', mr: 1 }} name="es_obligatorio" checked={formData.es_obligatorio} onChange={handleChange} />}
                 label="Es obligatorio"
               />
             </FormGroup>

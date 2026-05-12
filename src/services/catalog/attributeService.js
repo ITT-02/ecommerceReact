@@ -7,9 +7,9 @@ export const atributoService = {
       p_page_number: params.pageNumber || 1,
       p_page_size: params.pageSize || 10,
       p_search: params.search || '',
-      p_se_usa_en_filtro: params.seUsaEnFiltro ?? null,
-      p_se_usa_en_variantes: params.seUsaEnVariantes ?? null,
-      p_es_obligatorio: params.esObligatorio ?? null
+      p_se_usa_en_filtro: params.seUsaEnFiltro === "" ? null : params.seUsaEnFiltro,
+      p_se_usa_en_variantes: params.seUsaEnVariantes === "" ? null : params.seUsaEnVariantes,
+      p_es_obligatorio: params.esObligatorio === "" ? null : params.esObligatorio
     };
     const { data } = await restApi.post('/rpc/listar_atributos_paginado', payload);
     return data;

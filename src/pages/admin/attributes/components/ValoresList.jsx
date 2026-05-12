@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, CircularProgress, Paper, Typography, Chip } from '@mui/material';
-import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
+import { Box, Button, CircularProgress, Paper, Typography, IconButton, Divider, alpha } from '@mui/material';
+import { Add as AddIcon, EditOutlined as EditIcon, DeleteOutlined as DeleteIcon } from '@mui/icons-material';
 import { useAtributoValores } from '../../../../hooks/catalog/useAtributoValores';
-import { ConfirmDialog } from '../../../../components/common/ConfirmDialog'; 
+import { ConfirmDialog } from '../../../../components/common/ConfirmDialog';
 import { ValorForm } from './ValorForm';
 
-// NUEVO: Agregamos la propiedad `onChangeEvent`
 export const ValoresList = ({ atributoSeleccionado, onChangeEvent }) => {
   const { valores, loading, fetchValores, create, update, remove } = useAtributoValores(atributoSeleccionado?.id);
   const [openModal, setOpenModal] = useState(false);
   const [valorEditar, setValorEditar] = useState(null);
-
   const [valorEliminar, setValorEliminar] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -25,14 +23,10 @@ export const ValoresList = ({ atributoSeleccionado, onChangeEvent }) => {
 
   const handleSave = async (formData) => {
     try {
-      if (valorEditar) {
-        await update(valorEditar.id, formData);
-      } else {
-        await create(formData);
-      }
+      if (valorEditar) await update(valorEditar.id, formData);
+      else await create(formData);
       setOpenModal(false);
-      // NUEVO: Avisamos a la tabla que SÍ hubieron cambios
-      if (onChangeEvent) onChangeEvent(); 
+      if (onChangeEvent) onChangeEvent();
     } catch (error) {
       alert('Error guardando valor');
     }
@@ -44,7 +38,6 @@ export const ValoresList = ({ atributoSeleccionado, onChangeEvent }) => {
     try {
       await remove(valorEliminar.id);
       setValorEliminar(null);
-      // NUEVO: Avisamos a la tabla que SÍ hubieron cambios
       if (onChangeEvent) onChangeEvent();
     } catch (error) {
       alert('Error eliminando valor');
@@ -53,78 +46,142 @@ export const ValoresList = ({ atributoSeleccionado, onChangeEvent }) => {
     }
   };
 
-
   if (!atributoSeleccionado) return null;
 
   return (
-    <Paper sx={{ p: 3, border: 'none', boxShadow: 'none', bgcolor: 'transparent' }}>
-      <Box sx={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #D9984A', borderRadius: 2, px: 2, py: 0.5, mb: 3, bgcolor: '#fffdf9' }}>
-         <Typography sx={{ color: '#D9984A', fontWeight: 600 }}>Atributo: {atributoSeleccionado.nombre}</Typography>
-      </Box>
+    <Box sx={{ p: { xs: 2, md: 4 }, overflowX: 'hidden', width: '100%', bgcolor: 'background.default' }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 2, md: 4 }, width: '100%' }}>
+        
+        {/* PANEL IZQUIERDO - INFO Y ACCIONES */}
+        <Box sx={{ flexBasis: { xs: '100%', md: 'calc(33.33% - 16px)' }, minWidth: 0 }}>
+          <Box sx={{ position: 'sticky', top: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box>
+              <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 1 }}>
+                Gestión de Atributo
+              </Typography>
+              <Typography variant="h4" sx={{ color: '#D9984A', fontWeight: 700, mt: 0.5 }}>
+                {atributoSeleccionado.nombre}
+              </Typography>
+            </Box>
 
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-         <Typography variant="body2" color="text.secondary">Total registrados ({valores.length})</Typography>
-         <Button 
-            variant="outlined" size="small" startIcon={<AddIcon />} 
-            onClick={() => handleOpenModal()}
-            sx={{ borderColor: '#e0e0e0', color: '#2C2B29', bgcolor: '#fff', textTransform: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
-         >
-            Agregar valor
-         </Button>
-      </Box>
+            <Divider />
 
-      {loading ? (
-        <Box display="flex" justifyContent="center" p={4}><CircularProgress size={24} color="inherit" sx={{opacity: 0.5}} /></Box>
-      ) : (
-        <Paper sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, minHeight: 120, p: 3, borderRadius: 2, border: '1px dashed #e0e0e0', bgcolor: '#fff', boxShadow: 'none' }}>
-           {valores.length === 0 && <Typography variant="body2" color="text.disabled" sx={{ m: 'auto' }}>Aún no has agregado ningún valor (Ej: Pequeño, Rojo, etc.)</Typography>}
-           {valores.map((v) => (
-             <Chip
-                key={v.id}
-                label={v.valor}
-                onClick={() => handleOpenModal(v)}
-                onDelete={() => setValorEliminar(v)} // Abre el nuevo modal de confirmación en lugar del viejo confirm()
-                deleteIcon={<CloseIcon sx={{ fontSize: 16 }} />}
-                sx={{ 
-                   bgcolor: '#f5f5f5', 
-                   border: '1px solid #ddd', 
-                   borderRadius: 1.5,
-                   fontWeight: 500,
-                   px: 0.5,
-                   py: 2,
-                   transition: 'all 0.2s ease',
-                   '& .MuiChip-label': { px: 1.5 },
-                   '&:hover': { bgcolor: '#fff', borderColor: '#ccc', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }
-                }}
-                icon={v.color_hex ? (
-                   <Box sx={{ ml: 1.5, width: 14, height: 14, borderRadius: '50%', bgcolor: v.color_hex, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.15)' }} />
-                ) : undefined}
-             />
-           ))}
-        </Paper>
-      )}
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Estadísticas:
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                {valores.length} {valores.length === 1 ? 'registro actual' : 'registros actuales'}
+              </Typography>
+            </Box>
+
+            <Button
+              variant="contained"
+              color="primary" // Usar color primary del tema en vez de negro manual
+              size="large"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenModal()}
+              sx={{ textTransform: 'none', fontWeight: 600, py: 1.5, boxShadow: 3 }}
+            >
+              Nuevo valor
+            </Button>
+          </Box>
+        </Box>
+
+        {/* PANEL DERECHO - LISTA DE VALORES */}
+        <Box sx={{ flexBasis: { xs: '100%', md: 'calc(66.66% - 16px)' }, minWidth: 0, overflow: 'auto' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+            Valores configurados
+          </Typography>
+
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+              <CircularProgress size={32} sx={{ opacity: 0.5 }} />
+            </Box>
+          ) : (
+            <Box sx={{ minHeight: 200 }}>
+              {valores.length === 0 ? (
+                <Paper
+                  sx={{
+                    p: 5, textAlign: 'center', border: '1px dashed', borderColor: 'divider',
+                    bgcolor: 'background.paper', boxShadow: 'none',
+                  }}
+                >
+                  <Typography variant="body1" color="text.secondary">Aún no has agregado ningún valor.</Typography>
+                  <Typography variant="body2" color="text.disabled" mt={1}>(Ej: Pequeño, Rojo, Algodón, etc.)</Typography>
+                </Paper>
+              ) : (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%' }}>
+                  {valores.map((v) => (
+                    <Box key={v.id} sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
+                      <Paper
+                        sx={{
+                          p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          border: '1px solid', borderColor: 'divider', borderRadius: 2, 
+                          bgcolor: 'background.paper', boxShadow: 1, transition: 'all 0.2s', 
+                          '&:hover': { borderColor: 'primary.main', boxShadow: 3, transform: 'translateY(-2px)' },
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+                          {v.color_hex ? (
+                            <Box sx={{ width: 24, height: 24, borderRadius: '50%', bgcolor: v.color_hex, flexShrink: 0, border: '1px solid', borderColor: 'divider' }} />
+                          ) : (
+                            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D9984A', flexShrink: 0 }} />
+                          )}
+                          <Typography sx={{ fontWeight: 600, color: 'text.primary', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {v.valor}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+                          <IconButton 
+                            size="small" 
+                            color="success" // <-- Cambiado de "primary" a "success" (Verde)
+                            onClick={() => handleOpenModal(v)} 
+                            sx={{ 
+                              // 👇 Cambiamos theme.palette.primary.main por theme.palette.success.main
+                              bgcolor: (theme) => alpha(theme.palette.success.main, 0.1), 
+                              '&:hover': { bgcolor: (theme) => alpha(theme.palette.success.main, 0.2) } 
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          
+                          <IconButton 
+                            size="small" 
+                            color="error" // Rojo de alerta
+                            onClick={() => setValorEliminar(v)} 
+                            sx={{ 
+                              bgcolor: (theme) => alpha(theme.palette.error.main, 0.1), 
+                              '&:hover': { bgcolor: (theme) => alpha(theme.palette.error.main, 0.2) } 
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </Paper>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          )}
+        </Box>
+      </Box>
 
       {openModal && (
         <ValorForm
-          open={openModal}
-          isEdit={!!valorEditar}
-          valorInicial={valorEditar}
-          tipoDatoPadre={atributoSeleccionado.tipo_dato}
-          onClose={() => setOpenModal(false)}
-          onSave={handleSave}
+          open={openModal} isEdit={!!valorEditar} valorInicial={valorEditar}
+          tipoDatoPadre={atributoSeleccionado.tipo_dato} onClose={() => setOpenModal(false)} onSave={handleSave}
         />
       )}
 
-      {/* MODAL BONITO DE ELIMINACIÓN DE VALORES */}
       <ConfirmDialog
-        open={Boolean(valorEliminar)}
-        action="delete"
-        title="Eliminar valor de atributo"
-        message={`¿Estás seguro que deseas eliminar el valor "${valorEliminar?.valor}"? Si algún producto usa actualmente este valor, podría dejar de mostrarse correctamente.`}
-        onCancel={() => setValorEliminar(null)}
-        onConfirm={confirmarEliminacionValor}
-        loading={isDeleting}
+        open={Boolean(valorEliminar)} action="delete" title="Eliminar valor"
+        message={`¿Estás seguro que deseas eliminar "${valorEliminar?.valor}"?`}
+        onCancel={() => setValorEliminar(null)} onConfirm={confirmarEliminacionValor} loading={isDeleting}
       />
-    </Paper>
+    </Box>
   );
 };

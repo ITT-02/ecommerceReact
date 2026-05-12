@@ -50,12 +50,10 @@ export const WarehousesPage = () => {
     setPageNumber(1);
   };
 
-  const handleResetFilters = () => {
-    setSearch('');
-    setFilters({
-      esActivo: '',
-    });
-    setPageNumber(1);
+  const handleResetFilters = () => { 
+    setSearchValue(''); 
+    setFilterValues({ seUsaEnFiltro: "", seUsaEnVariantes: "", esObligatorio: "" }); 
+    setPageNumber(1); 
   };
 
   // Editar usa el id de la fila y consulta el detalle.
@@ -77,30 +75,19 @@ export const WarehousesPage = () => {
   // Columnas que se mostrarán en la tabla.
   // field debe coincidir con el nombre que devuelve el backend.
   const columns = [
-    {
-      field: 'codigo',
-      headerName: 'Código',
-      width: 130,
+    { field: 'nombre', headerName: 'Nombre', width: 170, renderCell: (row) => <Typography fontWeight={600}>{row.nombre}</Typography> },
+    { field: 'valores', headerName: 'Valores', width: 230, renderCell: (row) => <ValoresSummary atributoId={row.id} refreshKey={refreshKey} /> },
+    { field: 'tipo_dato', headerName: 'Tipo', width: 100, renderCell: (row) => <Typography variant="body2" sx={{textTransform: 'capitalize'}}>{row.tipo_dato}</Typography> },
+    { 
+      field: 'se_usa_en_filtro', headerName: 'Filtrable', align: 'center', width: 120, type: 'boolean' 
     },
-    {
-      field: 'nombre',
-      headerName: 'Nombre',
-      width: 220,
+    { 
+      field: 'se_usa_en_variantes', headerName: 'Variante', align: 'center', width: 120, type: 'boolean'
     },
-    {
-      field: 'descripcion',
-      headerName: 'Descripción',
-      width: 360,
-      emptyText: 'Sin descripción',
+    { 
+      field: 'es_obligatorio', headerName: 'Obligatorio', align: 'center', width: 120, type: 'boolean'
     },
-    {
-      field: 'es_activo',
-      headerName: 'Estado',
-      width: 130,
-      type: 'boolean',
-      trueLabel: 'Activo',
-      falseLabel: 'Inactivo',
-    },
+    { field: 'updated_at', headerName: 'Actualizado', width: 140, renderCell: (row) => <Typography variant="caption">{formatFecha(row.updated_at || row.created_at)}</Typography> },
   ];
 
   // Filtros que aparecerán arriba de la tabla.

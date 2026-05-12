@@ -1,40 +1,96 @@
 import React, { useState } from 'react';
 import {
-  Box, IconButton, Typography, Switch, Stack, Chip, Dialog, DialogContent, DialogTitle
+  Box, IconButton, Typography, Switch, Stack, Chip, Dialog, DialogContent, DialogTitle, useTheme, alpha, useMediaQuery
 } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted'; 
 import LayersIcon from '@mui/icons-material/Layers';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog'; 
-import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable'; // <-- AQUI USAMOS EL NUEVO COMPONENTE
+import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable'; 
 import { useAtributos } from "../../../hooks/catalog/useAttributes";
 import { useAtributoValores } from "../../../hooks/catalog/useAtributoValores";
 import { AtributoForm } from './components/AtributoForm';
 import { ValoresList } from './components/ValoresList';
 
-// NUEVO: Agregamos flexWrap, maxWidth y textOverflow para evitar derrames
-const ValoresSummary = ({ atributoId, refreshKey }) => {
+
+const ValoresSummary = ({ atributoId, tipoDato, refreshKey }) => {
   const { valores, loading, fetchValores } = useAtributoValores(atributoId);
+  const theme = useTheme(); 
+  
+  // Detectamos los tamaños de pantalla
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Celulares
+  const isLarge = useMediaQuery(theme.breakpoints.up('lg'));    // Pantallas grandes (como tu monitor de 27")
+
   React.useEffect(() => { fetchValores(); }, [fetchValores, refreshKey]);
 
   if (loading) return <Typography variant="caption" sx={{ opacity: 0.5 }}>Cargando...</Typography>;
   if (!valores || valores.length === 0) return <Typography variant="caption" color="text.disabled">-</Typography>;
 
-  const maxDisplay = 2;
+  const isColor = tipoDato === 'color';
+  
+  
+  let maxDisplay = 2; 
+  if (isColor) {
+    maxDisplay = isMobile ? 4 : (isLarge ? 8 : 5);
+  } else {
+    maxDisplay = isMobile ? 1 : (isLarge ? 4 : 2); // 4 chips en monitores grandes, 1 en celulares
+  }
+
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, maxWidth: 220 }}>
-      {valores.slice(0, maxDisplay).map(v => (
-        <Chip 
-           key={v.id} 
-           label={v.valor} 
-           size="small" 
-           variant="outlined" 
-           sx={{ height: 20, fontSize: '0.7rem', maxWidth: '120px', '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }} 
-        />
-      ))}
-      {valores.length > maxDisplay && <Chip label={`+${valores.length - maxDisplay}`} size="small" sx={{ height: 20, fontSize: '0.7rem' }} />}
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, maxWidth: isLarge ? 400 : 220, alignItems: 'center' }}>
+      {valores.slice(0, maxDisplay).map(v => {
+        if (isColor) {
+           return (
+             <Box 
+               key={v.id}
+               title={v.valor} 
+               sx={{ 
+                 width: 22, 
+                 height: 22, 
+                 borderRadius: '50%', 
+                 bgcolor: v.color_hex || theme.palette.text.disabled, 
+                 boxShadow: `inset 0 0 0 1px ${alpha(theme.palette.text.primary, 0.15)}, 0 2px 4px ${alpha(theme.palette.common.black, 0.05)}`,
+                 cursor: 'default',
+                 transition: 'transform 0.2s',
+                 '&:hover': { transform: 'scale(1.15)' } 
+               }} 
+             />
+           );
+        }
+        
+        return (
+          <Chip 
+             key={v.id} 
+             label={v.valor} 
+             size="small" 
+             sx={{ 
+               height: 24, 
+               fontSize: '0.75rem', 
+               maxWidth: '120px', 
+               // ADAPTADO AL MODO OSCURO AUTOMÁTICAMENTE:
+               bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : '#f5f5f5', 
+               color: 'text.primary',
+               fontWeight: 600,
+               border: '1px solid',
+               borderColor: 'divider',
+               borderRadius: '6px', 
+               '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis', px: 1 } 
+             }} 
+          />
+        );
+      })}
+      
+      {valores.length > maxDisplay && (
+        <Typography variant="caption" sx={{ 
+          color: 'text.secondary', fontWeight: 700, ml: 0.5, px: 1, py: 0.2, borderRadius: 2,
+          bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : '#f0f0f0', 
+        }}>
+          +{valores.length - maxDisplay}
+        </Typography>
+      )}
     </Box>
   );
 };
@@ -55,9 +111,7 @@ export const AttributesPage = () => {
   const [openValoresModal, setOpenValoresModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // NUEVO: Bandera del sensor de optimización de red
   const [hubieronCambios, setHubieronCambios] = useState(false);
-
   const [atributoEliminar, setAtributoEliminar] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -89,18 +143,12 @@ export const AttributesPage = () => {
     }
   };
 
-  const handleToggleInline = async (attr, field) => {
-    const newValue = !attr[field];
-    try { await update(attr.id, { [field]: newValue }); } catch (error) { alert('Error al actualizar'); }
-  };
-
   const handleOpenValores = (attr) => {
     setSeleccionado(attr);
-    setHubieronCambios(false); // Reseteamos el sensor al abrir
+    setHubieronCambios(false); 
     setOpenValoresModal(true);
   };
 
-  // NUEVO: La tabla solo se actualiza si atrapó algo nuevo
   const handleCloseValoresModal = () => {
     setOpenValoresModal(false);
     if (hubieronCambios) {
@@ -114,105 +162,81 @@ export const AttributesPage = () => {
     return new Date(fechaString).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  // NUEVO: Le agregamos propiedad "width" o "flex" a las columnas para evitar sobrecarga y desbordes. (La tabla de tu líder lo entiende)
   const columns = [
-    { field: 'nombre', headerName: 'Nombre', width: 170, renderCell: (row) => <Typography fontWeight={600}>{row.nombre}</Typography> },
-    { field: 'valores', headerName: 'Valores', width: 230, renderCell: (row) => <ValoresSummary atributoId={row.id} refreshKey={refreshKey} /> },
-    { field: 'tipo_dato', headerName: 'Tipo', width: 100, renderCell: (row) => <Typography variant="body2" sx={{textTransform: 'capitalize'}}>{row.tipo_dato}</Typography> },
+    { field: 'nombre', headerName: 'Nombre', width: 170, renderCell: (row) => <Typography fontWeight={600} color="text.primary">{row.nombre}</Typography> },
+    { field: 'valores', headerName: 'Valores', width: 230, renderCell: (row) => <ValoresSummary atributoId={row.id} tipoDato={row.tipo_dato} refreshKey={refreshKey} /> },
+    { field: 'tipo_dato', headerName: 'Tipo', width: 100, renderCell: (row) => <Typography variant="body2" color="text.secondary" sx={{textTransform: 'capitalize'}}>{row.tipo_dato}</Typography> },
     { 
       field: 'se_usa_en_filtro', headerName: 'Filtrable', align: 'center', width: 120,
-      renderCell: (row) => <Switch size="small" color="success" checked={row.se_usa_en_filtro} onClick={(e) => { e.stopPropagation(); handleToggleInline(row, 'se_usa_en_filtro') }} /> 
+      renderCell: (row) => (
+        <Chip label={row.se_usa_en_filtro ? "Sí" : "No"} size="small" color={row.se_usa_en_filtro ? "success" : "error"} variant="outlined" />
+      )
     },
     { 
       field: 'se_usa_en_variantes', headerName: 'Variante', align: 'center', width: 120,
-      renderCell: (row) => <Switch size="small" color="success" checked={row.se_usa_en_variantes} onClick={(e) => { e.stopPropagation(); handleToggleInline(row, 'se_usa_en_variantes') }} /> 
+      renderCell: (row) => (
+        <Chip label={row.se_usa_en_variantes ? "Sí" : "No"} size="small" color={row.se_usa_en_variantes ? "success" : "error"} variant="outlined" />
+      )
     },
     { 
       field: 'es_obligatorio', headerName: 'Obligatorio', align: 'center', width: 120,
-      renderCell: (row) => <Switch size="small" color="success" checked={row.es_obligatorio} onClick={(e) => { e.stopPropagation(); handleToggleInline(row, 'es_obligatorio') }} /> 
+      renderCell: (row) => (
+        <Chip label={row.es_obligatorio ? "Sí" : "No"} size="small" color={row.es_obligatorio ? "success" : "error"} variant="outlined" />
+      )
     },
-    { field: 'updated_at', headerName: 'Actualizado', width: 140, renderCell: (row) => <Typography variant="caption">{formatFecha(row.updated_at || row.created_at)}</Typography> },
+    { field: 'updated_at', headerName: 'Actualizado', width: 140, renderCell: (row) => <Typography variant="caption" color="text.secondary">{formatFecha(row.updated_at || row.created_at)}</Typography> },
   ];
 
-  // Acciones en la última columna
   const rowActions = [
-    { icon: <LayersIcon />, label: 'Valores', onClick: (row) => handleOpenValores(row) },
-    { icon: <EditOutlinedIcon />, label: 'Editar', onClick: (row) => handleOpenModal(row) },
-    { type: 'delete', label: 'Eliminar', onClick: (row) => setAtributoEliminar(row) }
+    { 
+      icon: <FormatListBulletedIcon color="primary" />, 
+      label: 'Gestionar Valores', // Mucho más explícito para el usuario
+      onClick: (row) => handleOpenValores(row) 
+    },
+    { 
+      icon: <EditOutlinedIcon color="success" />, // Verde
+      label: 'Editar', 
+      onClick: (row) => handleOpenModal(row) 
+    },
+    { 
+      type: 'delete', 
+      icon: <DeleteOutlineIcon color="error" />, // Rojo
+      label: 'Eliminar', 
+      onClick: (row) => setAtributoEliminar(row) 
+    }
   ];
 
-  // Filtros de búsqueda (Según la guía de tu empresa)
   const filtersConfig = [
-    {
-      name: 'seUsaEnFiltro', label: 'Uso en Filtros', type: 'select',
-      options: [
-        { label: 'Todos', value: null },
-        { label: 'Sí se usan', value: true },
-        { label: 'No se usan', value: false }
-      ]
-    },
-    {
-      name: 'seUsaEnVariantes', label: 'Uso en Variantes', type: 'select',
-      options: [
-        { label: 'Todos', value: null },
-        { label: 'Sí se usan', value: true },
-        { label: 'No se usan', value: false }
-      ]
-    },
-    {
-      name: 'esObligatorio', label: 'Obligatorio', type: 'select',
-      options: [
-        { label: 'Todos', value: null },
-        { label: 'Sí son obligatorios', value: true },
-        { label: 'No son obligatorios', value: false }
-      ]
-    }
+    { name: 'seUsaEnFiltro', label: 'Uso en Filtros', type: 'select', options: [ { label: 'Sí se usan', value: true }, { label: 'No se usan', value: false } ] },
+    { name: 'seUsaEnVariantes', label: 'Uso en Variantes', type: 'select', options: [ { label: 'Sí se usan', value: true }, { label: 'No se usan', value: false } ] },
+    { name: 'esObligatorio', label: 'Obligatorio', type: 'select', options: [ { label: 'Sí son obligatorios', value: true }, { label: 'No son obligatorios', value: false } ] }
   ];
 
   return (
     <Box sx={{ pb: 6, width: '100%' }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500, letterSpacing: 1, textTransform: 'uppercase' }}> Panel / Atributos </Typography>
-        <Typography variant="h4" sx={{ fontWeight: 700, mt: 1, color: '#2C2B29' }}>Atributos</Typography>
+        {/* EL TÍTULO YA SE VE BIEN EN OSCURO GRACIAS A text.primary */}
+        <Typography variant="h4" sx={{ fontWeight: 700, mt: 1, color: 'text.primary' }}>Atributos</Typography>
       </Box>
 
-      {/* AQUÍ INYECTAMOS LA TABLA GLOBAL DEL PROYECTO */}
       <AdminResourceTable
-        rows={atributos}
-        columns={columns}
-        actions={rowActions}
-        loading={loading}
-        pagination={pagination}
-        searchValue={searchValue}
-        searchLabel="Buscar por nombre, código o tipo..."
-        filterValues={filterValues}
-        filters={filtersConfig}
-        onSearchChange={onSearchChange}
-        onFilterChange={onFilterChange}
-        onResetFilters={onResetFilters}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-        primaryActionLabel="Nuevo Atributo"
-        onPrimaryAction={() => handleOpenModal()}
-        emptyTitle="No hay atributos"
-        emptyDescription="Comienza creando tu primer atributo."
+        rows={atributos} columns={columns} actions={rowActions} loading={loading} pagination={pagination}
+        searchValue={searchValue} searchLabel="Buscar por nombre, código o tipo..."
+        filterValues={filterValues} filters={filtersConfig}
+        onSearchChange={onSearchChange} onFilterChange={onFilterChange} onResetFilters={onResetFilters}
+        onPageChange={onPageChange} onPageSizeChange={onPageSizeChange}
+        primaryActionLabel="Nuevo Atributo" onPrimaryAction={() => handleOpenModal()}
+        emptyTitle="No hay atributos" emptyDescription="Comienza creando tu primer atributo."
       />
 
        <Dialog open={openValoresModal} onClose={handleCloseValoresModal} maxWidth="md" fullWidth>
-        {/* Le decimos as="div" para que deje de ser <h2> y no choque */}
         <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
           <Typography variant="h6" fontWeight="bold">Valores</Typography>
           <IconButton onClick={handleCloseValoresModal} size="small"><CloseIcon /></IconButton>
         </DialogTitle>
-        
-        {/* ESTO FUE LO QUE SE NOS BORRÓ SIN QUERER: */}
         <DialogContent dividers sx={{ p: 0 }}>
-            {seleccionado && (
-              <ValoresList 
-                atributoSeleccionado={seleccionado} 
-                onChangeEvent={() => setHubieronCambios(true)} // <-- ESPIAMOS LOS CAMBIOS AQUI
-              />
-            )}
+            {seleccionado && ( <ValoresList atributoSeleccionado={seleccionado} onChangeEvent={() => setHubieronCambios(true)} /> )}
         </DialogContent>
       </Dialog>
 
