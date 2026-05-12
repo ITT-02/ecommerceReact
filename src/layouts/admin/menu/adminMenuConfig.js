@@ -92,7 +92,7 @@ export const adminMenuGroups = [
       },
       {
         label: 'Movimientos',
-        path: '/admin/inventario/movimientos',
+        path: '/admin/movimientos',
         icon: SwapHorizIcon,
         roles: INVENTORY_ROLES,
       },

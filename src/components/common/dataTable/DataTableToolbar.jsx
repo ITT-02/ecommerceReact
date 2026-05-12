@@ -1,24 +1,26 @@
+import React, { useState } from 'react';
 import {
   Box,
   Button,
   InputAdornment,
   MenuItem,
   TextField,
+  Popover,
+  Badge,
+  Stack,
+  Typography,
+  IconButton,
+  alpha,
+  useTheme,
 } from '@mui/material';
 
 import AddIcon from '@mui/icons-material/Add';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
+import CloseIcon from '@mui/icons-material/Close';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
-/**
- * Barra de búsqueda, filtros y boton agregar.
- *
- * Diseño:
- * - Izquierda: Buscar + filtros + limpiar en una sola fila.
- * - Derecha: botón principal.
- * - En móvil puede bajar; en escritorio se mantiene en una sola línea.
- */
 export const DataTableToolbar = ({
   searchValue = '',
   searchLabel = 'Buscar',
@@ -30,6 +32,29 @@ export const DataTableToolbar = ({
   primaryActionLabel,
   onPrimaryAction,
 }) => {
+  const theme = useTheme();
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleClick = (event) => setAnchorEl(event.currentTarget);
+  const handleClose = () => setAnchorEl(null);
+
+  const open = Boolean(anchorEl);
+
+  let visibleFilters = [];
+  let hiddenFilters = [];
+
+  if (filters.length <= 2) {
+    visibleFilters = filters;
+    hiddenFilters = [];
+  } else {
+    visibleFilters = filters.slice(0, 1);
+    hiddenFilters = filters.slice(1);
+  }
+
+  const activeInPopupCount = hiddenFilters.reduce((acc, filter) => {
+    return filterValues[filter.name] ? acc + 1 : acc;
+  }, 0);
+
   const hasActiveFilters =
     Boolean(searchValue) || Object.values(filterValues).some(Boolean);
 
@@ -43,6 +68,56 @@ export const DataTableToolbar = ({
     },
   };
 
+  const renderFilterField = (filter, extraSx = {}) => {
+    const value = filterValues[filter.name] ?? '';
+    const isSelect = filter.type === 'select';
+
+    return (
+      <TextField
+        key={filter.name}
+        select={isSelect}
+        type={!isSelect ? filter.type ?? 'text' : undefined}
+        size="small"
+        label={filter.label}
+        value={value}
+        onChange={(event) => onFilterChange?.(filter.name, event.target.value)}
+        sx={{
+          ...compactFieldSx,
+          width: {
+            xs: '100%',
+            sm: filter.width ?? 150,
+          },
+          flexShrink: 0,
+          ...extraSx,
+        }}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <FilterAltOutlinedIcon sx={{ fontSize: 18 }} color="action" />
+              </InputAdornment>
+            ),
+          },
+          inputLabel:
+            filter.type === 'date' || filter.type === 'color'
+              ? { shrink: true }
+              : undefined,
+        }}
+      >
+        {isSelect && [
+          <MenuItem key="all" value="">
+            Todos
+          </MenuItem>,
+          ...(filter.options?.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          )) || []),
+        ]}
+      </TextField>
+    );
+  };
+
   return (
     <Box
       sx={{
@@ -50,11 +125,8 @@ export const DataTableToolbar = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: 2,
-        flexWrap: {
-          xs: 'wrap',
-          md: 'nowrap',
-        },
+        gap: 1.5,
+        flexWrap: { xs: 'wrap', md: 'nowrap' },
       }}
     >
       {/* Grupo izquierdo */}
@@ -63,10 +135,7 @@ export const DataTableToolbar = ({
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          flexWrap: {
-            xs: 'wrap',
-            md: 'nowrap',
-          },
+          flexWrap: { xs: 'wrap', md: 'nowrap' },
           flex: 1,
           minWidth: 0,
         }}
@@ -79,11 +148,7 @@ export const DataTableToolbar = ({
           onChange={(event) => onSearchChange?.(event.target.value)}
           sx={{
             ...compactFieldSx,
-            width: {
-              xs: '100%',
-              sm: 220,
-              md: 240,
-            },
+            width: { xs: '100%', sm: 220, md: 240 },
             flexShrink: 0,
           }}
           slotProps={{
@@ -97,78 +162,35 @@ export const DataTableToolbar = ({
           }}
         />
 
-        {/* Filtros */}
-        {filters.map((filter) => {
-          const value = filterValues[filter.name] ?? '';
+        {visibleFilters.map((filter) => renderFilterField(filter))}
 
-          if (filter.type === 'select') {
-            return (
-              <TextField
-                key={filter.name}
-                select
-                size="small"
-                label={filter.label}
-                value={value}
-                onChange={(event) =>
-                  onFilterChange?.(filter.name, event.target.value)
-                }
-                sx={{
-                  ...compactFieldSx,
-                  width: {
-                    xs: '100%',
-                    sm: filter.width ?? 150,
-                    md: filter.width ?? 150,
-                  },
-                  flexShrink: 0,
-                }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <FilterAltOutlinedIcon
-                          sx={{ fontSize: 18 }}
-                          color="action"
-                        />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              >
-                <MenuItem value="">Todos</MenuItem>
-
-                {filter.options?.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            );
-          }
-
-          return (
-            <TextField
-              key={filter.name}
-              size="small"
-              type={filter.type ?? 'text'}
-              label={filter.label}
-              value={value}
-              onChange={(event) =>
-                onFilterChange?.(filter.name, event.target.value)
+        {hiddenFilters.length > 0 && (
+          <Badge badgeContent={activeInPopupCount} color="primary">
+            <Button
+              variant="outlined"
+              onClick={handleClick}
+              startIcon={<FilterAltOutlinedIcon />}
+              endIcon={
+                <KeyboardArrowDownIcon sx={{ fontSize: 16, opacity: 0.5 }} />
               }
               sx={{
-                ...compactFieldSx,
-                width: {
-                  xs: '100%',
-                  sm: filter.width ?? 150,
-                  md: filter.width ?? 150,
-                },
-                flexShrink: 0,
+                height: 40,
+                borderColor: theme.palette.divider,
+                color: theme.palette.text.primary,
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2,
+                whiteSpace: 'nowrap',
+                backgroundColor: open
+                  ? alpha(theme.palette.primary.main, 0.05)
+                  : 'transparent',
               }}
-            />
-          );
-        })}
+            >
+              Más filtros
+            </Button>
+          </Badge>
+        )}
 
-        {/* Limpiar */}
         {hasActiveFilters && (
           <Button
             variant="outlined"
@@ -191,20 +213,8 @@ export const DataTableToolbar = ({
       {primaryActionLabel && onPrimaryAction && (
         <Box
           sx={{
-            display: 'flex',
-            justifyContent: {
-              xs: 'stretch',
-              md: 'flex-end',
-            },
-            width: {
-              xs: '100%',
-              md: 'auto',
-            },
             flexShrink: 0,
-            pl: {
-              xs: 0,
-              md: 2,
-            },
+            width: { xs: '100%', md: 'auto' },
           }}
         >
           <Button
@@ -213,18 +223,70 @@ export const DataTableToolbar = ({
             onClick={onPrimaryAction}
             sx={{
               height: 40,
-              minWidth: {
-                xs: '100%',
-                md: 165,
-              },
-              whiteSpace: 'nowrap',
+              minWidth: { xs: '100%', md: 165 },
               fontSize: '0.80rem',
+              whiteSpace: 'nowrap',
             }}
           >
             {primaryActionLabel}
           </Button>
         </Box>
       )}
+
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              p: 2.5,
+              borderRadius: '12px',
+              backgroundColor: theme.palette.background.paper,
+              boxShadow: theme.shadows[4],
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+            },
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 800,
+                color: theme.palette.primary.dark,
+              }}
+            >
+              FILTROS ADICIONALES
+            </Typography>
+
+            <IconButton size="small" onClick={handleClose}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            {hiddenFilters.map((filter) =>
+              renderFilterField(filter, {
+                width: {
+                  xs: '100%',
+                  md: filter.width ?? 180,
+                },
+              })
+            )}
+          </Stack>
+        </Box>
+      </Popover>
     </Box>
   );
 };
