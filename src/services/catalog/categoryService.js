@@ -14,6 +14,18 @@ export const getCategories = async () => {
   return response.data;
 };
 
+export const getSubcategories = async (parentId) => {
+  const response = await restApi.get('/categorias', {
+    params: {
+      select: '*',
+      categoria_padre_id: `eq.${parentId}`,
+      order: 'orden_visual.asc',
+    },
+  });
+
+  return response.data;
+};
+
 export const createCategory = async (category) => {
   const response = await restApi.post('/categorias', category, {
     params: { select: '*' },
