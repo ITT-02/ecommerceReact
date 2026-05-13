@@ -1,6 +1,7 @@
 // Página administrativa: Inventario.
 import React, { useState, useMemo } from 'react';
 
+
 // Componentes Propios
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { StatusChip } from '../../../components/common/StatusChip';
@@ -272,3 +273,8 @@ const handleResetFilters = () => {
     </PlaceholderPage>
   );
 };
+
+import { InventoryStockPage } from '../inventoryStock/InventoryStockPage';
+
+export const InventoryPage = () => <InventoryStockPage />;
+
