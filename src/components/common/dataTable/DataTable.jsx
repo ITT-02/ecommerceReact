@@ -485,7 +485,7 @@ const dynamicActionWidth = hasActions ? (actions.length * 38) + 20 : 0;
       ? theme.palette.primary.dark
       : theme.palette.primary.light;
 
-  const actionColumnWidth = 96;
+  {/* const actionColumnWidth = 96; */}
 
   return (
     <Paper

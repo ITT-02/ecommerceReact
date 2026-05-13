@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { ImageUploadField } from '../../forms/ImageUploadField';
+import { ConfirmDialog } from '../../common/ConfirmDialog';
 import { useState, useMemo } from 'react';
 
 const modalStyle = {
@@ -54,7 +55,6 @@ export const CategoryModal = ({
     open, 
     onClose, 
     onSave, 
-    onDelete, 
     category = null,
     isLoading = false 
 }) => {
@@ -85,6 +85,8 @@ export const CategoryModal = ({
 
     const [formData, setFormData] = useState(initialFormData);
     const [color, setColor] = useState(category?.color_hex || "#262EC3");
+    const [pendingSaveData, setPendingSaveData] = useState(null);
+    const [openConfirmSave, setOpenConfirmSave] = useState(false);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({
@@ -101,7 +103,7 @@ export const CategoryModal = ({
         handleChange(field, !formData[field]);
     };
 
-    const handleSave = async () => {
+    const handleSave = () => {
         const dataToSave = {
             categoria_padre_id: formData.categoria_padre_id ?? null,
             nombre: formData.nombre,
@@ -114,181 +116,178 @@ export const CategoryModal = ({
             es_activa: formData.es_activa,
             ...(category?.id && { id: category.id })
         };
-        await onSave(dataToSave);
+        setPendingSaveData(dataToSave);
+        setOpenConfirmSave(true);
     };
 
-    const handleDelete = async () => {
-        if (category?.id) {
-            await onDelete(category.id);
-        }
+    const handleConfirmSave = async () => {
+        if (!pendingSaveData) return;
+        await onSave(pendingSaveData);
+        setOpenConfirmSave(false);
+        setPendingSaveData(null);
     };
 
     return (
-        <Modal open={open} onClose={onClose}>
-            <Box sx={modalStyle}>
-                {/* Cabecera */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 800, color: '#333' }}>
-                        {category?.id ? 'Editar categoría' : 'Crear categoría'}
-                    </Typography>
-                    <IconButton onClick={onClose} sx={{ color: '#333', p: 0 }}>
-                        <CloseIcon sx={{ fontSize: 35 }} />
-                    </IconButton>
-                </Box>
+        <>
+            <Modal open={open} onClose={onClose}>
+                <Box sx={modalStyle}>
+                    {/* Cabecera */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800, color: '#333' }}>
+                            {category?.id ? 'Editar categoría' : 'Crear categoría'}
+                        </Typography>
+                        <IconButton onClick={onClose} sx={{ color: '#333', p: 0 }}>
+                            <CloseIcon sx={{ fontSize: 35 }} />
+                        </IconButton>
+                    </Box>
 
-                <Grid container spacing={2}>
-                    {/* Nombre */}
-                    <Grid item xs={12} size={12}>
-                        <Typography sx={labelStyle}>Nombre</Typography>
-                        <TextField 
-                            sx={{ ...inputStyle, width: '50%' }} 
-                            value={formData.nombre}
-                            onChange={(e) => handleChange('nombre', e.target.value)}
-                        />
-                    </Grid>
-
-                    {/* Descripción */}
-                    <Grid item xs={12} size={12}>
-                        <Typography sx={labelStyle}>Descripción</Typography>
-                        <TextField 
-                            fullWidth 
-                            multiline 
-                            rows={3} 
-                            sx={inputStyle}
-                            value={formData.descripcion}
-                            onChange={(e) => handleChange('descripcion', e.target.value)}
-                        />
-                    </Grid>
-
-                    {/* Imagen */}
-                    <Grid item xs={6} size={12}>
-                        <Typography sx={labelStyle}>Archivo de Imagen</Typography>
-                        <ImageUploadField 
-                            label="Seleccionar imagen" 
-                            file={formData.imagen} 
-                            onChange={handleImageChange}
-                        />
-                    </Grid>
-                    
-                    {/* Orden Visual */}
-                    <Grid item xs={6} size={6}>
-                        <Typography sx={labelStyle}>Orden Visual</Typography>
-                        <TextField 
-                            fullWidth 
-                            sx={inputStyle}
-                            value={formData.orden_visual}
-                            onChange={(e) => handleChange('orden_visual', e.target.value)}
-                        />
-                    </Grid>
-
-                    {/* Nombre de Ícono */}
-                    <Grid item xs={6} size={6}>
-                        <Typography sx={labelStyle}>Nombre de ícono</Typography>
-                        <TextField 
-                            fullWidth 
-                            sx={inputStyle}
-                            value={formData.icono}
-                            onChange={(e) => handleChange('icono', e.target.value)}
-                        />
-                    </Grid>
-
-                    {/* Color */}
-                    <Grid container item xs={12} size={12} spacing={2} sx={{ mt: 1}}>
-                        <Grid item xs={12} size={6}>
-                            <Typography sx={labelStyle}>Color</Typography>
-                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
-                                <TextField
-                                    type="color"
-                                    value={color}
-                                    onChange={(e) => setColor(e.target.value)}
-                                    fullWidth 
-                                    sx={{...inputStyle, width: '20%' }}
-                                />
-                                <TextField
-                                    type='text'
-                                    value={color}
-                                    onChange={(e) => setColor(e.target.value)}
-                                    fullWidth
-                                    sx={{ ...inputStyle, width: '70%', mt: 1 }}
-                                />
-                            </Box>
+                    <Grid container spacing={2}>
+                        {/* Nombre */}
+                        <Grid item xs={12} size={12}>
+                            <Typography sx={labelStyle}>Nombre</Typography>
+                            <TextField 
+                                sx={{ ...inputStyle, width: '50%' }} 
+                                value={formData.nombre}
+                                onChange={(e) => handleChange('nombre', e.target.value)}
+                            />
                         </Grid>
-                        <Grid item xs={6} />   
-                    </Grid>
 
-                    {/* Checkboxes */}
-                    <Grid item xs={6} size={12} >
-                        <Stack spacing={0.5} sx={{ mb: 0.5 }}>
-                                    <FormControlLabel 
-                                control={
-                                    <Checkbox 
-                                        checked={formData.es_visible}
-                                        onChange={() => handleCheckboxChange('es_visible')}
-                                        size="small" 
-                                        sx={{ color: '#673ab7' }} 
-                                    />
-                                } 
-                                label={<Typography sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>¿Es visible?</Typography>}
+                        {/* Descripción */}
+                        <Grid item xs={12} size={12}>
+                            <Typography sx={labelStyle}>Descripción</Typography>
+                            <TextField 
+                                fullWidth 
+                                multiline 
+                                rows={3} 
+                                sx={inputStyle}
+                                value={formData.descripcion}
+                                onChange={(e) => handleChange('descripcion', e.target.value)}
                             />
-                            <FormControlLabel 
-                                control={
-                                    <Checkbox 
-                                        checked={formData.es_activa}
-                                        onChange={() => handleCheckboxChange('es_activa')}
-                                        size="small" 
-                                        sx={{ color: '#673ab7' }} 
-                                    />
-                                } 
-                                label={<Typography sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>¿Está activa?</Typography>}
-                            />
-                        </Stack>
-                    </Grid>
+                        </Grid>
 
-                    {/* Botones */}
-                    <Grid item xs={12} sx={{ mt: 2, alignItems: 'end', display: 'flex', justifyContent: 'flex-end' }}>
-                        <Stack direction="row" spacing={2}>
-                            <Button 
-                                variant="contained"
-                                disabled={isLoading}
-                                onClick={handleSave}
-                                sx={{ 
-                                    bgcolor: '#E6EE9C', 
-                                    color: '#000', 
-                                    borderRadius: '15px',
-                                    fontWeight: 'bold', 
-                                    textTransform: 'none', 
-                                    fontSize: '1rem',
-                                    px: 4, 
-                                    py: 1.5, 
-                                    '&:hover': { bgcolor: '#D4E157' }
-                                }}
-                            >
-                                {isLoading ? 'Guardando...' : 'Guardar Cambios'}
-                            </Button>
-                            {category?.id && (
+                        {/* Imagen */}
+                        <Grid item xs={6} size={12}>
+                            <Typography sx={labelStyle}>Archivo de Imagen</Typography>
+                            <ImageUploadField 
+                                label="Seleccionar imagen" 
+                                file={formData.imagen} 
+                                onChange={handleImageChange}
+                            />
+                        </Grid>
+                        
+                        {/* Orden Visual */}
+                        <Grid item xs={6} size={6}>
+                            <Typography sx={labelStyle}>Orden Visual</Typography>
+                            <TextField 
+                                fullWidth 
+                                sx={inputStyle}
+                                value={formData.orden_visual}
+                                onChange={(e) => handleChange('orden_visual', e.target.value)}
+                            />
+                        </Grid>
+
+                        {/* Nombre de Ícono */}
+                        <Grid item xs={6} size={6}>
+                            <Typography sx={labelStyle}>Nombre de ícono</Typography>
+                            <TextField 
+                                fullWidth 
+                                sx={inputStyle}
+                                value={formData.icono}
+                                onChange={(e) => handleChange('icono', e.target.value)}
+                            />
+                        </Grid>
+
+                        {/* Color */}
+                        <Grid container item xs={12} size={12} spacing={2} sx={{ mt: 1}}>
+                            <Grid item xs={12} size={6}>
+                                <Typography sx={labelStyle}>Color</Typography>
+                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
+                                    <TextField
+                                        type="color"
+                                        value={color}
+                                        onChange={(e) => setColor(e.target.value)}
+                                        fullWidth 
+                                        sx={{...inputStyle, width: '20%' }}
+                                    />
+                                    <TextField
+                                        type='text'
+                                        value={color}
+                                        onChange={(e) => setColor(e.target.value)}
+                                        fullWidth
+                                        sx={{ ...inputStyle, width: '70%', mt: 1 }}
+                                    />
+                                </Box>
+                            </Grid>
+                            <Grid item xs={6} />   
+                        </Grid>
+
+                        {/* Checkboxes */}
+                        <Grid item xs={6} size={12} >
+                            <Stack spacing={0.5} sx={{ mb: 0.5 }}>
+                                <FormControlLabel 
+                                    control={
+                                        <Checkbox 
+                                            checked={formData.es_visible}
+                                            onChange={() => handleCheckboxChange('es_visible')}
+                                            size="small" 
+                                            sx={{ color: '#673ab7' }} 
+                                        />
+                                    } 
+                                    label={<Typography sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>¿Es visible?</Typography>}
+                                />
+                                <FormControlLabel 
+                                    control={
+                                        <Checkbox 
+                                            checked={formData.es_activa}
+                                            onChange={() => handleCheckboxChange('es_activa')}
+                                            size="small" 
+                                            sx={{ color: '#673ab7' }} 
+                                        />
+                                    } 
+                                    label={<Typography sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>¿Está activa?</Typography>}
+                                />
+                            </Stack>
+                        </Grid>
+
+                        {/* Botones */}
+                        <Grid item xs={12} sx={{ mt: 2, alignItems: 'end', display: 'flex', justifyContent: 'flex-end' }}>
+                            <Stack direction="row" spacing={2}>
                                 <Button 
                                     variant="contained"
                                     disabled={isLoading}
-                                    onClick={handleDelete}
+                                    onClick={handleSave}
                                     sx={{ 
-                                        bgcolor: '#D32F2F', 
-                                        color: '#FFF', 
+                                        bgcolor: '#E6EE9C', 
+                                        color: '#000', 
                                         borderRadius: '15px',
                                         fontWeight: 'bold', 
                                         textTransform: 'none', 
                                         fontSize: '1rem',
                                         px: 4, 
                                         py: 1.5, 
-                                        '&:hover': { bgcolor: '#B71C1C' }
+                                        '&:hover': { bgcolor: '#D4E157' }
                                     }}
                                 >
-                                    {isLoading ? 'Eliminando...' : 'Eliminar categoría'}
+                                    {isLoading ? 'Guardando...' : 'Guardar Cambios'}
                                 </Button>
-                            )}
-                        </Stack>
+                            </Stack>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Box>
-        </Modal>
+                </Box>
+            </Modal>
+
+            <ConfirmDialog
+                open={openConfirmSave}
+                action="warning"
+                title={category?.id ? 'Confirmar guardado' : 'Guardar categoría'}
+                message={category?.id
+                    ? '¿Deseas guardar los cambios realizados en esta categoría?'
+                    : '¿Deseas guardar esta nueva categoría?'}
+                onCancel={() => setOpenConfirmSave(false)}
+                onConfirm={handleConfirmSave}
+                confirmText={category?.id ? 'Guardar cambios' : 'Guardar'}
+                loading={isLoading}
+            />
+        </>
     );
 };

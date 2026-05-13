@@ -14,6 +14,7 @@ export const getCategories = async () => {
   return response.data;
 };
 
+{/*
 export const getSubcategories = async (parentId) => {
   const response = await restApi.get('/categorias', {
     params: {
@@ -25,6 +26,16 @@ export const getSubcategories = async (parentId) => {
 
   return response.data;
 };
+
+*/}
+export const getSubcategories = async (parentId) => {
+  const response = await restApi.post('/rpc/listar_subcategorias_por_padre', {
+    p_categoria_padre_id: parentId,
+  });
+
+  return response.data;
+};
+
 
 export const createCategory = async (category) => {
   const response = await restApi.post('/categorias', category, {

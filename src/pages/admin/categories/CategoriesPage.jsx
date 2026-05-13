@@ -15,6 +15,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { CategoryModal } from '../../../components/admin/categories/CategoryModal';
+import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { useCategories } from '../../../hooks/catalog/useCategories';
 import { useState, useMemo } from 'react';
 
@@ -28,6 +29,8 @@ export const CategoriesPage = () => {
     const [open, setOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [categoryToDelete, setCategoryToDelete] = useState(null);
 
     const [expandedIds, setExpandedIds] = useState(new Set());
     const [subcategoriesData, setSubcategoriesData] = useState({});
@@ -111,7 +114,6 @@ export const CategoriesPage = () => {
     const handleDeleteCategory = async (categoryId) => {
         setIsLoading(true);
         try {
-            // await deleteCategory(categoryId);
             await deleteCategory(categoryId);
             handleCloseEdit();
         } catch (error) {
@@ -119,6 +121,23 @@ export const CategoriesPage = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleOpenDeleteConfirm = (row) => {
+        setCategoryToDelete(row);
+        setConfirmDeleteOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!categoryToDelete) return;
+        setConfirmDeleteOpen(false);
+        await handleDeleteCategory(categoryToDelete.id);
+        setCategoryToDelete(null);
+    };
+
+    const handleCancelDelete = () => {
+        setConfirmDeleteOpen(false);
+        setCategoryToDelete(null);
     };
 
     return (
@@ -170,12 +189,16 @@ export const CategoriesPage = () => {
                                 </Box>
                             )
                         },
-                        { field: 'descripcion', headerName: 'Descripción' },
-                        { field: 'slug', headerName: 'Slug' },
                         {
-                            id: 'categoria_padre',
+                            field: 'descripcion',
+                            headerName: 'Descripción' },
+                        { field: 'slug', headerName: 'Slug'
+
+                        },
+                        {
+                            field: 'categoria_padre_nombre',
                             headerName: 'Categoría padre',
-                            renderCell: (row) => row.categoria_padre?.nombre ?? 'Principal',
+                            renderCell: (row) => row.categoria_padre_nombre || 'Principal',
                         },
                     ]}   
                     actions={[
@@ -183,7 +206,12 @@ export const CategoriesPage = () => {
                             icon: <EditIcon />,
                             label: 'Editar',
                             onClick: (row) => handleOpenEdit(row),
-                        }
+                        },
+                        {
+                            type: 'delete',
+                            label: 'Eliminar',
+                            onClick: (row) => handleOpenDeleteConfirm(row),
+                        },
                     ]}
                     loading={loading}
                     pagination={{
@@ -218,8 +246,17 @@ export const CategoriesPage = () => {
                     onClose={handleCloseEdit}
                     category={selectedCategory}
                     onSave={handleSaveCategory}
-                    onDelete={handleDeleteCategory}
                     isLoading={isLoading}
+                />
+
+                <ConfirmDialog
+                    open={confirmDeleteOpen}
+                    action="delete"
+                    title="Eliminar categoría"
+                    message={categoryToDelete ? `¿Deseas eliminar la categoría "${categoryToDelete.nombre}"? Esta acción no se puede deshacer.` : '¿Deseas eliminar esta categoría?'}
+                    onCancel={handleCancelDelete}
+                    onConfirm={handleConfirmDelete}
+                    loading={isLoading}
                 />
             </PlaceholderPage>
         </>
