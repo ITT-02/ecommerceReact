@@ -17,8 +17,8 @@ import { StatusChip } from '../../../components/common/StatusChip';
 
 import { WarehouseForm } from '../../../components/admin/WarehouseForm';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
-import { PageHeader } from '../../../components/common/PageHeader';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
+import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 
 export const WarehousesPage = () => {
   const theme = useTheme();
@@ -180,137 +180,125 @@ document.activeElement?.blur(); setDeleteLoading(true);
   ];
 
   return (
-    <Container
-      maxWidth="lg"
-      sx={{
-        py: 4,
-        backgroundColor: theme.palette.background.default,
-        minHeight: '100vh',
-      }}
-    >
-      <PageHeader
-        title="Gestión de Almacenes"
-        description="Administra los almacenes del sistema."
-      />
+    <PlaceholderPage title="Gestión de Almacenes" description="Administra los almacenes del sistema.">
+       <ErrorMessage message={error} />
 
-      <ErrorMessage message={error} />
+        <AdminResourceTable
+          rows={(warehouses ?? []).map((w) => ({
+            ...w,
+            id: w.id ?? w.codigo,
+          }))}
+          columns={[
+            {
+              field: 'codigo',
+              headerName: 'Código',
+              width: 140,
+              minWidth: 130,
+            },
+            {
+              field: 'nombre',
+              headerName: 'Nombre',
+              width: 220,
+              minWidth: 190,
+            },
+            {
+              field: 'descripcion',
+              headerName: 'Descripción',
+              width: 260,
+              minWidth: 220,
+              renderCell: (row) => row.descripcion || '-',
+            },
+            {
+              field: 'es_activo',
+              headerName: 'Estado',
+              width: 140,
+              minWidth: 140,
+              renderCell: (row) => (
+                <StatusChip
+                  label={row.es_activo ? 'Activo' : 'Inactivo'}
+                  color={row.es_activo ? 'success' : 'error'}
+                />
+              ),
+            },
+          ]}
+          actions={[
+            {
+              type: 'edit',
+              label: 'Editar',
+              onClick: (row) => handleEditOpen(row),
+            },
+            {
+              type: 'delete',
+              label: 'Eliminar',
+              onClick: (row) => handleDeleteOpen(row),
+            },
+          ]}
+          loading={Boolean(loading)}
+          pagination={_pagination}
+          searchValue={search}
+          searchLabel="Buscar almacén"
+          filters={tableFilters}
+          filterValues={filters}
+          onSearchChange={handleSearchChange}
+          onFilterChange={handleFilterChange}
+          onResetFilters={handleResetFilters}
+          onPageChange={setPageNumber}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPageNumber(1);
+          }}
+          emptyTitle="No hay almacenes"
+          emptyDescription="Aún no se han registrado almacenes."
+          maxHeight={540}
+          primaryActionLabel="Agregar Almacén"
+          onPrimaryAction={handleCreateOpen}
+        />
 
-      <AdminResourceTable
-        rows={(warehouses ?? []).map((w) => ({
-          ...w,
-          id: w.id ?? w.codigo,
-        }))}
-        columns={[
-          {
-            field: 'codigo',
-            headerName: 'Código',
-            width: 140,
-            minWidth: 130,
-          },
-          {
-            field: 'nombre',
-            headerName: 'Nombre',
-            width: 220,
-            minWidth: 190,
-          },
-          {
-            field: 'descripcion',
-            headerName: 'Descripción',
-            width: 260,
-            minWidth: 220,
-            renderCell: (row) => row.descripcion || '-',
-          },
-          {
-            field: 'es_activo',
-            headerName: 'Estado',
-            width: 140,
-            minWidth: 140,
-            renderCell: (row) => (
-              <StatusChip
-                label={row.es_activo ? 'Activo' : 'Inactivo'}
-                color={row.es_activo ? 'success' : 'error'}
+        {/* Modal: Crear */}
+        <Dialog open={createDialogOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth disableRestoreFocus>
+          <DialogTitle>Agregar nuevo almacén</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <WarehouseForm
+                formData={formData}
+                setFormData={setFormData}
+                onSubmit={handleCreateSubmit}
+                onCancel={handleDialogClose}
+                isEditing={false}
+                loading={createLoading}
               />
-            ),
-          },
-        ]}
-        actions={[
-          {
-            type: 'edit',
-            label: 'Editar',
-            onClick: (row) => handleEditOpen(row),
-          },
-          {
-            type: 'delete',
-            label: 'Eliminar',
-            onClick: (row) => handleDeleteOpen(row),
-          },
-        ]}
-        loading={Boolean(loading)}
-        pagination={_pagination}
-        searchValue={search}
-        searchLabel="Buscar almacén"
-        filters={tableFilters}
-        filterValues={filters}
-        onSearchChange={handleSearchChange}
-        onFilterChange={handleFilterChange}
-        onResetFilters={handleResetFilters}
-        onPageChange={setPageNumber}
-        onPageSizeChange={(size) => {
-          setPageSize(size);
-          setPageNumber(1);
-        }}
-        emptyTitle="No hay almacenes"
-        emptyDescription="Aún no se han registrado almacenes."
-        maxHeight={540}
-        primaryActionLabel="Agregar Almacén"
-        onPrimaryAction={handleCreateOpen}
-      />
+            </Box>
+          </DialogContent>
+        </Dialog>
 
-      {/* Modal: Crear */}
-      <Dialog open={createDialogOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth disableRestoreFocus>
-        <DialogTitle>Agregar nuevo almacén</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <WarehouseForm
-              formData={formData}
-              setFormData={setFormData}
-              onSubmit={handleCreateSubmit}
-              onCancel={handleDialogClose}
-              isEditing={false}
-              loading={createLoading}
-            />
-          </Box>
-        </DialogContent>
-      </Dialog>
+        {/* Modal: Editar */}
+        <Dialog open={editDialogOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth>
+          <DialogTitle>Editar almacén</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <WarehouseForm
+                formData={formData}
+                setFormData={setFormData}
+                onSubmit={handleUpdateSubmit}
+                onCancel={handleDialogClose}
+                isEditing={true}
+                loading={editLoading}
+              />
+            </Box>
+          </DialogContent>
+        </Dialog>
 
-      {/* Modal: Editar */}
-      <Dialog open={editDialogOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Editar almacén</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <WarehouseForm
-              formData={formData}
-              setFormData={setFormData}
-              onSubmit={handleUpdateSubmit}
-              onCancel={handleDialogClose}
-              isEditing={true}
-              loading={editLoading}
-            />
-          </Box>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal: Confirmar eliminación */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        action="delete"
-        title="Eliminar almacén"
-        message={`¿Estás seguro de eliminar el almacén "${selectedDeleteWarehouse?.nombre}"? Esta acción no se puede deshacer.`}
-        onConfirm={handleDeleteConfirm}
-        onCancel={handleDialogClose}
-        confirmText="Eliminar"
-        loading={deleteLoading}
-      />
-    </Container>
+        {/* Modal: Confirmar eliminación */}
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          action="delete"
+          title="Eliminar almacén"
+          message={`¿Estás seguro de eliminar el almacén "${selectedDeleteWarehouse?.nombre}"? Esta acción no se puede deshacer.`}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDialogClose}
+          confirmText="Eliminar"
+          loading={deleteLoading}
+        />
+    </PlaceholderPage>
   );
 };
