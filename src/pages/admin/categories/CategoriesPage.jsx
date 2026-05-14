@@ -17,6 +17,7 @@ import { AdminResourceTable } from '../../../components/common/dataTable/AdminRe
 import { CategoryModal } from '../../../components/admin/categories/CategoryModal';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { useCategories } from '../../../hooks/catalog/useCategories';
+import { mapFormDataToCategory } from '../../../adapters/categoriesMapper';
 import { useState, useMemo } from 'react';
 
 export const CategoriesPage = () => {
@@ -96,12 +97,12 @@ export const CategoriesPage = () => {
     const handleSaveCategory = async (categoryData) => {
         setIsLoading(true);
         try {
+            const mappedCategory = await mapFormDataToCategory(categoryData);
+
             if (categoryData.id) {
-                // Editar: await updateCategory(categoryData.id, categoryData);
-                await updateCategory({ id: categoryData.id, category: categoryData });
+                await updateCategory({ id: categoryData.id, category: mappedCategory });
             } else {
-                // Crear: await createCategory(categoryData);
-                await createCategory(categoryData);
+                await createCategory(mappedCategory);
             }
             handleCloseEdit();
         } catch (error) {

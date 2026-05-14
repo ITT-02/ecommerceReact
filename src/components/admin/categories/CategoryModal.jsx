@@ -11,7 +11,7 @@ import {
     Button,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { ImageUploadField } from '../../forms/ImageUploadField';
+import { FileUploadField } from '../../common/Field/FileUploadField';
 import { ConfirmDialog } from '../../common/ConfirmDialog';
 import { useState, useMemo } from 'react';
 
@@ -68,7 +68,10 @@ export const CategoryModal = ({
                 icono: category.icono || '',
                 es_visible: category.es_visible ?? true,
                 es_activa: category.es_activa ?? true,
-                imagen: category.imagen_url || null,
+                imagen_url: category.imagen_url || '',
+                imagen_path: category.imagen_path || '',
+                color_hex: category.color_hex || '#262EC3',
+                _file: null,
             };
         }
         return {
@@ -79,7 +82,10 @@ export const CategoryModal = ({
             icono: '',
             es_visible: true,
             es_activa: true,
-            imagen: null,
+            imagen_url: '',
+            imagen_path: '',
+            color_hex: '#262EC3',
+            _file: null,
         };
     }, [category]); // Solo recalcula cuando category cambia
 
@@ -96,7 +102,13 @@ export const CategoryModal = ({
     };
 
     const handleImageChange = (file) => {
-        handleChange('imagen', file);
+        handleChange('_file', file);
+    };
+
+    const handleImageRemove = () => {
+        handleChange('_file', null);
+        handleChange('imagen_url', '');
+        handleChange('imagen_path', '');
     };
 
     const handleCheckboxChange = (field) => {
@@ -108,7 +120,9 @@ export const CategoryModal = ({
             categoria_padre_id: formData.categoria_padre_id ?? null,
             nombre: formData.nombre,
             descripcion: formData.descripcion,
-            imagen_url: formData.imagen ?? null,
+            imagen_url: formData.imagen_url ?? null,
+            imagen_path: formData.imagen_path ?? null,
+            _file: formData._file,
             icono: formData.icono,
             color_hex: color,
             orden_visual: Number(formData.orden_visual),
@@ -167,11 +181,16 @@ export const CategoryModal = ({
 
                         {/* Imagen */}
                         <Grid item xs={6} size={12}>
-                            <Typography sx={labelStyle}>Archivo de Imagen</Typography>
-                            <ImageUploadField 
-                                label="Seleccionar imagen" 
-                                file={formData.imagen} 
+                            <Typography sx={labelStyle}>Imagen de categoría</Typography>
+                            <FileUploadField 
+                                label="Seleccionar imagen"
+                                accept="image/*"
+                                value={formData._file}
+                                previewUrl={formData.imagen_url}
                                 onChange={handleImageChange}
+                                onRemove={handleImageRemove}
+                                helperText="PNG, JPG, JPEG (máx. 5MB)"
+                                height={150}
                             />
                         </Grid>
                         
