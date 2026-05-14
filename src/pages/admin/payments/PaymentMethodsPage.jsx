@@ -1,7 +1,7 @@
 // Página administrativa: Métodos de pago.
 
 import { useState } from 'react';
-import { Container, Typography } from '@mui/material';
+import { Container, Typography, Box } from '@mui/material';
 
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
@@ -73,6 +73,20 @@ export const PaymentMethodsPage = () => {
   // Configuración de la Tabla (AdminResourceTable)
   const columns = [
     { field: 'orden_visual', headerName: 'Orden', width: 90 },
+    { 
+      field: 'imagen_url', 
+      headerName: 'Imagen', 
+      width: 100,
+      renderCell: (row) => (
+        row.imagen_url ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+            <img src={row.imagen_url} alt={row.nombre} style={{ maxHeight: '30px', maxWidth: '60px', objectFit: 'contain' }} />
+          </Box>
+        ) : (
+          <Typography variant="body2" color="text.secondary">-</Typography>
+        )
+      )
+    },
     { field: 'codigo', headerName: 'Código', width: 140 },
     { field: 'nombre', headerName: 'Nombre', width: 220 },
     { 

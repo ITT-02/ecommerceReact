@@ -11,6 +11,7 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material';
+import { FileUploadField } from '../../common/Field/FileUploadField';
 
 const TIPO_OPCIONES = [
   { value: 'transferencia', label: 'Transferencia' },
@@ -29,6 +30,8 @@ const INITIAL_STATE = {
   telefono: '',
   instrucciones: '',
   imagen_url: '',
+  imagen_path: '',
+  imageFile: null,
   orden_visual: 0,
   es_activo: true,
 };
@@ -56,6 +59,8 @@ export const PaymentMethodFormDialog = ({
           telefono: initialData.telefono || '',
           instrucciones: initialData.instrucciones || '',
           imagen_url: initialData.imagen_url || '',
+          imagen_path: initialData.imagen_path || '',
+          imageFile: null,
           orden_visual: initialData.orden_visual !== undefined ? initialData.orden_visual : 0,
           es_activo: initialData.es_activo !== undefined ? initialData.es_activo : true,
         });
@@ -84,6 +89,8 @@ export const PaymentMethodFormDialog = ({
       telefono: formData.telefono || null,
       instrucciones: formData.instrucciones || null,
       imagen_url: formData.imagen_url || null,
+      imagen_path: formData.imagen_path || null,
+      imageFile: formData.imageFile || null,
     };
     
     // Si estamos editando, extraemos solo los campos relevantes pero para metodos_pago mandamos
@@ -190,12 +197,15 @@ export const PaymentMethodFormDialog = ({
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <TextField
-                name="imagen_url"
-                label="URL de Imagen / Logo"
-                value={formData.imagen_url}
-                onChange={handleChange}
-                fullWidth
+              <FileUploadField
+                label="Logotipo del Método de Pago"
+                accept="image/*"
+                value={formData.imageFile}
+                previewUrl={formData.imagen_url}
+                height={160}
+                helperText="Selecciona un logotipo para el método de pago."
+                onChange={(file) => setFormData(prev => ({ ...prev, imageFile: file }))}
+                onRemove={() => setFormData(prev => ({ ...prev, imageFile: null, imagen_url: '', imagen_path: '' }))}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -219,7 +229,7 @@ export const PaymentMethodFormDialog = ({
                     color="primary"
                   />
                 }
-                label="Método Activo"
+                label={formData.es_activo ? "Método Activo" : "Método Inactivo"}
               />
             </Grid>
           </Grid>
