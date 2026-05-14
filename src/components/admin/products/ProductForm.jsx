@@ -109,7 +109,11 @@ export const ProductForm = ({
                 label="Descripcion corta"
                 value={getValue(formData.descripcion_corta)}
                 onChange={onChange}
-                inputProps={{ maxLength: 180 }}
+                slotProps={{
+                  htmlInput: {
+                    maxLength: 180,
+                  },
+                }}
                 helperText="Resumen breve para tablas, tarjetas y vistas rapidas."
               />
             </Grid>
@@ -145,9 +149,7 @@ export const ProductForm = ({
               onRemove={handleMediaRemove}
             />
 
-            <Typography variant="caption" color="text.secondary">
-              Los archivos nuevos se suben al guardar. Los archivos eliminados se registran para quitarlos del producto durante la edicion.
-            </Typography>
+            
           </Stack>
         </AdminSectionCard>
 
