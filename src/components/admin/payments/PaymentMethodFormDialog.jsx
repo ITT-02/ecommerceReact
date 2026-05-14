@@ -215,6 +215,12 @@ export const PaymentMethodFormDialog = ({
                 type="number"
                 value={formData.orden_visual}
                 onChange={handleChange}
+                slotProps={{
+                  htmlInput: {
+                    min: 1,
+                    step: 1
+                  }
+                }}
                 fullWidth
                 required
               />

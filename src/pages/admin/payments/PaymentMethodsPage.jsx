@@ -34,6 +34,7 @@ export const PaymentMethodsPage = () => {
   };
 
   const handleCloseForm = () => {
+    document.activeElement?.blur();
     setEditingMethod(null);
     setFormOpen(false);
   };
