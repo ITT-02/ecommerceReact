@@ -17,6 +17,8 @@ import { AttributesPage } from '../pages/admin/attributes/AttributesPage';
 import { BannersPage } from '../pages/admin/banners/BannersPage';
 import { CategoriesPage } from '../pages/admin/categories/CategoriesPage';
 import { InventoryPage } from '../pages/admin/inventory/InventoryPage';
+import { MovementsPage } from '../pages/admin/inventory/MovementsPage';
+
 import { WarehousesPage } from '../pages/admin/inventory/WarehousesPage';
 import { OrdersPage } from '../pages/admin/orders/OrdersPage';
 import { PaymentsPage } from '../pages/admin/payments/PaymentsPage';
@@ -97,6 +99,7 @@ export const AppRouter = () => {
           {/* Inventario */}
           <Route path="almacenes" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><WarehousesPage /></RoleRoute>} />
           <Route path="inventario" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><InventoryPage /></RoleRoute>} />
+          <Route path="movimientos" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><MovementsPage /></RoleRoute>} />
 
           {/* Marketing */}
           <Route path="promociones" element={<RoleRoute allowedRoles={MARKETING_ROLES}><PromotionsPage /></RoleRoute>} />

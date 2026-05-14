@@ -28,7 +28,10 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import HighlightOffOutlinedIcon from '@mui/icons-material/HighlightOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'; // Para Detalle de Producto
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'; // Para Ver Movimientos
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'; // Para Detalle de Transacción
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 /**
  * Obtiene el valor de una celda usando el nombre del campo.
  */
@@ -94,6 +97,10 @@ const TableActionButton = ({ action, row }) => {
     edit: <EditOutlinedIcon sx={{ fontSize: 17 }} />,
     deactivate: <HighlightOffOutlinedIcon sx={{ fontSize: 17 }} />,
     delete: <DeleteOutlinedIcon sx={{ fontSize: 17 }} />,
+    cancel: <BlockOutlinedIcon sx={{ fontSize: 17 }} />,      
+    info: <InfoOutlinedIcon sx={{ fontSize: 17 }} />,           
+    history: <HistoryOutlinedIcon sx={{ fontSize: 17 }} />,     
+    receipt: <ReceiptLongOutlinedIcon sx={{ fontSize: 17 }} />, 
   };
 
   const colorMap = {
@@ -101,6 +108,10 @@ const TableActionButton = ({ action, row }) => {
     edit: theme.palette.success.main,
     deactivate: theme.palette.warning.main,
     delete: theme.palette.error.main,
+    cancel: theme.palette.warning.main,
+    info: theme.palette.info.dark,   
+    history: theme.palette.secondary.main,
+    receipt: theme.palette.text.secondary, 
   };
 
   const actionColor =
@@ -466,6 +477,8 @@ export const DataTable = ({
 }) => {
   const theme = useTheme();
   const hasActions = actions.length > 0;
+  // Cálculo dinámico: 38px por cada botón + un margen de seguridad
+const dynamicActionWidth = hasActions ? (actions.length * 38) + 20 : 0;
 
   const headerBackground =
     theme.palette.mode === 'dark'
@@ -528,9 +541,9 @@ export const DataTable = ({
                 <TableCell
                   align="center"
                   sx={{
-                    width: actionColumnWidth,
-                    minWidth: actionColumnWidth,
-                    maxWidth: actionColumnWidth,
+                    width: dynamicActionWidth, 
+                    minWidth: dynamicActionWidth, 
+                    maxWidth: dynamicActionWidth,   
                     position: 'sticky',
                     top: 0,
                     right: 0,
@@ -597,9 +610,9 @@ export const DataTable = ({
                   <TableCell
                     align="center"
                     sx={{
-                      width: actionColumnWidth,
-                      minWidth: actionColumnWidth,
-                      maxWidth: actionColumnWidth,
+                    width: dynamicActionWidth, 
+                    minWidth: dynamicActionWidth, 
+                    maxWidth: dynamicActionWidth, 
                       position: 'sticky',
                       right: 0,
                       zIndex: 3,
