@@ -18,13 +18,13 @@ import { ProductForm } from '../../../components/admin/products/ProductForm';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
-import { PageHeader } from '../../../components/common/PageHeader';
 import {
   formDataToProductPayload,
   initialProductFormData,
   productToFormData,
 } from '../../../adapters/catalog/productAdapter';
 import { useProducts } from '../../../hooks/catalog/useProducts';
+import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 
 const toBooleanFilter = (value) => {
   if (value === '') return null;
@@ -312,12 +312,7 @@ export const ProductsPage = () => {
   ];
 
   return (
-    <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
-      <PageHeader
-        title="Productos"
-        description="Administra productos base, categorias, estado comercial y visibilidad en tienda."
-      />
-
+    <PlaceholderPage title="Productos" description="Administra productos base, categorias, estado comercial y visibilidad en tienda.">
       <Stack spacing={2}>
         <ErrorMessage message={error } />
 
@@ -416,6 +411,6 @@ export const ProductsPage = () => {
         onCancel={() => setConfirm(null)}
         onConfirm={handleConfirm}
       />
-    </Container>
+    </PlaceholderPage>
   );
 };
