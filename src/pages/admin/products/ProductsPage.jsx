@@ -18,7 +18,8 @@ import { ProductForm } from '../../../components/admin/products/ProductForm';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
-import { PageHeader } from '../../../components/common/PageHeader';
+
+import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 import {
   formDataToProductPayload,
   initialProductFormData,
@@ -312,45 +313,44 @@ export const ProductsPage = () => {
   ];
 
   return (
+    
     <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 } }}>
-      <PageHeader
-        title="Productos"
-        description="Administra productos base, categorias, estado comercial y visibilidad en tienda."
+          
+        <PlaceholderPage
+          title="Productos"
+          description="Gestiona los productos visibles en la pagina principal de la tienda."
+          >
+      <ErrorMessage message={error} />
+
+      {pageNotice && (
+        <Alert severity="info" onClose={() => setPageNotice('')}>
+          {pageNotice}
+        </Alert>
+      )}
+
+      <AdminResourceTable
+        rows={products}
+        columns={columns}
+        actions={actions}
+        loading={loading || fetching || detailLoading}
+        pagination={pagination}
+        searchValue={search}
+        searchLabel="Buscar producto"
+        filters={tableFilters}
+        filterValues={filters}
+        onSearchChange={handleSearchChange}
+        onFilterChange={handleFilterChange}
+        onResetFilters={handleResetFilters}
+        onPageChange={setPageNumber}
+        onPageSizeChange={handlePageSizeChange}
+        primaryActionLabel="Nuevo producto"
+        onPrimaryAction={handleCreate}
+        emptyTitle="No hay productos"
+        emptyDescription="Intenta ajustar la busqueda, cambiar filtros o crear un nuevo producto."
+        maxHeight={560}
       />
+    </PlaceholderPage>
 
-      <Stack spacing={2}>
-        <ErrorMessage message={error } />
-
-        {pageNotice && (
-          <Alert severity="info" onClose={() => setPageNotice('')}>
-            {pageNotice}
-          </Alert>
-        )}
-
-        <Box>
-          <AdminResourceTable
-            rows={products}
-            columns={columns}
-            actions={actions}
-            loading={loading || fetching || detailLoading }
-            pagination={pagination}
-            searchValue={search}
-            searchLabel="Buscar producto"
-            filters={tableFilters}
-            filterValues={filters}
-            onSearchChange={handleSearchChange}
-            onFilterChange={handleFilterChange}
-            onResetFilters={handleResetFilters}
-            onPageChange={setPageNumber}
-            onPageSizeChange={handlePageSizeChange}
-            primaryActionLabel="Nuevo producto"
-            onPrimaryAction={handleCreate}
-            emptyTitle="No hay productos"
-            emptyDescription="Intenta ajustar la busqueda, cambiar filtros o crear un nuevo producto."
-            maxHeight={560}
-          />
-        </Box>
-      </Stack>
 
       <Dialog
         open={isFormOpen}
