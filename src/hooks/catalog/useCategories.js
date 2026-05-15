@@ -1,7 +1,7 @@
 // Hook para categorías y subcategorías.
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createCategory, deleteCategory, getCategories, updateCategory } from '../services/categoryService';
+import { createCategory, deleteCategory, getCategories, updateCategory } from '../../services/catalog/categoryService';
 
 export const useCategories = () => {
   const queryClient = useQueryClient();

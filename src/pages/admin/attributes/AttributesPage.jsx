@@ -14,6 +14,7 @@ import { useAtributos } from "../../../hooks/catalog/useAttributes";
 import { useAtributoValores } from "../../../hooks/catalog/useAtributoValores";
 import { AtributoForm } from './components/AtributoForm';
 import { ValoresList } from './components/ValoresList';
+import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 
 
 const ValoresSummary = ({ atributoId, tipoDato, refreshKey }) => {
@@ -213,42 +214,40 @@ export const AttributesPage = () => {
   ];
 
   return (
-    <Box sx={{ pb: 6, width: '100%' }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500, letterSpacing: 1, textTransform: 'uppercase' }}> Panel / Atributos </Typography>
-        {/* EL TÍTULO YA SE VE BIEN EN OSCURO GRACIAS A text.primary */}
-        <Typography variant="h4" sx={{ fontWeight: 700, mt: 1, color: 'text.primary' }}>Atributos</Typography>
-      </Box>
+     <PlaceholderPage title="Atributos" description="Gestiona atributos y valores personalizados.">
+        <Box sx={{ pb: 6, width: '100%' }}>
+        
+          <AdminResourceTable
+            rows={atributos} columns={columns} actions={rowActions} loading={loading} pagination={pagination}
+            searchValue={searchValue} searchLabel="Buscar por nombre, código o tipo..."
+            filterValues={filterValues} filters={filtersConfig}
+            onSearchChange={onSearchChange} onFilterChange={onFilterChange} onResetFilters={onResetFilters}
+            onPageChange={onPageChange} onPageSizeChange={onPageSizeChange}
+            primaryActionLabel="Nuevo Atributo" onPrimaryAction={() => handleOpenModal()}
+            emptyTitle="No hay atributos" emptyDescription="Comienza creando tu primer atributo."
+          />
 
-      <AdminResourceTable
-        rows={atributos} columns={columns} actions={rowActions} loading={loading} pagination={pagination}
-        searchValue={searchValue} searchLabel="Buscar por nombre, código o tipo..."
-        filterValues={filterValues} filters={filtersConfig}
-        onSearchChange={onSearchChange} onFilterChange={onFilterChange} onResetFilters={onResetFilters}
-        onPageChange={onPageChange} onPageSizeChange={onPageSizeChange}
-        primaryActionLabel="Nuevo Atributo" onPrimaryAction={() => handleOpenModal()}
-        emptyTitle="No hay atributos" emptyDescription="Comienza creando tu primer atributo."
-      />
+          <Dialog open={openValoresModal} onClose={handleCloseValoresModal} maxWidth="md" fullWidth>
+            <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+              <Typography variant="h6" fontWeight="bold">Valores</Typography>
+              <IconButton onClick={handleCloseValoresModal} size="small"><CloseIcon /></IconButton>
+            </DialogTitle>
+            <DialogContent dividers sx={{ p: 0 }}>
+                {seleccionado && ( <ValoresList atributoSeleccionado={seleccionado} onChangeEvent={() => setHubieronCambios(true)} /> )}
+            </DialogContent>
+          </Dialog>
 
-       <Dialog open={openValoresModal} onClose={handleCloseValoresModal} maxWidth="md" fullWidth>
-        <DialogTitle component="div" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
-          <Typography variant="h6" fontWeight="bold">Valores</Typography>
-          <IconButton onClick={handleCloseValoresModal} size="small"><CloseIcon /></IconButton>
-        </DialogTitle>
-        <DialogContent dividers sx={{ p: 0 }}>
-            {seleccionado && ( <ValoresList atributoSeleccionado={seleccionado} onChangeEvent={() => setHubieronCambios(true)} /> )}
-        </DialogContent>
-      </Dialog>
+          {openModal && (
+            <AtributoForm open={openModal} isEdit={!!atributoEditar} atributoInicial={atributoEditar} onClose={() => setOpenModal(false)} onSave={handleSaveAttr} />
+          )}
 
-      {openModal && (
-        <AtributoForm open={openModal} isEdit={!!atributoEditar} atributoInicial={atributoEditar} onClose={() => setOpenModal(false)} onSave={handleSaveAttr} />
-      )}
-
-      <ConfirmDialog
-        open={Boolean(atributoEliminar)} action="delete" title="Eliminar atributo"
-        message={`¿Eliminar ${atributoEliminar?.nombre}? Se perderán todos sus valores.`}
-        onCancel={() => setAtributoEliminar(null)} onConfirm={confirmarEliminacion} loading={isDeleting}
-      />
-    </Box>
+          <ConfirmDialog
+            open={Boolean(atributoEliminar)} action="delete" title="Eliminar atributo"
+            message={`¿Eliminar ${atributoEliminar?.nombre}? Se perderán todos sus valores.`}
+            onCancel={() => setAtributoEliminar(null)} onConfirm={confirmarEliminacion} loading={isDeleting}
+          />
+        </Box>
+    </PlaceholderPage>
   );
 };
+
