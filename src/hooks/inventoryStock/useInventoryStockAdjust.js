@@ -1,15 +1,15 @@
+// src/hooks/inventoryStock/useInventoryStockAdjust.js
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { registrarMovimientoInventario } from '../../services/inventoryStock/inventoryStockService';
+import { registrarAjusteStock } from '../../services/inventoryStock/inventoryStockService';
+
 
 export const useInventoryStockAdjust = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: registrarMovimientoInventario,
+    mutationFn: registrarAjusteStock,  // ← Solo ajustes
     onSuccess: () => {
-      // Invalidar tablas y modales
       queryClient.invalidateQueries({ queryKey: ['inventoryStock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventoryStockMovements'] });
     },
   });
 
@@ -19,4 +19,3 @@ export const useInventoryStockAdjust = () => {
     error: mutation.error?.message ?? null,
   };
 };
-
