@@ -23,7 +23,7 @@ const modalStyle = {
     width: 650,
     maxHeight: '90vh',
     overflowY: 'auto',
-    bgcolor: '#FFF',
+    bgcolor: 'background.paper',
     borderRadius: '40px', 
     boxShadow: '0px 8px 30px rgba(0,0,0,0.1)',
     p: 4,
@@ -33,23 +33,13 @@ const modalStyle = {
 
 const labelStyle = {
     fontWeight: 'bold',
-    color: '#555',
-    mb: 0.5,
+    color: 'textPrimary',
+    mb: 1,
     ml: 0.5,
     fontSize: '0.9rem'
 };
 
-const inputStyle = {
-    '& .MuiOutlinedInput-root': {
-        bgcolor: '#E0E0E0',
-        borderRadius: '15px',
-        '& fieldset': { border: 'none' },
-    },
-    '& .MuiInputBase-input': {
-        padding: '10px 15px',
-        fontSize: '0.9rem'
-    }
-};
+
 
 export const CategoryModal = ({ 
     open, 
@@ -143,14 +133,14 @@ export const CategoryModal = ({
 
     return (
         <>
-            <Modal open={open} onClose={onClose}>
-                <Box sx={modalStyle}>
+            <Modal open={open} onClose={onClose} >
+                <Box sx={modalStyle} scroll="paper">
                     {/* Cabecera */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <Typography variant="h5" sx={{ fontWeight: 800, color: '#333' }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800, color: 'textPrimary' }}>
                             {category?.id ? 'Editar categoría' : 'Crear categoría'}
                         </Typography>
-                        <IconButton onClick={onClose} sx={{ color: '#333', p: 0 }}>
+                        <IconButton onClick={onClose} sx={{ color: 'textPrimary', p: 0 }}>
                             <CloseIcon sx={{ fontSize: 35 }} />
                         </IconButton>
                     </Box>
@@ -160,7 +150,7 @@ export const CategoryModal = ({
                         <Grid item xs={12} size={12}>
                             <Typography sx={labelStyle}>Nombre</Typography>
                             <TextField 
-                                sx={{ ...inputStyle, width: '50%' }} 
+                                sx={{ width: '50%', bgcolor: 'primaryDark' }} 
                                 value={formData.nombre}
                                 onChange={(e) => handleChange('nombre', e.target.value)}
                             />
@@ -173,7 +163,7 @@ export const CategoryModal = ({
                                 fullWidth 
                                 multiline 
                                 rows={3} 
-                                sx={inputStyle}
+                                sx={{ bgcolor: 'primaryDark'}}
                                 value={formData.descripcion}
                                 onChange={(e) => handleChange('descripcion', e.target.value)}
                             />
@@ -199,7 +189,7 @@ export const CategoryModal = ({
                             <Typography sx={labelStyle}>Orden Visual</Typography>
                             <TextField 
                                 fullWidth 
-                                sx={inputStyle}
+                                sx={{mt: 1, bgcolor: 'primaryDark'}}
                                 value={formData.orden_visual}
                                 onChange={(e) => handleChange('orden_visual', e.target.value)}
                             />
@@ -210,7 +200,7 @@ export const CategoryModal = ({
                             <Typography sx={labelStyle}>Nombre de ícono</Typography>
                             <TextField 
                                 fullWidth 
-                                sx={inputStyle}
+                                sx={{mt: 1, bgcolor: 'primaryDark'}}
                                 value={formData.icono}
                                 onChange={(e) => handleChange('icono', e.target.value)}
                             />
@@ -226,14 +216,14 @@ export const CategoryModal = ({
                                         value={color}
                                         onChange={(e) => setColor(e.target.value)}
                                         fullWidth 
-                                        sx={{...inputStyle, width: '20%' }}
+                                        sx={{ width: '20%' }}
                                     />
                                     <TextField
                                         type='text'
                                         value={color}
                                         onChange={(e) => setColor(e.target.value)}
                                         fullWidth
-                                        sx={{ ...inputStyle, width: '70%', mt: 1 }}
+                                        sx={{ width: '70%', mt: 1 }}
                                     />
                                 </Box>
                             </Grid>
@@ -241,7 +231,7 @@ export const CategoryModal = ({
                         </Grid>
 
                         {/* Checkboxes */}
-                        <Grid item xs={6} size={12} >
+                        <Grid item xs={6} size={12} sx={{ mt: 1, width: '30%' }}>
                             <Stack spacing={0.5} sx={{ mb: 0.5 }}>
                                 <FormControlLabel 
                                     control={
@@ -269,7 +259,7 @@ export const CategoryModal = ({
                         </Grid>
 
                         {/* Botones */}
-                        <Grid item xs={12} sx={{ mt: 2, alignItems: 'end', display: 'flex', justifyContent: 'flex-end' }}>
+                        <Grid item xs={12} size={12} sx={{ mt: 2, alignItems: 'end', display: 'flex', justifyContent: 'flex-end' }}>
                             <Stack direction="row" spacing={2}>
                                 <Button 
                                     variant="contained"
