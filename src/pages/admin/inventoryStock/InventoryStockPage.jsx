@@ -14,31 +14,39 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
+
 import { PageHeader } from '../../../components/common/PageHeader';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { StatusChip } from '../../../components/common/StatusChip';
 
+
 import { useInventoryStockTable } from '../../../hooks/inventoryStock/useInventoryStockTable';
 import { useInventoryStockMovements } from '../../../hooks/inventoryStock/useInventoryStockMovements';
 import { useInventoryStockAdjust } from '../../../hooks/inventoryStock/useInventoryStockAdjust';
 
+
 import { listarAlmacenesAutocomplete } from './helpers/listarAlmacenesAutocomplete';
+
 
 const getDerivedStockState = (row) => {
   if (!row) return 'N/A';
+
 
   const cantidadDisponible = Number(row.cantidad_disponible ?? NaN);
   const stockTotal = Number(row.stock_total ?? NaN);
   const stockMinimo = Number(row.stock_minimo ?? NaN);
 
+
   if (!Number.isNaN(cantidadDisponible) && cantidadDisponible <= 0) {
     return 'SIN_STOCK';
   }
 
+
   if (row.stock_bajo === true) {
     return 'BAJO';
   }
+
 
   if (
     !Number.isNaN(stockTotal) &&
@@ -48,23 +56,29 @@ const getDerivedStockState = (row) => {
     return 'BAJO';
   }
 
+
   if (!Number.isNaN(cantidadDisponible)) {
     return 'CORRECTO';
   }
 
+
   return 'N/A';
 };
+
 
 const formatStockStateLabel = (state) => {
   switch (state) {
     case 'SIN_STOCK':
       return 'Sin stock';
 
+
     case 'BAJO':
       return 'Bajo';
 
+
     case 'CORRECTO':
       return 'Correcto';
+
 
     case 'N/A':
     default:
@@ -72,14 +86,17 @@ const formatStockStateLabel = (state) => {
   }
 };
 
+
 const formatStockStateChipColor = (state) => {
   switch (state) {
     case 'SIN_STOCK':
     case 'BAJO':
       return 'error';
 
+
     case 'CORRECTO':
       return 'success';
+
 
     case 'N/A':
     default:
@@ -87,8 +104,10 @@ const formatStockStateChipColor = (state) => {
   }
 };
 
+
 export const InventoryStockPage = () => {
   const theme = useTheme();
+
 
   const {
     rows,
@@ -96,16 +115,20 @@ export const InventoryStockPage = () => {
     error,
     pagination,
 
+
     pageNumber,
     pageSize,
     setPageNumber,
     setPageSize,
 
+
     search,
     setSearch,
 
+
     almacenId,
     setAlmacenId,
+
 
     stockBajo,
     setStockBajo,
@@ -114,18 +137,24 @@ export const InventoryStockPage = () => {
     initialPageSize: 10,
   });
 
+
   const [detailOpen, setDetailOpen] = useState(false);
   const [movementsOpen, setMovementsOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
 
+
   const [selectedRow, setSelectedRow] = useState(null);
+
 
   const [movementsQueryEnabled, setMovementsQueryEnabled] = useState(false);
 
+
   const [almacenes, setAlmacenes] = useState([]);
+
 
   const [nuevoStockFinal, setNuevoStockFinal] = useState('');
   const [notas, setNotas] = useState('');
+
 
   const {
     data: movementsData,
@@ -139,14 +168,17 @@ export const InventoryStockPage = () => {
     pageSize: 20,
   });
 
+
   const {
     adjust,
     loading: adjustLoading,
     error: adjustError,
   } = useInventoryStockAdjust();
 
+
   useEffect(() => {
     let isMounted = true;
+
 
     listarAlmacenesAutocomplete({ query: '' }).then((items) => {
       if (isMounted) {
@@ -154,20 +186,24 @@ export const InventoryStockPage = () => {
       }
     });
 
+
     return () => {
       isMounted = false;
     };
   }, []);
+
 
   const resetAdjustForm = () => {
     setNuevoStockFinal('');
     setNotas('');
   };
 
+
   const handleOpenDetail = (row) => {
     setSelectedRow(row);
     setDetailOpen(true);
   };
+
 
   const handleOpenMovements = (row) => {
     setSelectedRow(row);
@@ -175,23 +211,29 @@ export const InventoryStockPage = () => {
     setMovementsQueryEnabled(true);
   };
 
+
   const handleOpenAdjust = (row) => {
     setSelectedRow(row);
     setAdjustOpen(true);
     resetAdjustForm();
   };
 
+
   const handleCloseAll = () => {
     setDetailOpen(false);
     setMovementsOpen(false);
     setAdjustOpen(false);
 
+
     setSelectedRow(null);
+
 
     setMovementsQueryEnabled(false);
 
+
     resetAdjustForm();
   };
+
 
   const tableFilters = useMemo(
     () => [
@@ -221,6 +263,7 @@ export const InventoryStockPage = () => {
     [almacenes]
   );
 
+
   const filterValues = useMemo(
     () => ({
       estadoStock: stockBajo || '',
@@ -229,17 +272,21 @@ export const InventoryStockPage = () => {
     [stockBajo, almacenId]
   );
 
+
   const handleFilterChange = (name, value) => {
     if (name === 'estadoStock') {
       setStockBajo(value || null);
     }
 
+
     if (name === 'almacenId') {
       setAlmacenId(value || null);
     }
 
+
     setPageNumber(1);
   };
+
 
   const handleResetFilters = () => {
     setSearch('');
@@ -247,6 +294,7 @@ export const InventoryStockPage = () => {
     setStockBajo(null);
     setPageNumber(1);
   };
+
 
   return (
     <Container
@@ -262,7 +310,9 @@ export const InventoryStockPage = () => {
         description="Consulta stock por variante y almacén. Los cambios de stock se registran como movimientos."
       />
 
+
       <ErrorMessage message={error} />
+
 
       <Box sx={{ mb: 2 }}>
         <TextField
@@ -273,6 +323,7 @@ export const InventoryStockPage = () => {
           onChange={(e) => {
             const value = e.target.value;
 
+
             setAlmacenId(value === '' ? null : value);
             setPageNumber(1);
           }}
@@ -281,6 +332,7 @@ export const InventoryStockPage = () => {
           <MenuItem value="">
             Todos
           </MenuItem>
+
 
           {almacenes.map((a) => (
             <MenuItem
@@ -292,6 +344,7 @@ export const InventoryStockPage = () => {
           ))}
         </TextField>
       </Box>
+
 
       <AdminResourceTable
         rows={(rows || [])
@@ -305,9 +358,11 @@ export const InventoryStockPage = () => {
               stockBajo === null ||
               String(r.estadoStockDerivado) === String(stockBajo);
 
+
             const cumpleAlmacen =
               !almacenId ||
               String(r.almacen_id) === String(almacenId);
+
 
             return cumpleEstado && cumpleAlmacen;
           })}
@@ -413,6 +468,7 @@ export const InventoryStockPage = () => {
             renderCell: (row) => {
               const derived = getDerivedStockState(row);
 
+
               return (
                 <StatusChip
                   label={formatStockStateLabel(derived)}
@@ -424,6 +480,7 @@ export const InventoryStockPage = () => {
         ]}
       />
 
+      {/* MODAL DETALLE */}
       <Dialog
         open={detailOpen}
         onClose={handleCloseAll}
@@ -431,72 +488,155 @@ export const InventoryStockPage = () => {
         fullWidth
         disableRestoreFocus
       >
-        <DialogTitle>
-          Detalle del inventario
-        </DialogTitle>
+        <DialogTitle>Detalle del inventario</DialogTitle>
 
         <DialogContent>
           {selectedRow && (
-            <Box sx={{ pt: 1 }}>
-              <Grid container spacing={1.5}>
-                {[
-                  ['Producto', selectedRow.producto_nombre],
-                  ['Variante', selectedRow.nombre_variante],
-                  ['Atributos', selectedRow.atributos_resumen],
-                  ['Almacén', selectedRow.almacen_nombre],
-                  ['Disponible', selectedRow.cantidad_disponible],
-                  ['Reservado', selectedRow.cantidad_reservada],
-                  ['Stock total', selectedRow.stock_total],
-                  ['Stock mínimo', selectedRow.stock_minimo],
-                ].map(([key, value]) => (
-                  <Grid item xs={12} sm={6} key={key}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                    >
-                      {key}
-                    </Typography>
+            <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
 
+              {/* BLOQUE 1 — PRODUCTO */}
+              <Box
+                sx={{
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                  Información del producto
+                </Typography>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">
+                      Producto
+                    </Typography>
                     <Typography sx={{ fontWeight: 600 }}>
-                      {value ?? '-'}
+                      {selectedRow.producto_nombre || '-'}
                     </Typography>
                   </Grid>
-                ))}
 
-                <Grid item xs={12} sm={6}>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                  >
-                    Estado
-                  </Typography>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">
+                      Variante
+                    </Typography>
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {selectedRow.nombre_variante || '-'}
+                    </Typography>
+                  </Grid>
 
-                  <Box sx={{ pt: 0.5 }}>
-                    <StatusChip
-                      label={formatStockStateLabel(
-                        getDerivedStockState(selectedRow)
-                      )}
-                      color={formatStockStateChipColor(
-                        getDerivedStockState(selectedRow)
-                      )}
-                    />
-                  </Box>
+                  <Grid item xs={12}>
+                    <Typography variant="caption" color="text.secondary">
+                      Atributos
+                    </Typography>
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {selectedRow.atributos_resumen || '-'}
+                    </Typography>
+                  </Grid>
                 </Grid>
-              </Grid>
+              </Box>
+
+              {/* BLOQUE 2 — ALMACÉN Y STOCK */}
+              <Box
+                sx={{
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                  Información de stock en almacén
+                </Typography>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">
+                      Almacén
+                    </Typography>
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {selectedRow.almacen_nombre || '-'}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={6} sm={3}>
+                    <Typography variant="caption" color="text.secondary">
+                      Disponible
+                    </Typography>
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {selectedRow.cantidad_disponible ?? 0}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={6} sm={3}>
+                    <Typography variant="caption" color="text.secondary">
+                      Reservado
+                    </Typography>
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {selectedRow.cantidad_reservada ?? 0}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={6} sm={3}>
+                    <Typography variant="caption" color="text.secondary">
+                      Stock total
+                    </Typography>
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {selectedRow.stock_total ?? 0}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={6} sm={3}>
+                    <Typography variant="caption" color="text.secondary">
+                      Stock mínimo
+                    </Typography>
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {selectedRow.stock_minimo ?? 0}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* BLOQUE 3 — ESTADO DESTACADO */}
+              <Box
+                sx={{
+                  p: 2,
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  textAlign: 'center',
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Estado actual del stock
+                </Typography>
+
+                <Box sx={{ pt: 1 }}>
+                  <StatusChip
+                    label={formatStockStateLabel(
+                      getDerivedStockState(selectedRow)
+                    )}
+                    color={formatStockStateChipColor(
+                      getDerivedStockState(selectedRow)
+                    )}
+                  />
+                </Box>
+              </Box>
+
             </Box>
           )}
         </DialogContent>
 
         <DialogActions>
-          <Button
-            onClick={handleCloseAll}
-            variant="outlined"
-          >
+          <Button onClick={handleCloseAll} variant="outlined">
             Cerrar
           </Button>
         </DialogActions>
       </Dialog>
+          
 
+      {/* MODAL MOVIMIENTOS */}
       <Dialog
         open={movementsOpen}
         onClose={() => {
@@ -511,33 +651,169 @@ export const InventoryStockPage = () => {
           Movimientos
         </DialogTitle>
 
+
         <DialogContent>
           <ErrorMessage message={movementsError} />
 
+
           <Box sx={{ py: 1 }}>
+            {selectedRow && (
+              <Box
+                sx={{
+                  mb: 3,
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                }}
+              >
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="caption" color="text.secondary">
+                      Producto
+                    </Typography>
+
+
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {selectedRow.producto_nombre || '-'}
+                    </Typography>
+                  </Grid>
+
+
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="caption" color="text.secondary">
+                      Variante
+                    </Typography>
+
+
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {selectedRow.nombre_variante || '-'}
+                    </Typography>
+                  </Grid>
+
+
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="caption" color="text.secondary">
+                      Almacén
+                    </Typography>
+
+
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {selectedRow.almacen_nombre || '-'}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+
+
             {movementsLoading ? (
               <Typography>
                 Cargando...
               </Typography>
+            ) : (movementsData?.items ?? []).length === 0 ? (
+              <Typography>
+                No hay movimientos registrados.
+              </Typography>
             ) : (
               <Box
-                component="pre"
                 sx={{
-                  whiteSpace: 'pre-wrap',
-                  fontSize: 12,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
                 }}
               >
-                {JSON.stringify(
-                  movementsData?.items ??
-                    movementsData ??
-                    [],
-                  null,
-                  2
-                )}
+                {(movementsData?.items ?? []).map((mov) => (
+                  <Box
+                    key={mov.id}
+                    sx={{
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      p: 2,
+                    }}
+                  >
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="caption" color="text.secondary">
+                          Fecha
+                        </Typography>
+
+
+                        <Typography>
+                          {mov.created_at
+                            ? new Date(mov.created_at).toLocaleString()
+                            : '-'}
+                        </Typography>
+                      </Grid>
+
+
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="caption" color="text.secondary">
+                          Tipo
+                        </Typography>
+
+
+                        <Typography>
+                          {mov.tipo_movimiento || '-'}
+                        </Typography>
+                      </Grid>
+
+
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="caption" color="text.secondary">
+                          Cantidad
+                        </Typography>
+
+
+                        <Typography>
+                          {mov.cantidad ?? 0}
+                        </Typography>
+                      </Grid>
+
+
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="caption" color="text.secondary">
+                          Referencia
+                        </Typography>
+
+
+                        <Typography>
+                          {mov.referencia_tipo || '-'}
+                        </Typography>
+                      </Grid>
+
+
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="caption" color="text.secondary">
+                          Anulado
+                        </Typography>
+
+
+                        <Typography>
+                          {mov.anulado ? 'Sí' : 'No'}
+                        </Typography>
+                      </Grid>
+
+
+                      <Grid item xs={12}>
+                        <Typography variant="caption" color="text.secondary">
+                          Notas
+                        </Typography>
+
+
+                        <Typography>
+                          {mov.notas || '-'}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                ))}
               </Box>
             )}
           </Box>
         </DialogContent>
+
 
         <DialogActions>
           <Button
@@ -552,6 +828,8 @@ export const InventoryStockPage = () => {
         </DialogActions>
       </Dialog>
 
+
+      {/* MODAL AJUSTAR */}
       <Dialog
         open={adjustOpen}
         onClose={handleCloseAll}
@@ -563,8 +841,10 @@ export const InventoryStockPage = () => {
           Ajustar stock
         </DialogTitle>
 
+
         <DialogContent>
           <ErrorMessage message={adjustError} />
+
 
           <Box
             sx={{
@@ -584,6 +864,7 @@ export const InventoryStockPage = () => {
               fullWidth
             />
 
+
             <TextField
               label="Notas (opcional)"
               value={notas}
@@ -595,6 +876,7 @@ export const InventoryStockPage = () => {
           </Box>
         </DialogContent>
 
+
         <DialogActions>
           <Button
             onClick={handleCloseAll}
@@ -604,13 +886,16 @@ export const InventoryStockPage = () => {
             Cancelar
           </Button>
 
+
           <Button
             variant="contained"
             disabled={adjustLoading}
             onClick={async () => {
               if (!selectedRow) return;
 
+
               const cantidad = Number(nuevoStockFinal);
+
 
               await adjust({
                 varianteId: selectedRow.variante_id,
@@ -622,6 +907,7 @@ export const InventoryStockPage = () => {
                 referenciaId: null,
               });
 
+
               handleCloseAll();
             }}
           >
@@ -632,3 +918,4 @@ export const InventoryStockPage = () => {
     </Container>
   );
 };
+
