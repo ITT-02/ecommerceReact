@@ -19,23 +19,34 @@ export const initialRegisterFormData = {
   email: '',
   password: '',
   confirmPassword: '',
-  
+  tipo_documento: '',
+  documento_identidad: '',
 };
 
-export const registerFormToAuthPayload = (formData) => ({
-  email: formData.email.trim().toLowerCase(),
-  password: formData.password,
-  data: {
-    nombres: formData.nombres.trim(),
-    apellidos: formData.apellidos.trim(),
-    telefono: formData.telefono.trim() || null,
-  },
-});
+export const registerFormToAuthPayload = (formData) => {
+    const nombres = formData.nombres?.trim() || '';
+    const apellidos = formData.apellidos?.trim() || '';
+    const nombreCompleto = `${nombres} ${apellidos}`.trim();
+
+    return {
+      email: formData.email?.trim(),
+      password: formData.password,
+      data: {
+        nombres,
+        apellidos,
+        nombre_completo: nombreCompleto,
+        telefono: formData.telefono?.trim() || null,
+        tipo_documento: formData.tipo_documento || null,
+        documento_identidad: formData.documento_identidad?.trim() || null,
+      },
+    };
+  };
 
 export const validateRegisterForm = (formData) => {
-  if (!formData.nombres.trim()) return 'Ingresa tus nombres.';
-  if (!formData.apellidos.trim()) return 'Ingresa tus apellidos.';
-  if (!formData.email.trim()) return 'Ingresa tu correo electrónico.';
+  if (!formData.nombres?.trim()) return 'Ingresa tus nombres.';
+  if (!formData.apellidos?.trim()) return 'Ingresa tus apellidos.';
+  if (!formData.email?.trim()) return 'Ingresa tu correo electrónico.';
+  if (!formData.password) return 'Ingresa una contraseña.';
   if (formData.password.length < 8) return 'La contraseña debe tener mínimo 8 caracteres.';
   if (formData.password !== formData.confirmPassword) return 'Las contraseñas no coinciden.';
   return null;
