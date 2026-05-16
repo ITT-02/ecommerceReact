@@ -183,14 +183,14 @@ export const CategoryModal = ({
                         <Grid item xs={6} size={12}>
                             <Typography sx={labelStyle}>Imagen de categoría</Typography>
                             <FileUploadField 
-                                label="Seleccionar imagen"
+                                label="Seleccionar imagen de categoría"
                                 accept="image/*"
                                 value={formData._file}
                                 previewUrl={formData.imagen_url}
                                 onChange={handleImageChange}
                                 onRemove={handleImageRemove}
-                                helperText="PNG, JPG, JPEG (máx. 5MB)"
-                                height={150}
+                                helperText="Selecciona un archivo PNG, JPG, JPEG (máx. 5MB)"
+                                height={180}
                             />
                         </Grid>
                         

@@ -51,7 +51,9 @@ export const uploadFile = async ({ bucket, folder, file }) => {
   if (!file) return null;
 
   const path = buildFilePath({ folder, file });
-
+  console.log(file.type);
+  console.log(path);
+  console.log("SUBIENDO A:", { bucket, folder, path });
   await storageApi.post(`/object/${bucket}/${path}`, file, {
     headers: {
       // Indica el tipo real del archivo: image/png, video/mp4, application/pdf, etc.
