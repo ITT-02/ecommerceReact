@@ -1,6 +1,9 @@
 // Servicio para categorías y subcategorías.
 
 import { restApi } from '../../api/restApi';
+import { deleteFile } from '../filesService';
+
+const CATEGORY_BUCKET = 'category-images';
 
 export const getCategories = async () => {
   const response = await restApi.get('/categorias', {
@@ -55,11 +58,18 @@ export const updateCategory = async (id, category) => {
   return response.data[0] || null;
 };
 
-export const deleteCategory = async (id) => {
+export const deleteCategory = async (category) => {
   const response = await restApi.delete('/categorias', {
-    params: { id: `eq.${id}`, select: '*' },
+    params: { id: `eq.${category.id}`, select: '*' },
     headers: { Prefer: 'return=representation' },
   });
+
+   if (category.imagen_path) {
+    await deleteFile({
+      bucket: CATEGORY_BUCKET,
+      path: category.imagen_path,
+    });
+  }
 
   return response.data[0] || null;
 };

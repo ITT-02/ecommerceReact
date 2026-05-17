@@ -112,10 +112,10 @@ export const CategoriesPage = () => {
         }
     };
 
-    const handleDeleteCategory = async (categoryId) => {
+    const handleDeleteCategory = async (category) => {
         setIsLoading(true);
         try {
-            await deleteCategory(categoryId);
+            await deleteCategory(category);
             handleCloseEdit();
         } catch (error) {
             console.error('Error eliminando categoría:', error);
@@ -132,7 +132,7 @@ export const CategoriesPage = () => {
     const handleConfirmDelete = async () => {
         if (!categoryToDelete) return;
         setConfirmDeleteOpen(false);
-        await handleDeleteCategory(categoryToDelete.id);
+        await handleDeleteCategory(categoryToDelete);
         setCategoryToDelete(null);
     };
 
@@ -147,7 +147,18 @@ export const CategoriesPage = () => {
                 <AdminResourceTable
                     rows={displayRows}
                     columns={[
-                        { field: 'orden_visual', headerName: 'Orden' },
+                        {
+                            field: 'orden_visual',
+                            headerName: 'Orden',
+                            width: 70,
+                        },
+                        {
+                            field: 'imagen_url',
+                            headerName: 'Imagen',
+                            type: 'image',
+                            imageSize: 48,
+                            width: 90,
+                        },
                         { 
                             field: 'nombre', 
                             headerName: 'Nombre',
@@ -163,7 +174,7 @@ export const CategoriesPage = () => {
                                         <IconButton 
                                             size="small" 
                                             onClick={() => handleToggleExpand(row)}
-                                            sx={{ p: 0.5, color: '#333' }}
+                                            sx={{ p: 0.5, color: 'primary' }}
                                         >
                                             {expandedIds.has(row.id) ? (
                                                 <KeyboardArrowUpIcon fontSize="small" /> 
@@ -175,15 +186,14 @@ export const CategoriesPage = () => {
 
                                     {/* SÍMBOLO SOLO PARA HIJOS */}
                                     {row.isSubcategory && (
-                                        <Typography sx={{ color: '#aaa', fontSize: '0.8rem', mr: 1 }}>
+                                        <Typography sx={{ color: 'primary', fontSize: '0.8rem', mr: 1 }}>
                                             └─
                                         </Typography>
                                     )}
 
                                     <Typography sx={{ 
                                         fontWeight: row.isSubcategory ? 400 : 700, 
-                                        fontSize: '0.9rem',
-                                        color: '#333'
+                                        fontSize: '0.9rem'
                                     }}>
                                         {row.nombre}
                                     </Typography>

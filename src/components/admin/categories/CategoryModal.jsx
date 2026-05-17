@@ -20,7 +20,8 @@ const modalStyle = {
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: 650,
+    width: 'calc(100% - 32px)',
+    maxwidth: 'md',
     maxHeight: '90vh',
     overflowY: 'auto',
     bgcolor: 'background.paper',
@@ -133,7 +134,7 @@ export const CategoryModal = ({
 
     return (
         <>
-            <Modal open={open} onClose={onClose} >
+            <Modal open={open} onClose={onClose}  >
                 <Box sx={modalStyle} scroll="paper">
                     {/* Cabecera */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -147,7 +148,7 @@ export const CategoryModal = ({
 
                     <Grid container spacing={2}>
                         {/* Nombre */}
-                        <Grid item xs={12} size={12}>
+                        <Grid item xs={12} size={{xs: 12, sm: 12}}>
                             <Typography sx={labelStyle}>Nombre</Typography>
                             <TextField 
                                 sx={{ width: '50%', bgcolor: 'primaryDark' }} 
@@ -157,7 +158,7 @@ export const CategoryModal = ({
                         </Grid>
 
                         {/* Descripción */}
-                        <Grid item xs={12} size={12}>
+                        <Grid item xs={12} size={{xs: 12, sm: 12}}>
                             <Typography sx={labelStyle}>Descripción</Typography>
                             <TextField 
                                 fullWidth 
@@ -170,7 +171,7 @@ export const CategoryModal = ({
                         </Grid>
 
                         {/* Imagen */}
-                        <Grid item xs={6} size={12}>
+                        <Grid item xs={6} size={{xs: 12, sm: 12}}>
                             <Typography sx={labelStyle}>Imagen de categoría</Typography>
                             <FileUploadField 
                                 label="Seleccionar imagen de categoría"
@@ -185,7 +186,7 @@ export const CategoryModal = ({
                         </Grid>
                         
                         {/* Orden Visual */}
-                        <Grid item xs={6} size={6}>
+                        <Grid item xs={6} size={{xs: 12, sm: 6}}>
                             <Typography sx={labelStyle}>Orden Visual</Typography>
                             <TextField 
                                 fullWidth 
@@ -208,7 +209,7 @@ export const CategoryModal = ({
 
                         {/* Color */}
                         <Grid container item xs={12} size={12} spacing={2} sx={{ mt: 1}}>
-                            <Grid item xs={12} size={6}>
+                            <Grid item xs={12} size={{xs: 12, sm: 6}}>
                                 <Typography sx={labelStyle}>Color</Typography>
                                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
                                     <TextField

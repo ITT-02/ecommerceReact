@@ -1,6 +1,6 @@
 import { uploadFile } from '../services/filesService';
 
-const CATEGORIES_BUCKET = 'categorias';
+const CATEGORIES_BUCKET = 'category-images';
 const CATEGORIES_FOLDER = 'images';
 
 /**
