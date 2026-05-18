@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
-import { MovementForm } from './components/MovementForm';
-import { CancelMovementDialog } from './components/CancelMovementDialog';
-import { MovementDetailDialog } from './components/MovementDetailDialog';
+import { MovementForm } from './componentsMovements/MovementForm';
+import { CancelMovementDialog } from './componentsMovements/CancelMovementDialog';
+import { MovementDetailDialog } from './componentsMovements/MovementDetailDialog';
 // Ajusta las rutas de los imports según tu estructura
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { useInventoryMovements } from '../../../hooks/inventory/useInventoryMovements';
@@ -87,12 +85,12 @@ export const MovementsPage = () => {
     // ---> Acciones de la tabla y Filtros disponibles
     const rowActions = [
         { 
-            icon: <VisibilityOutlinedIcon color="info" />,  // "info" te dará un azul claro muy visible e intuitivo para leer / ver
-            label: 'Ver detalle', 
+            type: 'view',
+            label: 'Ver detalle',
             onClick: (row) => setMovimientoDetalle(row)
         },
         { 
-            icon: <BlockOutlinedIcon color="error" />, // "error" te dará el color rojo de alerta
+            type:'cancel', 
             label: 'Anular', 
             disabled: (row) => row.anulado || row.referencia_tipo === 'anulacion',
             onClick: (row) => setMovimientoAnular(row) 

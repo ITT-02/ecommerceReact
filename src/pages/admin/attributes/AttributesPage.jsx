@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import {
   Box, IconButton, Typography, Switch, Stack, Chip, Dialog, DialogContent, DialogTitle, useTheme, alpha, useMediaQuery
 } from '@mui/material';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted'; 
 import LayersIcon from '@mui/icons-material/Layers';
 import CloseIcon from '@mui/icons-material/Close';
@@ -195,13 +193,12 @@ export const AttributesPage = () => {
       onClick: (row) => handleOpenValores(row) 
     },
     { 
-      icon: <EditOutlinedIcon color="success" />, // Verde
+      type: 'edit', 
       label: 'Editar', 
       onClick: (row) => handleOpenModal(row) 
     },
     { 
       type: 'delete', 
-      icon: <DeleteOutlineIcon color="error" />, // Rojo
       label: 'Eliminar', 
       onClick: (row) => setAtributoEliminar(row) 
     }
