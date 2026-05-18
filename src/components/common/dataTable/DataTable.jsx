@@ -120,10 +120,20 @@ const TableActionButton = ({ action, row }) => {
   return (
     <Tooltip title={action.label}>
       <span>
-        <IconButton
+       <IconButton
           size="small"
           disabled={action.disabled?.(row)}
-          onClick={() => action.onClick?.(row)}
+          onMouseDown={(e) => {
+            // Evita que el botón conserve el foco antes de abrir un Dialog.
+            e.preventDefault();
+          }}
+          onClick={(e) => {
+            // Quita el foco del botón antes de ejecutar la acción.
+            e.currentTarget.blur();
+            document.activeElement?.blur();
+
+            action.onClick?.(row);
+          }}
           aria-label={action.label}
           sx={{
             width: 30,
