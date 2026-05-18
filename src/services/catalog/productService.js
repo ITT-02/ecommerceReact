@@ -14,6 +14,21 @@ export const getProducts = async () => {
   return response.data;
 };
 
+export const getProductOptions = async (search = '') => {
+  const params = {
+    select: 'id,nombre',
+    es_activo: 'eq.true',
+    order: 'nombre.asc',
+  };
+
+  if (search) {
+    params.nombre = `ilike.*${search}*`;
+  }
+
+  const response = await restApi.get('/productos', { params });
+  return response.data;
+};
+
 export const getProductById = async (id) => {
   const response = await restApi.get('/productos', {
     params: {

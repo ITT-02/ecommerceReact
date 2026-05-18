@@ -1,17 +1,76 @@
 // Hook para variantes de producto.
 
-import { useQuery } from '@tanstack/react-query';
-import { getVariants } from '../services/variantService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  getVariants, 
+  getVariantAttributeOptions, 
+  createVariant, 
+  updateVariant, 
+  deactivateVariant, 
+  deleteVariant 
+} from '../../services/catalog/variantService';
 
-export const useVariants = (productId = null) => {
-  const variantsQuery = useQuery({
-    queryKey: ['variants', productId],
-    queryFn: () => getVariants(productId),
+export const useVariants = ({ page = 1, limit = 10, search = '', productId = null, isActive = null } = {}) => {
+  const queryClient = useQueryClient();
+  const queryKey = ['variants', { page, limit, search, productId, isActive }];
+
+  const { data, isLoading, error } = useQuery({
+    queryKey,
+    queryFn: () => getVariants({ page, limit, search, productId, isActive }),
+  });
+
+  // Intentamos extraer los totales y las variantes desde la estructura que devuelve el RPC
+  const variantsArray = data?.items ?? data?.variantes ?? data?.data ?? (Array.isArray(data) ? data : []);
+  const totalCount = data?.totalCount ?? data?.[0]?.total_records ?? data?.total_records ?? (Array.isArray(variantsArray) ? variantsArray.length : 0);
+  const pagesCount = data?.totalPages ?? data?.[0]?.total_pages ?? data?.total_pages ?? 1;
+
+  const saveMutation = useMutation({
+    mutationFn: ({ payload, id }) => {
+      if (id) {
+        return updateVariant(id, payload);
+      }
+      return createVariant(payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['variants'] });
+    },
+  });
+
+  const deactivateMutation = useMutation({
+    mutationFn: (id) => deactivateVariant(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['variants'] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteVariant(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['variants'] });
+    },
   });
 
   return {
-    variants: variantsQuery.data ?? [],
-    loading: variantsQuery.isLoading,
-    error: variantsQuery.error?.message ?? null,
+    variants: Array.isArray(variantsArray) ? variantsArray : [],
+    totalRecords: totalCount,
+    totalPages: pagesCount,
+    loading: isLoading,
+    error: error?.message ?? null,
+    saveVariant: (payload, id) => saveMutation.mutateAsync({ payload, id }),
+    deactivateVariant: (id) => deactivateMutation.mutateAsync(id),
+    removeVariant: (id) => deleteMutation.mutateAsync(id),
+  };
+};
+
+export const useVariantAttributes = () => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['variantAttributes'],
+    queryFn: getVariantAttributeOptions,
+  });
+
+  return {
+    attributes: data ?? [],
+    loading: isLoading,
+    error: error?.message ?? null,
   };
 };

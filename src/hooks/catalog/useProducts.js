@@ -1,7 +1,7 @@
 // Hook para productos base.
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createProduct, deleteProduct, getProducts, updateProduct } from '../services/productService';
+import { createProduct, deleteProduct, getProducts, updateProduct, getProductOptions } from '../../services/catalog/productService';
 
 export const useProducts = () => {
   const queryClient = useQueryClient();
@@ -35,5 +35,18 @@ export const useProducts = () => {
       await deleteMutation.mutateAsync(id);
       return true;
     },
+  };
+};
+
+export const useProductOptions = (search = '') => {
+  const query = useQuery({
+    queryKey: ['productOptions', search],
+    queryFn: () => getProductOptions(search),
+    keepPreviousData: true,
+  });
+
+  return {
+    productOptions: query.data ?? [],
+    loading: query.isLoading,
   };
 };

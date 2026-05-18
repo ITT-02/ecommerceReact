@@ -1,7 +1,10 @@
 // Adapta respuestas y formularios de autenticación entre React y la API externa.
 
 export const authResponseToSession = (data) => {
-  const expiresAt = data.expires_at || Math.floor(Date.now() / 1000) + Number(data.expires_in || 3600);
+  // Calculamos la expiración relativa a la hora del CLIENTE para evitar 
+  // problemas de desincronización de relojes (clock skew) que causan loops infinitos.
+  const expiresIn = Number(data.expires_in || 3600);
+  const expiresAt = Math.floor(Date.now() / 1000) + expiresIn;
 
   return {
     accessToken: data.access_token,

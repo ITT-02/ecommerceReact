@@ -123,7 +123,13 @@ const TableActionButton = ({ action, row }) => {
         <IconButton
           size="small"
           disabled={action.disabled?.(row)}
-          onClick={() => action.onClick?.(row)}
+          onClick={(e) => {
+            // Evitar warning "Blocked aria-hidden" al abrir modales
+            if (e && e.currentTarget) {
+              e.currentTarget.blur();
+            }
+            action.onClick?.(row);
+          }}
           aria-label={action.label}
           sx={{
             width: 30,
@@ -393,6 +399,9 @@ const DataTablePaginationBar = ({
             onChange={(event) => {
                 onPageSizeChange?.(Number(event.target.value));
                 onPageChange?.(1);
+            }}
+            MenuProps={{
+              disablePortal: true,
             }}
             sx={{
                 height: 28,
