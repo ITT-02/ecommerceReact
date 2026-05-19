@@ -1,13 +1,20 @@
 // Hook para pedidos.
 
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getOrders } from '../../services/sales/orderService';
+import {
+  changeOrderStatus,
+  getOrderDetail,
+  getOrders,
+} from '../../services/sales/orderService';
+import { mapOrderStatusFormToPayload } from '../../adapters/orderAdapter';
 
 const ordersQueryKey = ['orders-admin'];
-const hoy = new Date();
-const year = hoy.getFullYear();
-const month = hoy.getMonth();
+
+const getErrorMessage = (error) =>
+  error?.response?.data?.message ||
+  error?.response?.data?.error ||
+  error?.message ||
+  null;
 
 export const useOrders = ({
   pageNumber = 1,
@@ -15,22 +22,14 @@ export const useOrders = ({
   search = '',
   estadoPedido = null,
   estadoPago = null,
-  fechaInicio =  new Date(year,month,1).toISOString().split('T')[0],
-  fechaFin = new Date(year,month+1,0).toISOString().split('T')[0],
+  fechaInicio = null,
+  fechaFin = null,
 } = {}) => {
- //const queryClient = useQueryClient();
-const ordersQuery = useQuery({ queryKey: [
-  ... ordersQueryKey,
-  pageNumber,
-  pageSize,
-  search,
-  estadoPedido,
-  estadoPago,
-  fechaInicio,
-  fechaFin,
+  const queryClient = useQueryClient();
 
-  ], queryFn: () => getOrders(
-    {
+  const ordersQuery = useQuery({
+    queryKey: [
+      ...ordersQueryKey,
       pageNumber,
       pageSize,
       search,
@@ -38,12 +37,28 @@ const ordersQuery = useQuery({ queryKey: [
       estadoPago,
       fechaInicio,
       fechaFin,
-    }),
+    ],
+    queryFn: () =>
+      getOrders({
+        pageNumber,
+        pageSize,
+        search,
+        estadoPedido,
+        estadoPago,
+        fechaInicio,
+        fechaFin,
+      }),
+  });
+
+  const changeStatusMutation = useMutation({
+    mutationFn: (form) => changeOrderStatus(mapOrderStatusFormToPayload(form)),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ordersQueryKey }),
   });
 
   return {
-    orders: ordersQuery.data?.items?? [],
+    orders: ordersQuery.data?.items ?? [],
     loading: ordersQuery.isLoading,
+    fetching: ordersQuery.isFetching,
     pagination: {
       totalCount: ordersQuery.data?.totalCount ?? 0,
       pageNumber: ordersQuery.data?.pageNumber ?? pageNumber,
@@ -52,6 +67,12 @@ const ordersQuery = useQuery({ queryKey: [
       hasPreviousPage: ordersQuery.data?.hasPreviousPage ?? false,
       hasNextPage: ordersQuery.data?.hasNextPage ?? false,
     },
-    error: ordersQuery.error?.message ?? null,
+    error: getErrorMessage(ordersQuery.error) || getErrorMessage(changeStatusMutation.error),
+    changingStatus: changeStatusMutation.isPending,
+    getOrderDetail,
+    updateOrderStatus: async (form) => {
+      await changeStatusMutation.mutateAsync(form);
+      return true;
+    },
   };
 };
