@@ -62,3 +62,25 @@ export const deleteVariant = async (id) => {
   });
   return response.data[0] || null;
 };
+
+export const getProductOptions = async (search = '') => {
+  const params = {
+    select: 'id,nombre,slug,es_activo',
+    es_activo: 'eq.true',
+    order: 'nombre.asc',
+  };
+
+  if (search?.trim()) {
+    params.nombre = `ilike.*${search.trim()}*`;
+  }
+
+  const response = await restApi.get('/productos', { params });
+
+  return response.data.map((product) => ({
+    id: product.id,
+    value: product.id,
+    label: product.nombre,
+    nombre: product.nombre,
+    slug: product.slug,
+  }));
+};
