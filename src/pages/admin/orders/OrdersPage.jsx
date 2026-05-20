@@ -220,9 +220,21 @@ export const OrdersPage = () => {
   const columns = [
     {
       field: 'numero_pedido',
-      headerName: 'N. Pedido',
+      headerName: 'N° Pedido',
       width: 150,
-      emptyText: 'Sin numero',
+      emptyText: 'Sin número',
+      renderCell: (row) => (
+        <Typography
+          variant="caption"
+          sx={{
+            fontWeight: 700,
+            fontSize: '0.82rem',
+            color: 'text.primary',
+          }}
+        >
+          {row.numero_pedido || 'Sin número'}
+        </Typography>
+      ),
     },
     {
       field: 'nombre_cliente',

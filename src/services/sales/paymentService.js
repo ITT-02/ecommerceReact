@@ -50,3 +50,19 @@ export const getAdminRelatedOrder = async (pedidoId) => {
   });
   return response.data;
 };
+
+// 5.Lista los métodos de pago para opciones de filtro.
+
+export const getPaymentMethodOptions = async () => {
+  const response = await restApi.get('/metodos_pago', {
+    params: {
+      select: 'id,nombre,orden_visual,es_activo',
+      order: 'orden_visual.asc,nombre.asc',
+    },
+  });
+
+  return (response.data ?? []).map((method) => ({
+    label: method.nombre,
+    value: method.nombre?.trim(),
+  }));
+};

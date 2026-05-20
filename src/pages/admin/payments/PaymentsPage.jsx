@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 
 // Componentes comunes
@@ -11,18 +9,23 @@ import { ChangePaymentStatusDialog } from './components/ChangePaymentStatusDialo
 import { PaymentDetailDialog } from './components/PaymentDetailDialog';
 import { RelatedOrderDialog } from './components/RelatedOrderDialog';
 // El hook que acabamos de crear
-import { useAdminPayments } from '../../../hooks/sales/useAdminPayments';
+import { useAdminPayments, usePaymentMethodOptions } from '../../../hooks/sales/useAdminPayments';
+import {getTodayDateInputValue} from '../../../utils/formatters';
 
 export const PaymentsPage = () => {
     // 1. Estados para los parámetros de la API
     const [pageNumber, setPageNumber] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [search, setSearch] = useState('');
-    const [filterValues, setFilterValues] = useState({});
+    const [filterValues, setFilterValues] = useState({
+    fecha_fin: getTodayDateInputValue(),
+    });
 
     // 2. Extraer valores limpios de filtros
     const estadoPago = filterValues?.estado === 'todos' ? null : filterValues?.estado;
     const metodoPago = filterValues?.metodo_pago === 'todos' ? null : filterValues?.metodo_pago;
+    const fechaInicio = filterValues?.fecha_inicio || null;
+    const fechaFin = filterValues?.fecha_fin || null;
 
     // 3. Ejecutar el hook
     const { 
@@ -36,7 +39,9 @@ export const PaymentsPage = () => {
         pageSize,
         search,
         estado: estadoPago || null,
-        metodoPago: metodoPago || null
+        metodoPago: metodoPago || null,
+        fechaInicio,
+        fechaFin,
     });
 
     // 4. Estados para controlar apertura de modales (crearemos los modales después)
@@ -65,10 +70,21 @@ export const PaymentsPage = () => {
             hour: '2-digit', minute: '2-digit' 
         }).format(new Date(fechaStr));
     };
+    //Filtro metodos de pago
+    const {
+        data: paymentMethodOptions = [],
+        isLoading: isLoadingPaymentMethods,
+        } = usePaymentMethodOptions();
 
     // --- Configuración de DataTable ---
     const columns = [
-        { field: 'numero_pedido', headerName: 'N° Pedido', width: 130, renderCell: (row) => <Typography sx={{ fontWeight: 'bold' }}>{row.numero_pedido}</Typography> },
+        { field: 'numero_pedido', headerName: 'N° Pedido', width: 130, renderCell: (row) => 
+        <Typography variant="caption" sx={{
+        fontWeight: 700,
+        fontSize: '0.78rem',
+        color: 'text.primary',
+       }}>{row.numero_pedido}</Typography> },
+
         { field: 'nombre_cliente', headerName: 'Cliente', width: 220 },
         { field: 'metodo_pago', headerName: 'Método', width: 120, renderCell: (row) => <Typography sx={{ textTransform: 'capitalize' }}>{row.metodo_pago}</Typography> },
         { field: 'monto', headerName: 'Monto', width: 110, renderCell: (row) => <Typography sx={{ fontWeight: 'bold', color: 'primary.main' }}>{formatCurrency(row.monto)}</Typography> },
@@ -90,13 +106,12 @@ export const PaymentsPage = () => {
 
     const rowActions = [
         { 
-            icon: <VisibilityOutlinedIcon color="info" />,
+            type: 'view',
             label: 'Ver Detalle del Pago', 
             onClick: (row) => setPagoDetalle(row)
         },
         { 
             type: 'edit',
-            icon: <EditOutlinedIcon />, // color="success" está en DataTable para 'edit' por defecto
             label: 'Cambiar Estado', 
             onClick: (row) => setPagoCambiarEstado(row)
         },
@@ -108,30 +123,42 @@ export const PaymentsPage = () => {
     ];
 
     // Opciones sacadas del backend (apoyo.md)
-    const filtersConfig = [
-        { 
-            name: 'estado', 
-            label: 'Estado', 
-            type: 'select', 
-            options: [ 
-                { label: 'Pendientes', value: 'pendiente' }, 
-                { label: 'Aprobados', value: 'aprobado' },
-                { label: 'Rechazados', value: 'rechazado' }
-            ] 
+   const filtersConfig = useMemo(() => [
+        {
+            name: 'estado',
+            label: 'Estado',
+            type: 'select',
+            options: [
+            { label: 'Pendientes', value: 'pendiente' },
+            { label: 'Aprobados', value: 'aprobado' },
+            { label: 'Rechazados', value: 'rechazado' },
+            ],
         },
-        { 
-            name: 'metodo_pago', 
-            label: 'Método', 
-            type: 'select', 
-            options: [ 
-                { label: 'Yape', value: 'yape' }, 
-                { label: 'Plin', value: 'plin' },
-                { label: 'Transferencia', value: 'transferencia' },
-                { label: 'Efectivo', value: 'efectivo' },
-                { label: 'Tarjeta', value: 'tarjeta' }
-            ] 
-        }
-    ];
+        {
+            name: 'metodo_pago',
+            label: 'Método',
+            type: 'select',
+            options: paymentMethodOptions,
+        },
+        {
+            name: 'fecha_inicio',
+            label: 'Desde',
+            type: 'date',
+            width: 155,
+            maxDate: filterValues.fecha_fin || undefined,
+            disableFuture: true,
+        },
+        {
+            name: 'fecha_fin',
+            label: 'Hasta',
+            type: 'date',
+            width: 155,
+            minDate: filterValues.fecha_inicio || undefined,
+            disableFuture: true,
+        },
+        ], [ paymentMethodOptions,
+            filterValues.fecha_inicio,
+            filterValues.fecha_fin,]);
 
     return (
         <PlaceholderPage
@@ -142,7 +169,7 @@ export const PaymentsPage = () => {
                 rows={pagos}
                 columns={columns}
                 actions={rowActions}
-                loading={isLoading}
+                loading={isLoading || isLoadingPaymentMethods}
                 
                 pagination={pagination}
                 
@@ -153,7 +180,12 @@ export const PaymentsPage = () => {
                 filterValues={filterValues}
                 filters={filtersConfig}
                 onFilterChange={(name, val) => { setFilterValues(prev => ({...prev, [name]: val})); setPageNumber(1); }}
-                onResetFilters={() => { setFilterValues({}); setPageNumber(1); }}
+                onResetFilters={() => {
+                                setFilterValues({
+                                    fecha_fin: getTodayDateInputValue(),
+                                });
+                                setPageNumber(1);
+                                }}
                 
                 onPageChange={(page) => setPageNumber(page)} 
                 onPageSizeChange={(size) => { setPageSize(size); setPageNumber(1); }}

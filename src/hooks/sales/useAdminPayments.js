@@ -1,10 +1,10 @@
-// Ruta sugerida: src/hooks/sales/useAdminPayments.js
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   getAdminPayments, 
   changePaymentStatus, 
   getAdminPaymentDetail, 
-  getAdminRelatedOrder 
+  getAdminRelatedOrder,
+  getPaymentMethodOptions
 } from '../../services/sales/paymentService'; 
 
 export const useAdminPayments = (filters = {}) => {
@@ -63,5 +63,14 @@ export const useAdminRelatedOrder = (pedidoId) => {
     queryKey: ['admin-related-order', pedidoId],
     queryFn: () => getAdminRelatedOrder(pedidoId),
     enabled: !!pedidoId, 
+  });
+};
+
+// 5.Carga los métodos de pago para filtros.
+
+export const usePaymentMethodOptions = () => {
+  return useQuery({
+    queryKey: ['payment-method-options'],
+    queryFn: getPaymentMethodOptions,
   });
 };

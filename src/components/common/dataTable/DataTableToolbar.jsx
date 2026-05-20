@@ -20,6 +20,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { AppDatePicker } from '../AppDatePicker';
 
 export const DataTableToolbar = ({
   searchValue = '',
@@ -72,6 +73,23 @@ export const DataTableToolbar = ({
     const value = filterValues[filter.name] ?? '';
     const isSelect = filter.type === 'select';
 
+    if (filter.type === 'date') {
+      return (
+        <AppDatePicker
+          key={filter.name}
+          name={filter.name}
+          label={filter.label}
+          value={value}
+          width={filter.width ?? 155}
+          minDate={filter.minDate}
+          maxDate={filter.maxDate}
+          disableFuture={filter.disableFuture ?? false}
+          disablePast={filter.disablePast ?? false}
+          onChange={onFilterChange}
+        />
+      );
+    }
+
     return (
       <TextField
         key={filter.name}
@@ -99,7 +117,7 @@ export const DataTableToolbar = ({
             ),
           },
           inputLabel:
-            filter.type === 'date' || filter.type === 'color'
+            filter.type === 'color'
               ? { shrink: true }
               : undefined,
         }}
