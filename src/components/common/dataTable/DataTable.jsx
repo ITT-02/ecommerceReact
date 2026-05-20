@@ -32,11 +32,26 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'; // Para Detalle
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'; // Para Ver Movimientos
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'; // Para Detalle de Transacción
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
+
 /**
  * Obtiene el valor de una celda usando el nombre del campo.
  */
 const getCellValue = (row, field) => {
   return field ? row?.[field] : undefined;
+};
+
+/**
+ * Obtiene las acciones visibles para una fila.
+ */
+const getVisibleActions = (actions, row) => {
+  return actions.filter((action) => {
+    if (typeof action.visible === 'function') {
+      return action.visible(row);
+    }
+
+    return true;
+  });
 };
 
 /**
@@ -97,10 +112,11 @@ const TableActionButton = ({ action, row }) => {
     edit: <EditOutlinedIcon sx={{ fontSize: 17 }} />,
     deactivate: <HighlightOffOutlinedIcon sx={{ fontSize: 17 }} />,
     delete: <DeleteOutlinedIcon sx={{ fontSize: 17 }} />,
-    cancel: <BlockOutlinedIcon sx={{ fontSize: 17 }} />,      
-    info: <InfoOutlinedIcon sx={{ fontSize: 17 }} />,           
-    history: <HistoryOutlinedIcon sx={{ fontSize: 17 }} />,     
-    receipt: <ReceiptLongOutlinedIcon sx={{ fontSize: 17 }} />, 
+    cancel: <BlockOutlinedIcon sx={{ fontSize: 17 }} />,
+    info: <InfoOutlinedIcon sx={{ fontSize: 17 }} />,
+    history: <HistoryOutlinedIcon sx={{ fontSize: 17 }} />,
+    receipt: <ReceiptLongOutlinedIcon sx={{ fontSize: 17 }} />,
+    add: <AddCircleOutlineRoundedIcon sx={{ fontSize: 17 }} />,
   };
 
   const colorMap = {
@@ -111,7 +127,8 @@ const TableActionButton = ({ action, row }) => {
     cancel: theme.palette.warning.main,
     info: theme.palette.info.dark,   
     history: theme.palette.secondary.main,
-    receipt: theme.palette.text.secondary, 
+    receipt: theme.palette.text.secondary,
+    add: theme.palette.primary.main,
   };
 
   const actionColor =
@@ -123,7 +140,17 @@ const TableActionButton = ({ action, row }) => {
         <IconButton
           size="small"
           disabled={action.disabled?.(row)}
-          onClick={() => action.onClick?.(row)}
+          onMouseDown={(e) => {
+            // Evita que el botón conserve el foco antes de abrir un Dialog.
+            e.preventDefault();
+          }}
+          onClick={(e) => {
+            // Quita el foco del botón antes de ejecutar la acción.
+            e.currentTarget.blur();
+            document.activeElement?.blur();
+
+            action.onClick?.(row);
+          }}
           aria-label={action.label}
           sx={{
             width: 30,
@@ -369,91 +396,91 @@ const DataTablePaginationBar = ({
 
         {/* Selector compacto al extremo derecho */}
         <Box
-        sx={{
+          sx={{
             ml: 'auto',
             display: 'flex',
             alignItems: 'center',
             gap: 0.75,
             flexWrap: 'wrap',
-        }}
+          }}
         >
-        <Typography
+          <Typography
             variant="caption"
             sx={{
-            color: 'text.secondary',
-            fontWeight: 600,
+              color: 'text.secondary',
+              fontWeight: 600,
             }}
-        >
+          >
             Mostrar
-        </Typography>
+          </Typography>
 
-        <FormControl size="small">
+          <FormControl size="small">
             <Select
-            value={pageSize}
-            onChange={(event) => {
+              value={pageSize}
+              onChange={(event) => {
                 onPageSizeChange?.(Number(event.target.value));
                 onPageChange?.(1);
-            }}
-            sx={{
+              }}
+              sx={{
                 height: 28,
                 minWidth: 62,
                 fontSize: '0.78rem',
                 fontWeight: 700,
                 borderRadius: 1,
                 '& .MuiSelect-select': {
-                py: 0.35,
-                px: 1,
+                  py: 0.35,
+                  px: 1,
                 },
-            }}
+              }}
             >
-            {[5, 10, 20, 50].map((size) => (
+              {[5, 10, 20, 50].map((size) => (
                 <MenuItem key={size} value={size}>
-                {size}
+                  {size}
                 </MenuItem>
-            ))}
+              ))}
             </Select>
-        </FormControl>
+          </FormControl>
 
-        <Typography
+          <Typography
             variant="caption"
             sx={{
-            color: 'text.secondary',
-            fontWeight: 600,
+              color: 'text.secondary',
+              fontWeight: 600,
             }}
-        >
+          >
             registros
-        </Typography>
+          </Typography>
 
-        <Typography
+          <Typography
             variant="caption"
             sx={{
-            mx: 0.5,
-            color: 'divider',
-            fontWeight: 700,
+              mx: 0.5,
+              color: 'divider',
+              fontWeight: 700,
             }}
-        >
+          >
             |
-        </Typography>
+          </Typography>
 
-        <Typography
+          <Typography
             variant="caption"
             sx={{
-            color: 'text.secondary',
-            fontWeight: 600,
+              color: 'text.secondary',
+              fontWeight: 600,
             }}
-        >
+          >
             Total:
-        </Typography>
+          </Typography>
 
-        <Typography
-        variant="caption"
-        sx={{
-            fontWeight: 800,
-            color: 'primary.main',
-        }}
-        >
-        {totalCount}
-        </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 800,
+              color: 'primary.main',
+            }}
+          >
+            {totalCount}
+          </Typography>
         </Box>
       </Stack>
     </Box>
@@ -477,15 +504,26 @@ export const DataTable = ({
 }) => {
   const theme = useTheme();
   const hasActions = actions.length > 0;
+
+  // Cálculo dinámico: usa el máximo de acciones visibles por fila.
+  // Si no hay filas, toma la cantidad total de acciones configuradas.
+  const maxVisibleActions = rows.length
+    ? Math.max(
+        ...rows.map((row) => getVisibleActions(actions, row).length),
+        0
+      )
+    : actions.length;
+
   // Cálculo dinámico: 38px por cada botón + un margen de seguridad
-const dynamicActionWidth = hasActions ? (actions.length * 38) + 20 : 0;
+  const dynamicActionWidth = hasActions
+    ? Math.max((maxVisibleActions * 38) + 20, 72)
+    : 0;
 
   const headerBackground =
     theme.palette.mode === 'dark'
       ? theme.palette.primary.dark
       : theme.palette.primary.light;
 
-  const actionColumnWidth = 96;
 
   return (
     <Paper
@@ -541,9 +579,9 @@ const dynamicActionWidth = hasActions ? (actions.length * 38) + 20 : 0;
                 <TableCell
                   align="center"
                   sx={{
-                    width: dynamicActionWidth, 
-                    minWidth: dynamicActionWidth, 
-                    maxWidth: dynamicActionWidth,   
+                    width: dynamicActionWidth,
+                    minWidth: dynamicActionWidth,
+                    maxWidth: dynamicActionWidth,
                     position: 'sticky',
                     top: 0,
                     right: 0,
@@ -588,66 +626,70 @@ const dynamicActionWidth = hasActions ? (actions.length * 38) + 20 : 0;
               </TableRow>
             )}
 
-            {rows.map((row) => (
-              <TableRow key={row.id} hover>
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.field ?? column.id}
-                    align={column.align ?? 'left'}
-                    sx={{
-                      width: column.width ?? 180,
-                      minWidth: column.minWidth ?? column.width ?? 160,
-                      maxWidth: column.maxWidth ?? column.width ?? 260,
-                      verticalAlign: 'top',
-                      py: 1.2,
-                    }}
-                  >
-                    {renderCellContent({ row, column })}
-                  </TableCell>
-                ))}
+            {rows.map((row) => {
+              const visibleActions = getVisibleActions(actions, row);
 
-                {hasActions && (
-                  <TableCell
-                    align="center"
-                    sx={{
-                    width: dynamicActionWidth, 
-                    minWidth: dynamicActionWidth, 
-                    maxWidth: dynamicActionWidth, 
-                      position: 'sticky',
-                      right: 0,
-                      zIndex: 3,
-                      p: 0.75,
-                      textAlign: 'center',
-                      verticalAlign: 'middle',
-                      backgroundColor: theme.palette.background.paper,
-                      backgroundImage: 'none',
-                      borderLeft: `1px solid ${theme.palette.divider}`,
-                      boxShadow: '-8px 0 12px -10px rgba(0,0,0,0.22)',
-                      backgroundClip: 'padding-box',
-                    }}
-                  >
-                    <Stack
-                      direction="row"
-                      spacing={0.5}
+              return (
+                <TableRow key={row.id} hover>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.field ?? column.id}
+                      align={column.align ?? 'left'}
                       sx={{
-                        width: '100%',
-                        mx: 'auto',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        width: column.width ?? 180,
+                        minWidth: column.minWidth ?? column.width ?? 160,
+                        maxWidth: column.maxWidth ?? column.width ?? 260,
+                        verticalAlign: 'top',
+                        py: 1.2,
                       }}
                     >
-                      {actions.map((action) => (
-                        <TableActionButton
-                          key={action.type ?? action.label}
-                          action={action}
-                          row={row}
-                        />
-                      ))}
-                    </Stack>
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
+                      {renderCellContent({ row, column })}
+                    </TableCell>
+                  ))}
+
+                  {hasActions && (
+                    <TableCell
+                      align="center"
+                      sx={{
+                        width: dynamicActionWidth,
+                        minWidth: dynamicActionWidth,
+                        maxWidth: dynamicActionWidth,
+                        position: 'sticky',
+                        right: 0,
+                        zIndex: 3,
+                        p: 0.75,
+                        textAlign: 'center',
+                        verticalAlign: 'middle',
+                        backgroundColor: theme.palette.background.paper,
+                        backgroundImage: 'none',
+                        borderLeft: `1px solid ${theme.palette.divider}`,
+                        boxShadow: '-8px 0 12px -10px rgba(0,0,0,0.22)',
+                        backgroundClip: 'padding-box',
+                      }}
+                    >
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{
+                          width: '100%',
+                          mx: 'auto',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {visibleActions.map((action) => (
+                          <TableActionButton
+                            key={action.type ?? action.label}
+                            action={action}
+                            row={row}
+                          />
+                        ))}
+                      </Stack>
+                    </TableCell>
+                  )}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>

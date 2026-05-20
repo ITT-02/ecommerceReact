@@ -1,6 +1,6 @@
 // Pagina administrativa: Pedidos.
 
-import { useState } from 'react';
+import { isValidElement, useState } from 'react';
 import {
   Alert,
   Box,
@@ -83,7 +83,11 @@ const InfoLine = ({ label, value }) => (
     <Typography variant="caption" color="text.secondary" fontWeight={700}>
       {label}
     </Typography>
-    <Typography variant="body2">{value ?? '-'}</Typography>
+    {isValidElement(value) ? (
+      <Box>{value}</Box>
+    ) : (
+      <Typography variant="body2">{value ?? '-'}</Typography>
+    )}
   </Stack>
 );
 
@@ -102,7 +106,6 @@ export const OrdersPage = () => {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState(initialFilters);
   const [pageNotice, setPageNotice] = useState('');
-  const [detailLoading, setDetailLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [paymentsOpen, setPaymentsOpen] = useState(false);
@@ -154,7 +157,6 @@ export const OrdersPage = () => {
   };
 
   const loadOrderDetail = async (order) => {
-    setDetailLoading(true);
     setFormError('');
 
     try {
@@ -164,8 +166,6 @@ export const OrdersPage = () => {
     } catch (err) {
       setFormError(err?.response?.data?.message || err.message);
       return null;
-    } finally {
-      setDetailLoading(false);
     }
   };
 
@@ -325,19 +325,17 @@ export const OrdersPage = () => {
     {
       type: 'view',
       label: 'Ver detalle',
-      disabled: () => detailLoading,
       onClick: handleViewDetail,
     },
     {
       type: 'edit',
       label: 'Cambiar estado',
-      disabled: (order) => detailLoading || order.estado_pedido === 'cancelado',
+      disabled: (order) => order.estado_pedido === 'cancelado',
       onClick: handleOpenStatus,
     },
     {
       type: 'receipt',
       label: 'Ver pagos',
-      disabled: () => detailLoading,
       onClick: handleViewPayments,
     },
   ];
@@ -363,7 +361,7 @@ export const OrdersPage = () => {
             rows={orders}
             columns={columns}
             actions={actions}
-            loading={loading || fetching || detailLoading}
+            loading={loading || fetching}
             pagination={pagination}
             searchValue={search}
             searchLabel="Buscar pedido"
