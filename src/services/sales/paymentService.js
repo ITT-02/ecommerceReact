@@ -1,38 +1,52 @@
-// Servicio para pagos y comprobantes.
-
+// Ruta sugerida: src/services/sales/paymentService.js
 import { restApi } from '../../api/restApi';
 
-export const getPayments = async () => {
-  const response = await restApi.get('/pagos', {
-    params: {
-      select: '*,pedidos(numero_pedido,total,estado_pedido,estado_pago)',
-      order: 'created_at.desc',
-    },
-  });
-  return response.data;
-};
-
-export const registerOrderPayment = async ({ pedidoId, metodoPago, monto, urlComprobante, referenciaTransaccion }) => {
-  const response = await restApi.post('/rpc/registrar_pago_pedido', {
-    p_pedido_id: pedidoId,
+// 1. Listar pagos paginados
+export const getAdminPayments = async ({
+  pageNumber = 1,
+  pageSize = 10,
+  search = '',
+  estado = null,
+  metodoPago = null,
+  pedidoId = null,
+  fechaInicio = null,
+  fechaFin = null
+}) => {
+  const response = await restApi.post('/rpc/listar_pagos_admin_paginado', {
+    p_page_number: pageNumber,
+    p_page_size: pageSize,
+    p_search: search || null,
+    p_estado: estado,
     p_metodo_pago: metodoPago,
-    p_monto: monto,
-    p_url_comprobante: urlComprobante || null,
-    p_referencia_transaccion: referenciaTransaccion || null,
+    p_pedido_id: pedidoId,
+    p_fecha_inicio: fechaInicio,
+    p_fecha_fin: fechaFin
   });
   return response.data;
 };
 
-export const updatePaymentStatus = async (paymentId, estado) => {
-  const payload = {
-    estado,
-    pagado_at: estado === 'aprobado' ? new Date().toISOString() : null,
-  };
-
-  const response = await restApi.patch('/pagos', payload, {
-    params: { id: `eq.${paymentId}`, select: '*' },
-    headers: { Prefer: 'return=representation' },
+// 2. Obtener detalle de pago e historial
+export const getAdminPaymentDetail = async (pagoId) => {
+  const response = await restApi.post('/rpc/obtener_pago_admin_detalle', {
+    p_pago_id: pagoId
   });
+  return response.data;
+};
 
-  return response.data[0] || null;
+// 3. Cambiar el estado del pago
+export const changePaymentStatus = async ({ pagoId, estadoNuevo, comentario }) => {
+  const response = await restApi.post('/rpc/cambiar_estado_pago_admin', {
+    p_pago_id: pagoId,
+    p_estado_nuevo: estadoNuevo,
+    p_comentario: comentario || null
+  });
+  return response.data;
+};
+
+// 4. Obtener detalle del pedido relacionado
+export const getAdminRelatedOrder = async (pedidoId) => {
+  const response = await restApi.post('/rpc/obtener_pedido_admin_detalle', {
+    p_pedido_id: pedidoId
+  });
+  return response.data;
 };
