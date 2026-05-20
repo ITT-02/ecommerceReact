@@ -1,31 +1,82 @@
-// Servicio para stock e inventario.
-
 import { restApi } from '../../api/restApi';
 
-export const getInventory = async () => {
-  const response = await restApi.get('/inventario', {
+/**
+ * Obtiene la lista de almacenes activos ordenados por nombre.
+ */
+export const getActivesWarehouses = async () => {
+  const response = await restApi.get('/almacenes', {
     params: {
-      select: '*,producto_variantes(*,productos(id,nombre)),almacenes(id,nombre,codigo)',
-      order: 'updated_at.desc',
+      select: 'id,nombre',
+      es_activo: 'eq.true',
+      order: 'nombre.asc',
     },
   });
-  return response.data;
+  return response.data || [];
 };
 
-export const getStockAlerts = async () => {
-  const response = await restApi.get('/vw_alertas_stock', {
-    params: { select: '*', order: 'producto_nombre.asc' },
+/**
+ * Lista el inventario general de manera paginado con filtros.
+ */
+export const listarInventarioPaginado = async ({
+  pageNumber,
+  pageSize,
+  search,
+  almacenId,
+  stockBajo,
+} = {}) => {
+  const response = await restApi.post('/rpc/listar_inventario_paginado', {
+    p_page_number: pageNumber,
+    p_page_size: pageSize,
+    p_search: search,
+    p_almacen_id: almacenId || null,
+    p_stock_bajo: stockBajo === null || stockBajo === '' 
+      ? null 
+      : (stockBajo === true || stockBajo === 'true'),
   });
+
   return response.data;
 };
 
-export const registerInventoryMovement = async ({ varianteId, almacenId, tipoMovimiento, cantidad, notas }) => {
+/**
+ * Lista el historial de movimientos de inventario de forma paginada.
+ */
+export const listarMovimientosInventarioPaginado = async ({
+  varianteId,
+  almacenId,
+  pageNumber = 1,
+  pageSize = 10,
+} = {}) => {
+  const response = await restApi.post('/rpc/listar_movimientos_inventario_paginado', {
+    p_variante_id: varianteId,
+    p_almacen_id: almacenId,
+    p_page_number: pageNumber,
+    p_page_size: pageSize,
+    p_search: '',
+    p_tipo_movimiento: null,
+  });
+
+  return response.data;
+};
+
+/**
+ * Registra un ajuste manual forzando el tipo a 'ajuste'.
+ */
+export const registrarAjusteStock = async ({
+  varianteId,
+  almacenId,
+  nuevoStockFinal,
+  referenciaTipo,
+  notas,
+} = {}) => {
   const response = await restApi.post('/rpc/registrar_movimiento_inventario', {
     p_variante_id: varianteId,
     p_almacen_id: almacenId,
-    p_tipo_movimiento: tipoMovimiento,
-    p_cantidad: cantidad,
+    p_tipo_movimiento: 'ajuste',
+    p_cantidad: Number(nuevoStockFinal),
     p_notas: notas || null,
+    p_referencia_tipo: referenciaTipo || 'conteo_fisico',
+    p_referencia_id: null,
   });
+
   return response.data;
 };
