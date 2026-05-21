@@ -38,12 +38,13 @@ import {
   getOrderStatusLabel,
   getPaymentStatusLabel,
 } from '../../../adapters/orderAdapter';
+import {getTodayDateInputValue} from '../../../utils/formatters';
 
 const initialFilters = {
   estadoPedido: '',
   estadoPago: '',
   fechaInicio: '',
-  fechaFin: '',
+  fechaFin: getTodayDateInputValue(),
 };
 
 const initialStatusForm = {
@@ -324,12 +325,16 @@ export const OrdersPage = () => {
       label: 'Desde',
       type: 'date',
       width: 155,
+      maxDate: filters.fechaFin || undefined, // Evita que "Desde" sea mayor que "Hasta"
+      disableFuture: true,
     },
     {
       name: 'fechaFin',
       label: 'Hasta',
       type: 'date',
       width: 155,
+      minDate: filters.fechaInicio || undefined, // Evita que "Hasta" sea menor que "Desde"
+      disableFuture: true,                    // Bloquea fechas futuras
     },
   ];
 
