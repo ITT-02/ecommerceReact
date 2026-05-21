@@ -28,6 +28,11 @@ export const usePromotions = ({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['promotions'] }),
   });
 
+  const deleteMutation = useMutation({
+      mutationFn: deletePromotion,
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['promotions'] }),
+    });
+  
 
   return {
     promotions: promotionsQuery.data?.items ?? [],
@@ -40,7 +45,12 @@ export const usePromotions = ({
         hasNextPage: promotionsQuery.data?.hasNextPage ?? false,
     },
     loading: promotionsQuery.isLoading,
+    fetching: promotionsQuery.isFetching,
     error: promotionsQuery.error?.message ?? null,
+    saving: saveMutation.isPending,
+    deleting: deleteMutation.isPending,
+    getPromotionById,
     savePromotion: (promotion, id = null) => saveMutation.mutateAsync({ id, promotion }),
+    removePromotion: (id) => deleteMutation.mutateAsync(id),
   };
 };

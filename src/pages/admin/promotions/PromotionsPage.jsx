@@ -1,13 +1,16 @@
 // Página administrativa: Promociones.
 import { useState } from 'react';
 
+import { PromotionDetailDialog } from '../../../components/admin/promotions/PromotionDetailDialog';
+
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 import { usePromotions } from '../../../hooks/marketing/usePromotions';
 
 export const PromotionsPage = () => {
 
-    const [editingId, setEditingId] = useState(null);
+    const [openDetail, setOpenDetail] = useState(false);
+    const [selectedPromotion, setSelectedPromotion] = useState(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [confirm, setConfirm] = useState(null);
     const [pageNumber, setPageNumber] = useState(1);
@@ -22,11 +25,18 @@ export const PromotionsPage = () => {
         promotions,
         pagination,
         loading,
+        fetching,
+        error,
+        saving,
+        deleting,
+        getPromotionById,
+        savePromotion,
+        removePromotion,
     } = usePromotions({
         pageNumber,
         pageSize,
         search,
-        esActivo: null,
+        esActivo: filters.esActivo === '' ? null : filters.esActivo === 'true',
     })
 
     const columns = [
@@ -47,6 +57,7 @@ export const PromotionsPage = () => {
             label: 'Ver Detalles',
             onClick: (id) => {
                 // Lógica para ver detalles de promoción
+                handleOpenDetail(id); // <--- Aquí abres el diálogo de detalles pasando el ID de la promoción
             },
         },
         {
@@ -107,10 +118,16 @@ export const PromotionsPage = () => {
     }
   ];
 
-  const handlePageSizeChange = (value) => {
-    setPageSize(value);
-    setPageNumber(1);
-  };
+    const handleOpenDetail = (row) => {
+        setSelectedPromotion(row); // <--- Aquí guardas el registro específico del renglón
+        setOpenDetail(true);
+    };
+
+    {/* Cambio de tamaño de página*/}
+    const handlePageSizeChange = (value) => {
+        setPageSize(value);
+        setPageNumber(1);
+    };
 
     return (
         <PlaceholderPage title="Promociones" description="Gestiona descuentos y promociones." >
@@ -125,6 +142,12 @@ export const PromotionsPage = () => {
                 filters={tableFilters}
                 onPageSizeChange = {handlePageSizeChange}
             />
-        </PlaceholderPage>
+
+            <PromotionDetailDialog 
+                open={openDetail} 
+                onClose={() => setOpenDetail(false)} 
+                promotion={selectedPromotion} // Pasamos la promoción elegida
+            />
+        </PlaceholderPage>  
     );
 };
