@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import {
-  Container,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -33,7 +32,7 @@ export const BannersPage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({ esActivo: '' });
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
 
   const {
@@ -102,17 +101,21 @@ export const BannersPage = () => {
   };
 
   const handleEdit = async (banner) => {
+    setFormData(mapBannerToFormData(banner));
+    setEditingId(banner.id);
+    setIsFormOpen(true);
+    setFormError(null);
+
     try {
-      setDetailLoading(true);
+      setFormLoading(true);
       const bannerDetail = await getBannerById(banner.id);
-      setFormData(mapBannerToFormData(bannerDetail || banner));
-      setEditingId(banner.id);
-      setIsFormOpen(true);
-      setFormError(null);
+      if (bannerDetail) {
+        setFormData(mapBannerToFormData(bannerDetail));
+      }
     } catch (err) {
       setFormError(err.message);
     } finally {
-      setDetailLoading(false);
+      setFormLoading(false);
     }
   };
 
@@ -237,7 +240,6 @@ export const BannersPage = () => {
     {
       type: 'edit',
       label: 'Editar',
-      disabled: () => detailLoading,
       onClick: handleEdit,
     },
     {
@@ -256,7 +258,7 @@ export const BannersPage = () => {
         rows={banners}
         columns={columns}
         actions={actions}
-        loading={loading || fetching || detailLoading}
+        loading={loading || fetching}
         pagination={pagination}
         searchValue={search}
         searchLabel="Buscar banner"
@@ -320,7 +322,7 @@ export const BannersPage = () => {
           <BannerForm
             editingId={editingId}
             formData={formData}
-            loading={saving}
+            loading={saving || formLoading}
             onCancel={handleCloseForm}
             onChange={changeInput}
             onFileChange={changeFileInput}

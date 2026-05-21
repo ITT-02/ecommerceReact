@@ -1,6 +1,10 @@
 // Servicio para pedidos y seguimiento de compra.
 
 import { restApi } from '../../api/restApi';
+import {
+  normalizeOrderDetail,
+  normalizeOrdersPaginatedResponse,
+} from '../../adapters/orderAdapter';
 
 export const createOrderFromCart = async ({ direccionId, metodoPago, notasCliente }) => {
   const response = await restApi.post('/rpc/crear_pedido_desde_carrito', {
@@ -9,6 +13,37 @@ export const createOrderFromCart = async ({ direccionId, metodoPago, notasClient
     p_notas_cliente: notasCliente || null,
   });
   return response.data;
+};
+
+export const getOrders = async ({
+  pageNumber = 1,
+  pageSize = 10,
+  search = '',
+  estadoPedido = null,
+  estadoPago = null,
+  fechaInicio = null,
+  fechaFin = null,
+}) => {
+  const response = await restApi.post('/rpc/listar_pedidos_admin_paginado', {
+    p_page_number: pageNumber,
+    p_page_size: pageSize,
+    p_search: search,
+    p_estado_pedido: estadoPedido,
+    p_estado_pago: estadoPago,
+    p_fecha_inicio: fechaInicio,
+    p_fecha_fin: fechaFin,
+  });
+
+  return normalizeOrdersPaginatedResponse(response.data, pageNumber, pageSize);
+};
+
+export const getOrderDetail = async (id) => {
+  const response = await restApi.post('/rpc/obtener_pedido_admin_detalle', {
+    p_pedido_id: id,
+  });
+
+  const detail = Array.isArray(response.data) ? response.data[0] : response.data;
+  return normalizeOrderDetail(detail || {});
 };
 
 export const getMyOrders = async () => {

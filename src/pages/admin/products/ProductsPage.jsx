@@ -4,7 +4,6 @@ import { useState } from 'react';
 import {
   Alert,
   Box,
-  Container,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -42,7 +41,7 @@ export const ProductsPage = () => {
     requiereCotizacion: '',
   });
   const [confirm, setConfirm] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [pageNotice, setPageNotice] = useState('');
   const [formData, setFormData] = useState(initialProductFormData);
   const [editingId, setEditingId] = useState(null);
@@ -132,18 +131,22 @@ export const ProductsPage = () => {
   };
 
   const handleEdit = async (product) => {
+    setFormData(productToFormData(product));
+    setEditingId(product.id);
+    setIsFormOpen(true);
+    setFormError('');
+    setPageNotice('');
+
     try {
-      setDetailLoading(true);
+      setFormLoading(true);
       const productDetail = await getProductById(product.id);
-      setFormData(productToFormData(productDetail || product));
-      setEditingId(product.id);
-      setIsFormOpen(true);
-      setFormError('');
-      setPageNotice('');
+      if (productDetail) {
+        setFormData(productToFormData(productDetail));
+      }
     } catch (err) {
       setFormError(err.message);
     } finally {
-      setDetailLoading(false);
+      setFormLoading(false);
     }
   };
 
@@ -301,7 +304,6 @@ export const ProductsPage = () => {
     {
       type: 'edit',
       label: 'Editar',
-      disabled: () => detailLoading,
       onClick: handleEdit,
     },
     {
@@ -327,7 +329,7 @@ export const ProductsPage = () => {
             rows={products}
             columns={columns}
             actions={actions}
-            loading={loading || fetching || detailLoading }
+            loading={loading || fetching}
             pagination={pagination}
             searchValue={search}
             searchLabel="Buscar producto"
@@ -392,7 +394,7 @@ export const ProductsPage = () => {
             editingId={editingId}
             formData={formData}
             categories={categories}
-            loading={saving}
+            loading={saving || formLoading}
             error={formError}
             onCancel={handleCloseForm}
             onChange={handleInputChange}
