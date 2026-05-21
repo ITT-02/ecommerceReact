@@ -2,7 +2,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   getVariants, 
-  getVariantAttributeOptions, 
+  getVariantAttributeOptions,
+  getProductOptions,
   createVariant, 
   updateVariant, 
   deactivateVariant, 
@@ -78,11 +79,12 @@ export const useProductOptions = (search = '') => {
   const query = useQuery({
     queryKey: ['productOptions', search],
     queryFn: () => getProductOptions(search),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 
   return {
     productOptions: query.data ?? [],
     loading: query.isLoading,
+    error: query.error?.message ?? null,
   };
 };
