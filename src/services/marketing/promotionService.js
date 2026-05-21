@@ -23,15 +23,15 @@ export const getPromotions = async ({
 };
 
 export const getPromotionById = async (id) => {
-  const response = await restApi.get('/promociones', {
-    params: { id: `eq.${id}`, select: '*', limit: 1 },
+  const response = await restApi.post('/rpc/obtener_promocion_admin_detalle', {
+    p_promocion_id: id
   });
 
-  return response.data[0] || null;
+  return response.data || null;
 };
 
 export const createPromotion = async (promotionData) => {
-  const response = await restApi.post('/promociones', promotionData, {
+  const response = await restApi.post('/rpc/crear_promocion_admin', promotionData, {
     params: { select: '*' },
     headers: { Prefer: 'return=representation' },
   });
@@ -39,7 +39,7 @@ export const createPromotion = async (promotionData) => {
 };
 
 export const updatePromotion = async (id, promotionData) => {
-  const response = await restApi.patch('/promociones', promotionData, {
+  const response = await restApi.patch('/rpc/actualizar_promocion_admin', promotionData, {
     params: { id: `eq.${id}`, select: '*' },
     headers: { Prefer: 'return=representation' },
   });
@@ -48,7 +48,7 @@ export const updatePromotion = async (id, promotionData) => {
 };
 
 export const deletePromotion = async (id) => {
-  const response = await restApi.delete('/promociones', {
+  const response = await restApi.delete('/rpc/eliminar_promocion_admin', {
     params: { id: `eq.${id}`, select: '*' },
     headers: { Prefer: 'return=representation' },
   });

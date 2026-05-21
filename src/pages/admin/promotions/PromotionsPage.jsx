@@ -2,6 +2,7 @@
 import { useState } from 'react';
 
 import { PromotionDetailDialog } from '../../../components/admin/promotions/PromotionDetailDialog';
+import { PromotionFormDialog } from '../../../components/admin/promotions/PromotionFormDialog';
 
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
@@ -11,7 +12,7 @@ export const PromotionsPage = () => {
 
     const [openDetail, setOpenDetail] = useState(false);
     const [selectedPromotion, setSelectedPromotion] = useState(null);
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [formOpen, setFormOpen] = useState(false);
     const [confirm, setConfirm] = useState(null);
     const [pageNumber, setPageNumber] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -55,9 +56,23 @@ export const PromotionsPage = () => {
         {
             type: 'view',
             label: 'Ver Detalles',
-            onClick: (id) => {
-                // Lógica para ver detalles de promoción
-                handleOpenDetail(id); // <--- Aquí abres el diálogo de detalles pasando el ID de la promoción
+            onClick: async (idOrRow) => {
+                // Extraemos el id dinámicamente sin importar si la tabla manda el ID o la fila entera
+                const id = typeof idOrRow === 'object' ? idOrRow.id : idOrRow;
+                
+                try {
+                    // 1. Vamos al backend a traer la data completa (incluyendo la tabla de aplicaciones)
+                    const promocionCompleta = await getPromotionById(id);
+                    
+                    if (promocionCompleta) {
+                        // 2. Guardamos el objeto rico en datos en el estado y abrimos el modal
+                        setSelectedPromotion(promocionCompleta);
+                        setOpenDetail(true);
+                    }
+                } catch (err) {
+                    console.error("Error al obtener los detalles completos de la promoción:", err);
+                    // Opcional: Aquí puedes gatillar un toast o alerta visual de error
+                }
             },
         },
         {
@@ -129,6 +144,18 @@ export const PromotionsPage = () => {
         setPageNumber(1);
     };
 
+    {/* Función para guardar/editar una promoción */}
+    const handleSave = async (payload, id) => {
+        try {
+            // Si pasamos el id, la mutation llamará a updatePromotion; si es null, usará createPromotion
+            await savePromotion(payload, id); 
+            setFormOpen(false);
+            setSelectedPromotion(null);
+        } catch (err) {
+            console.error("Error al procesar la promoción:", err);
+        }
+    };
+
     return (
         <PlaceholderPage title="Promociones" description="Gestiona descuentos y promociones." >
             <AdminResourceTable
@@ -147,6 +174,14 @@ export const PromotionsPage = () => {
                 open={openDetail} 
                 onClose={() => setOpenDetail(false)} 
                 promotion={selectedPromotion} // Pasamos la promoción elegida
+            />
+
+            <PromotionFormDialog 
+                open={formOpen}
+                onClose={() => { setFormOpen(false); setSelectedPromotion(null); }}
+                onSave={handleSave}
+                promotion={selectedPromotion} // Se pasa el objeto de la fila al editar o null al crear
+                loading={saving}
             />
         </PlaceholderPage>  
     );

@@ -131,6 +131,12 @@ export const PromotionDetailDialog = ({ open, onClose, promotion }) => {
                                         {promotion.fecha_fin ? new Date(promotion.fecha_fin).toLocaleDateString() : 'No definida'}
                                     </Typography>
                                 </Grid>
+                                <Grid size={6}>
+                                    <Typography variant="subtitle1" sx={labelStyle}>Monto Mínimo</Typography>
+                                    <Typography variant="body1" sx={{ ml: 0.5 }}>
+                                        {promotion.monto_minimo_pedido ? `$${promotion.monto_minimo_pedido}` : '0.00'}
+                                    </Typography>
+                                </Grid>
                             </Grid>
                         </Box>
                     </Grid>
@@ -144,18 +150,16 @@ export const PromotionDetailDialog = ({ open, onClose, promotion }) => {
                             <Table size="small">
                                 <TableHead >
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 'bold', py: 1.5 }}>Tipo de Aplicación</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Criterio / Categoría afectada</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Monto Mínimo Compra</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', py: 1.5 }}>Tipo de Objetivo</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Objetivo Afectado</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {promotion.aplicaciones && promotion.aplicaciones.length > 0 ? (
                                         promotion.aplicaciones.map((app, index) => (
                                             <TableRow key={index} sx={{ '&:last-child cell, &:last-child th': { border: 0 } }}>
-                                                <TableCell sx={{ py: 1.5 }}>{app.tipo || 'General'}</TableCell>
-                                                <TableCell>{app.criterio || 'Todo el catálogo'}</TableCell>
-                                                <TableCell sx={{ fontWeight: 600 }}>${app.monto_minimo ?? '0.00'}</TableCell>
+                                                <TableCell sx={{ py: 1.5 }}>{app.target_tipo || 'General'}</TableCell>
+                                                <TableCell>{app.target_nombre || 'Todo el catálogo'}</TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
