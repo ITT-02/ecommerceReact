@@ -1,7 +1,6 @@
 // Página administrativa: Promociones.
 import { useState } from 'react';
 
-import { PromotionDetailDialog } from '../../../components/admin/promotions/PromotionDetailDialog';
 import { PromotionFormDialog } from '../../../components/admin/promotions/PromotionFormDialog';
 
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
@@ -10,16 +9,14 @@ import { usePromotions } from '../../../hooks/marketing/usePromotions';
 
 export const PromotionsPage = () => {
 
-    const [openDetail, setOpenDetail] = useState(false);
     const [selectedPromotion, setSelectedPromotion] = useState(null);
     const [formOpen, setFormOpen] = useState(false);
+    const [formMode, setFormMode] = useState('create');
     const [confirm, setConfirm] = useState(null);
     const [pageNumber, setPageNumber] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [search, setSearch] = useState('');
     const [filters, setFilters] = useState({ esActivo: '' });
-    const [detailLoading, setDetailLoading] = useState(false);
-    const [formError, setFormError] = useState(null);
 
 
     const {
@@ -56,43 +53,48 @@ export const PromotionsPage = () => {
         {
             type: 'view',
             label: 'Ver Detalles',
-            onClick: async (idOrRow) => {
-                // Extraemos el id dinámicamente sin importar si la tabla manda el ID o la fila entera
-                const id = typeof idOrRow === 'object' ? idOrRow.id : idOrRow;
-                
+            onClick: async (row) => {
+                const id = row?.id;
                 try {
-                    // 1. Vamos al backend a traer la data completa (incluyendo la tabla de aplicaciones)
                     const promocionCompleta = await getPromotionById(id);
-                    
                     if (promocionCompleta) {
-                        // 2. Guardamos el objeto rico en datos en el estado y abrimos el modal
                         setSelectedPromotion(promocionCompleta);
-                        setOpenDetail(true);
+                        setFormMode('view');
+                        setFormOpen(true);
                     }
                 } catch (err) {
-                    console.error("Error al obtener los detalles completos de la promoción:", err);
-                    // Opcional: Aquí puedes gatillar un toast o alerta visual de error
+                    console.error('Error al obtener los detalles completos de la promoción:', err);
                 }
             },
         },
         {
             type: 'edit',
             label: 'Editar',
-            onClick: (id) => {
-                // Lógica para editar promoción
+            onClick: async (row) => {
+                const id = row?.id;
+                try {
+                    const promocionCompleta = await getPromotionById(id);
+                    if (promocionCompleta) {
+                        setSelectedPromotion(promocionCompleta);
+                        setFormMode('edit');
+                        setFormOpen(true);
+                    }
+                } catch (err) {
+                    console.error('Error al intentar editar la promoción:', err);
+                }
             },
         },
         {
             type: 'deactivate',
             label: 'Activar/Desactivar',
-            onClick: (id) => {
+            onClick: (row) => {
                 // Lógica para activar/desactivar promoción
             },
         },
         {
             type: 'delete',
             label: 'Eliminar',
-            onClick: (id) => {
+            onClick: (row) => {
                 // Lógica para eliminar promoción
             },
         }
@@ -133,9 +135,10 @@ export const PromotionsPage = () => {
     }
   ];
 
-    const handleOpenDetail = (row) => {
-        setSelectedPromotion(row); // <--- Aquí guardas el registro específico del renglón
-        setOpenDetail(true);
+    const handleCreatePromotion = () => {
+        setSelectedPromotion(null);
+        setFormMode('create');
+        setFormOpen(true);
     };
 
     {/* Cambio de tamaño de página*/}
@@ -167,20 +170,18 @@ export const PromotionsPage = () => {
                 pagination={pagination}
                 searchValue={search}
                 filters={tableFilters}
-                onPageSizeChange = {handlePageSizeChange}
-            />
-
-            <PromotionDetailDialog 
-                open={openDetail} 
-                onClose={() => setOpenDetail(false)} 
-                promotion={selectedPromotion} // Pasamos la promoción elegida
+                onPageSizeChange={handlePageSizeChange}
+                primaryActionLabel="Crear promoción"
+                onPrimaryAction={handleCreatePromotion}
             />
 
             <PromotionFormDialog 
+                key={`${formMode}-${selectedPromotion?.id ?? 'new'}`}
                 open={formOpen}
                 onClose={() => { setFormOpen(false); setSelectedPromotion(null); }}
                 onSave={handleSave}
                 promotion={selectedPromotion} // Se pasa el objeto de la fila al editar o null al crear
+                mode={formMode}
                 loading={saving}
             />
         </PlaceholderPage>  

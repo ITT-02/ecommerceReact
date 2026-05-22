@@ -39,11 +39,12 @@ export const createPromotion = async (promotionData) => {
 };
 
 export const updatePromotion = async (id, promotionData) => {
-  const response = await restApi.patch('/rpc/actualizar_promocion_admin', promotionData, {
-    params: { id: `eq.${id}`, select: '*' },
+  console.log('Datos enviados para actualización:', { p_promocion_id: id, ...promotionData });
+  const response = await restApi.post('/rpc/actualizar_promocion_admin', promotionData, {
+    params: { select: '*' },
     headers: { Prefer: 'return=representation' },
   });
-
+  console.log('Respuesta de actualización:', response.data);
   return response.data[0] || null;
 };
 

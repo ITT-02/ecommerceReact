@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -15,20 +15,12 @@ import {
   Box
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { initialPromotionFormData, mapPromotionToFormData, mapFormDataToPayload } from '../../../adapters/promotionsMapper';
+import { mapPromotionToFormData, mapFormDataToPayload } from '../../../adapters/promotionsMapper';
 
-export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading }) => {
-  const isEditMode = Boolean(promotion?.id);
-  const [formData, setFormData] = useState(initialPromotionFormData);
-
-  // Cada vez que se abra con una promoción o se limpie, inicializamos el formulario
-  useEffect(() => {
-    if (open) {
-        setFormData(mapPromotionToFormData(promotion));
-    } else {
-        setFormData(initialPromotionFormData);
-    }
-}, [open, promotion]);
+export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading, mode = 'create' }) => {
+  const isEditMode = mode === 'edit';
+  const isViewMode = mode === 'view';
+  const [formData, setFormData] = useState(() => mapPromotionToFormData(promotion));
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
@@ -40,15 +32,13 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Inyectamos un arreglo vacío de aplicaciones por defecto (modificar si agregas selector de categorías/productos)
+    if (isViewMode) return;
+
     const payload = mapFormDataToPayload(formData, []);
-    
-    // Ejecutamos el guardado pasando el id si estamos editando
     await onSave(payload, promotion?.id || null);
     onClose();
   };
 
-  // Lógica de deshabilitación dinámica basada en las reglas que me pasaste
   const isCupon = formData.tipo_promocion === 'cupon';
   const isEnvioGratis = formData.tipo_promocion === 'envio_gratis' || formData.tipo_descuento === 'envio_gratis';
 
@@ -59,8 +49,6 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
       fullWidth
       maxWidth="md" // Ideal para acomodar dos columnas de inputs cómodamente
       PaperProps={{
-        component: 'form',
-        onSubmit: handleSubmit,
         sx: {
           borderRadius: (theme) => `${theme.palette.custom.radius.xxl}px`,
           bgcolor: 'background.paper',
@@ -68,10 +56,11 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
         },
       }}
     >
-      {/* CABECERA */}
-      <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box component="form" onSubmit={handleSubmit} noValidate>
+        {/* CABECERA */}
+        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h5">
-          {isEditMode ? 'Editar Promoción' : 'Crear Promoción'}
+          {isViewMode ? 'Detalles de Promoción' : isEditMode ? 'Editar Promoción' : 'Crear Promoción'}
         </Typography>
         <IconButton onClick={onClose} sx={{ color: 'text.primary' }}>
           <CloseIcon sx={{ fontSize: 24 }} />
@@ -90,6 +79,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               name="nombre"
               value={formData.nombre}
               onChange={handleChange}
+              disabled={isViewMode}
             />
           </Grid>
 
@@ -101,6 +91,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               name="tipo_promocion"
               value={formData.tipo_promocion}
               onChange={handleChange}
+              disabled={isViewMode}
             >
               <MenuItem value="descuento_directo">Descuento Directo</MenuItem>
               <MenuItem value="cupon">Cupón</MenuItem>
@@ -117,6 +108,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               name="descripcion"
               value={formData.descripcion}
               onChange={handleChange}
+              disabled={isViewMode}
             />
           </Grid>
 
@@ -128,6 +120,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               name="tipo_descuento"
               value={formData.tipo_descuento}
               onChange={handleChange}
+              disabled={isViewMode}
             >
               <MenuItem value="porcentaje">Porcentaje (%)</MenuItem>
               <MenuItem value="monto_fijo">Monto Fijo</MenuItem>
@@ -142,7 +135,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               type="number"
               label="Valor descuento"
               name="valor_descuento"
-              disabled={isEnvioGratis}
+              disabled={isViewMode || isEnvioGratis}
               value={isEnvioGratis ? 0 : formData.valor_descuento}
               onChange={handleChange}
               slotProps={{ htmlInput: { min: 0 } }}
@@ -153,7 +146,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               required={isCupon}
-              disabled={!isCupon}
+              disabled={isViewMode || !isCupon}
               label="Código cupón"
               name="codigo"
               value={isCupon ? formData.codigo : ''}
@@ -170,6 +163,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               name="prioridad"
               value={formData.prioridad}
               onChange={handleChange}
+              disabled={isViewMode}
             />
           </Grid>
 
@@ -182,6 +176,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               value={formData.fecha_inicio}
               onChange={handleChange}
               slotProps={{ inputLabel: { shrink: true } }}
+              disabled={isViewMode}
             />
           </Grid>
 
@@ -194,6 +189,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               value={formData.fecha_fin}
               onChange={handleChange}
               slotProps={{ inputLabel: { shrink: true } }}
+              disabled={isViewMode}
             />
           </Grid>
 
@@ -205,6 +201,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               name="monto_minimo_pedido"
               value={formData.monto_minimo_pedido}
               onChange={handleChange}
+              disabled={isViewMode}
               slotProps={{ htmlInput: { min: 0 } }}
             />
           </Grid>
@@ -217,6 +214,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               name="uso_maximo"
               value={formData.uso_maximo}
               onChange={handleChange}
+              disabled={isViewMode}
               placeholder="Ilimitado"
             />
           </Grid>
@@ -229,6 +227,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               name="uso_por_cliente"
               value={formData.uso_por_cliente}
               onChange={handleChange}
+              disabled={isViewMode}
               placeholder="Ilimitado"
             />
           </Grid>
@@ -240,6 +239,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
               label="Aplica a"
               name="aplica_a"
               value={formData.aplica_a}
+              disabled={isViewMode}
               onChange={handleChange}
             >
               <MenuItem value="todos">Todos</MenuItem>
@@ -258,6 +258,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
                   onChange={handleChange}
                   name="es_activa"
                   color="success"
+                  disabled={isViewMode}
                 />
               }
               label={
@@ -275,8 +276,8 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
       <DialogActions sx={{ p: 2.5, gap: 1 }}>
         <Button
           onClick={onClose}
-          variant="outlined"
-          color="secondary"
+          variant={isViewMode ? 'contained' : 'outlined'}
+          color={isViewMode ? 'primary' : 'secondary'}
           disabled={loading}
           sx={{
             borderRadius: (theme) => `${theme.palette.custom.radius.md}px`,
@@ -284,23 +285,27 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading 
             py: 1.2
           }}
         >
-          Cancelar
+          {isViewMode ? 'Cerrar' : 'Cancelar'}
         </Button>
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          disabled={loading}
-          sx={{
-            borderRadius: (theme) => `${theme.palette.custom.radius.md}px`,
-            px: 4,
-            py: 1.2,
-            fontWeight: 'bold'
-          }}
-        >
-          {loading ? 'Guardando...' : isEditMode ? 'Guardar Cambios' : 'Crear Promoción'}
-        </Button>
+        {!isViewMode && (
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={loading}
+            onClick={handleSubmit}
+            sx={{
+              borderRadius: (theme) => `${theme.palette.custom.radius.md}px`,
+              px: 4,
+              py: 1.2,
+              fontWeight: 'bold'
+            }}
+          >
+            {loading ? 'Guardando...' : isEditMode ? 'Guardar Cambios' : 'Crear Promoción'}
+          </Button>
+        )}
       </DialogActions>
+      </Box>
     </Dialog>
   );
 };
