@@ -17,6 +17,9 @@ import CloseIcon from '@mui/icons-material/Close';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { useRoles } from '../../../hooks/users/useRoles';
+import { useAuth } from '../../../hooks/auth/useAuth';
+import { hasAllowedRole } from '../../../utils/access/menuByRole';
+import { ADMIN_ROLES } from '../../../utils/access/accessControl';
 
 import { RoleCard } from './componentsRoles/RoleCard';
 import { RoleDetailDialog } from './componentsRoles/RoleDetailDialog';
@@ -28,6 +31,9 @@ export const RolesPage = () => {
   const [detailRole, setDetailRole] = useState(null);
   const [editRole, setEditRole] = useState(null);
   const [assignRole, setAssignRole] = useState(null);
+
+  const { roles: userRoles } = useAuth();
+  const canManagePermissions = hasAllowedRole(userRoles, ADMIN_ROLES);
 
   const {
     roles,
@@ -126,6 +132,7 @@ export const RolesPage = () => {
                 <Grid key={role.id} size={{ xs: 12, sm: 6, lg: 4 }}>
                   <RoleCard
                     role={role}
+                    canManagePermissions={canManagePermissions}
                     onDetail={setDetailRole}
                     onEdit={setEditRole}
                     onAssign={setAssignRole}
@@ -155,6 +162,7 @@ export const RolesPage = () => {
         role={assignRole}
         permissionOptions={permissionOptions}
         getRoleDetail={getRoleDetail}
+        canManagePermissions={canManagePermissions}
         onClose={() => setAssignRole(null)}
         onSave={assignRolePermissions}
       />

@@ -42,6 +42,7 @@ export const RoleAssignPermissionsDialog = ({
   role,
   permissionOptions,
   getRoleDetail,
+  canManagePermissions,
   onClose,
   onSave,
 }) => {
@@ -54,15 +55,24 @@ export const RoleAssignPermissionsDialog = ({
 
   useEffect(() => {
     if (!open || !role) return;
-    setLoadingDetail(true);
-    setError(null);
-    setFilter('');
-    getRoleDetail(role.id)
-      .then((detail) => {
-        setSelected(new Set((detail.permisos || []).map((p) => p.codigo)));
-      })
-      .catch(setError)
-      .finally(() => setLoadingDetail(false));
+    let cancelled = false;
+
+    const load = async () => {
+      setLoadingDetail(true);
+      setError(null);
+      setFilter('');
+      try {
+        const detail = await getRoleDetail(role.id);
+        if (!cancelled) setSelected(new Set((detail.permisos || []).map((p) => p.codigo)));
+      } catch (err) {
+        if (!cancelled) setError(err);
+      } finally {
+        if (!cancelled) setLoadingDetail(false);
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
   }, [open, role, getRoleDetail]);
 
   const grouped = useMemo(() => {
@@ -79,7 +89,7 @@ export const RoleAssignPermissionsDialog = ({
 
   const isSuperAdmin = role.codigo === 'super_admin';
   const isCliente = role.codigo === 'cliente';
-  const locked = isSuperAdmin || isCliente || !role.puede_asignar_permisos;
+  const locked = !canManagePermissions || isSuperAdmin || isCliente;
 
   const toggle = (codigo) => {
     setSelected((prev) => {

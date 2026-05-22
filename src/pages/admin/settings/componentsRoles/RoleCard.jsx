@@ -20,12 +20,12 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 import { fmtDate, getModuleColor, moduleFromCode } from './roleHelpers';
 
-export const RoleCard = ({ role, onDetail, onEdit, onAssign }) => {
+export const RoleCard = ({ role, canManagePermissions, onDetail, onEdit, onAssign }) => {
   const isSuperAdmin = role.codigo === 'super_admin';
   const isCliente = role.codigo === 'cliente';
 
   const editDisabled = !role.puede_editar || isSuperAdmin;
-  const assignDisabled = !role.puede_asignar_permisos || isSuperAdmin || isCliente;
+  const assignDisabled = !canManagePermissions || isSuperAdmin || isCliente;
 
   const editTooltip = isSuperAdmin
     ? 'Rol protegido — no editable'
@@ -37,8 +37,8 @@ export const RoleCard = ({ role, onDetail, onEdit, onAssign }) => {
     ? 'Rol protegido — permisos fijos'
     : isCliente
     ? 'El cliente no recibe permisos administrativos'
-    : !role.puede_asignar_permisos
-    ? 'Sin permisos para asignar permisos'
+    : !canManagePermissions
+    ? 'Solo administrador o super_admin pueden asignar permisos'
     : 'Asignar permisos';
 
   return (
