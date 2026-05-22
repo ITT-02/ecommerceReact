@@ -7,22 +7,30 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import {
   Avatar,
-  IconButton,
+  Button,
+  Divider,
   ListItemIcon,
   Menu,
   MenuItem,
+  Stack,
+  Typography,
 } from '@mui/material';
 
 import { useAuth } from '../../../hooks/auth/useAuth';
+import { getMainRole, hasInternalRole } from '../../../utils/access/menuByRole';
 
 export const StoreUserMenu = () => {
   const navigate = useNavigate();
-  const { profile, user, logout } = useAuth();
+  const { profile, user, logout, roles } = useAuth();
+  const isInternalUser = hasInternalRole(roles);
+  const mainRole = getMainRole(roles);
   const [anchorEl, setAnchorEl] = useState(null);
 
   const open = Boolean(anchorEl);
@@ -62,22 +70,37 @@ const handleLogout = async () => {
 
   return (
     <>
-      <IconButton
+      <Button
         onClick={(event) => setAnchorEl(event.currentTarget)}
+        color="inherit"
+        endIcon={<KeyboardArrowDownIcon fontSize="small" />}
         aria-label="Abrir menú de usuario"
+        sx={{ minWidth: 'auto', px: 1, py: 0.5, borderRadius: 2, textTransform: 'none' }}
       >
-        <Avatar
-          sx={{
-            width: 34,
-            height: 34,
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-            fontWeight: 700,
-          }}
-        >
-          {displayName.charAt(0).toUpperCase()}
-        </Avatar>
-      </IconButton>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <Avatar
+            sx={{
+              width: 34,
+              height: 34,
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              fontWeight: 700,
+            }}
+          >
+            {displayName.charAt(0).toUpperCase()}
+          </Avatar>
+
+          {/* Nombre y rol — solo en desktop */}
+          <Stack sx={{ display: { xs: 'none', md: 'flex' }, textAlign: 'left' }}>
+            <Typography variant="subtitle2" noWrap>
+              {displayName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {mainRole}
+            </Typography>
+          </Stack>
+        </Stack>
+      </Button>
 
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
         <MenuItem onClick={() => handleGoTo('/perfil')}>
@@ -93,6 +116,18 @@ const handleLogout = async () => {
           </ListItemIcon>
           Mis pedidos
         </MenuItem>
+
+        {isInternalUser && (
+          <>
+            <Divider />
+            <MenuItem onClick={() => handleGoTo('/admin/dashboard')}>
+              <ListItemIcon>
+                <AdminPanelSettingsIcon fontSize="small" />
+              </ListItemIcon>
+              Volver al panel administrativo
+            </MenuItem>
+          </>
+        )}
 
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>

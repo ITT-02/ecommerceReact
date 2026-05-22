@@ -1,8 +1,5 @@
 import { useState } from 'react';
 import { Chip, Typography, Box } from '@mui/material';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
@@ -103,18 +100,17 @@ export const UsersPage = () => {
 
   const rowActions = [
     {
-      icon: <VisibilityOutlinedIcon color="info" />,
+      type: 'view',
       label: 'Ver detalle',
       onClick: (row) => setUserDetalle(row),
     },
     {
       type: 'edit',
-      icon: <EditOutlinedIcon />,
       label: 'Editar perfil',
       onClick: (row) => setUserEditar(row),
     },
     {
-      icon: <ManageAccountsOutlinedIcon color="secondary" />,
+      type: 'assign_roles',
       label: 'Asignar roles',
       onClick: (row) => setUserRoles(row),
     },
