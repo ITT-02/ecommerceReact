@@ -50,8 +50,7 @@ export const updatePromotion = async (id, promotionData) => {
 
 export const deletePromotion = async (id) => {
   const response = await restApi.post('/rpc/eliminar_promocion_admin', {
-    params: { id: `eq.${id}`, select: '*' },
-    headers: { Prefer: 'return=representation' },
+    p_promocion_id: id
   });
   
   return response.data[0] || null;
