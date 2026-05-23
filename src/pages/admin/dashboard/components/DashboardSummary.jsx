@@ -26,9 +26,9 @@ export const DashboardSummary = ({ resumen = {} }) => {
 
   return (
     <Stack spacing={2}>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ alignItems: 'stretch' }}>
         {cards.map((c) => (
-          <Grid key={c.title} size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid key={c.title} size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
             <AdminStatsCard title={c.title} value={c.value ?? 0} />
           </Grid>
         ))}

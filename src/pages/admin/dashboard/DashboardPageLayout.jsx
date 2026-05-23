@@ -4,10 +4,9 @@ import { DashboardFilters } from './components/DashboardFilters';
 import { DashboardSummary } from './components/DashboardSummary';
 import { PedidosEstadoTable } from './components/PedidosEstadoTable';
 import { PagosEstadoTable } from './components/PagosEstadoTable';
-import { InventarioCriticoTable } from './components/InventarioCriticoTable';
-import { UltimosPedidosTable } from './components/UltimosPedidosTable';
-import { MovimientosRecientesTable } from './components/MovimientosRecientesTable';
-import { DashboardSection } from './components/DashboardSection';
+import { InventarioCriticoCard } from './components/InventarioCriticoCard';
+import { UltimosPedidosCard } from './components/UltimosPedidosCard';
+import { MovimientosRecientesCard } from './components/MovimientosRecientesCard';
 
 export const DashboardPageLayout = ({
   fechaInicio,
@@ -48,37 +47,28 @@ export const DashboardPageLayout = ({
       <Box sx={{ mt: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={6}>
-            <DashboardSection title="Pedidos por estado">
-              <PedidosEstadoTable pedidosPorEstado={pedidosPorEstado} />
-            </DashboardSection>
+            <PedidosEstadoTable pedidosPorEstado={pedidosPorEstado} />
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <DashboardSection title="Pagos por estado">
-              <PagosEstadoTable pagosPorEstado={pagosPorEstado} />
-            </DashboardSection>
+            <PagosEstadoTable pagosPorEstado={pagosPorEstado} />
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <DashboardSection title="Inventario crítico">
-              <InventarioCriticoTable inventarioCritico={inventarioCritico} />
-            </DashboardSection>
+            <InventarioCriticoCard inventarioCritico={inventarioCritico} />
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <DashboardSection title="Últimos pedidos">
-              <UltimosPedidosTable ultimosPedidos={ultimosPedidos} />
-            </DashboardSection>
+            <UltimosPedidosCard ultimosPedidos={ultimosPedidos} />
           </Grid>
 
           <Grid item xs={12}>
-            <DashboardSection title="Movimientos recientes">
-              <MovimientosRecientesTable movimientosRecientes={movimientosRecientes} />
-            </DashboardSection>
+            <MovimientosRecientesCard movimientosRecientes={movimientosRecientes} />
           </Grid>
         </Grid>
       </Box>
     </Box>
   );
 };
+
 
