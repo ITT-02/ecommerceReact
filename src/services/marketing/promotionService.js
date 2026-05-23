@@ -39,17 +39,17 @@ export const createPromotion = async (promotionData) => {
 };
 
 export const updatePromotion = async (id, promotionData) => {
-  console.log('Datos enviados para actualización:', { p_promocion_id: id, ...promotionData });
-  const response = await restApi.post('/rpc/actualizar_promocion_admin', promotionData, {
-    params: { select: '*' },
-    headers: { Prefer: 'return=representation' },
-  });
-  console.log('Respuesta de actualización:', response.data);
-  return response.data[0] || null;
+  const payload = {
+    p_promocion_id: id,
+    ...promotionData,
+  };
+
+  const response = await restApi.post('/rpc/actualizar_promocion_admin', payload);
+  return response.data?.[0] ?? response.data ?? null;
 };
 
 export const deletePromotion = async (id) => {
-  const response = await restApi.delete('/rpc/eliminar_promocion_admin', {
+  const response = await restApi.post('/rpc/eliminar_promocion_admin', {
     params: { id: `eq.${id}`, select: '*' },
     headers: { Prefer: 'return=representation' },
   });

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 
 import { PromotionFormDialog } from '../../../components/admin/promotions/PromotionFormDialog';
+import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
@@ -12,7 +13,13 @@ export const PromotionsPage = () => {
     const [selectedPromotion, setSelectedPromotion] = useState(null);
     const [formOpen, setFormOpen] = useState(false);
     const [formMode, setFormMode] = useState('create');
-    const [confirm, setConfirm] = useState(null);
+    const [pendingSave, setPendingSave] = useState(null);
+    const [confirmDialog, setConfirmDialog] = useState({
+        open: false,
+        action: null,
+        title: '',
+        message: '',
+    });
     const [pageNumber, setPageNumber] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [search, setSearch] = useState('');
@@ -85,17 +92,16 @@ export const PromotionsPage = () => {
             },
         },
         {
-            type: 'deactivate',
-            label: 'Activar/Desactivar',
-            onClick: (row) => {
-                // Lógica para activar/desactivar promoción
-            },
-        },
-        {
             type: 'delete',
             label: 'Eliminar',
-            onClick: (row) => {
-                // Lógica para eliminar promoción
+            onClick: (promotion) => {
+                setConfirmDialog({
+                    open: true,
+                    action: 'delete',
+                    title: `Eliminar promoción: ${promotion.nombre}`,
+                    message: '¿Estás seguro de que deseas eliminar esta promoción? Esta acción no se puede deshacer.',
+                    onConfirm: () => handleConfirmDelete(promotion.id),
+                });
             },
         }
     ];
@@ -149,13 +155,43 @@ export const PromotionsPage = () => {
 
     {/* Función para guardar/editar una promoción */}
     const handleSave = async (payload, id) => {
+        if (formMode === 'edit') {
+            // Para edición, mostrar confirmación
+            setPendingSave({ payload, id });
+            setConfirmDialog({
+                open: true,
+                action: 'warning',
+                title: 'Guardar cambios',
+                message: '¿Deseas guardar los cambios en esta promoción?',
+                onConfirm: () => performSave(payload, id),
+            });
+        } else {
+            // Para creación, guardar directamente
+            performSave(payload, id);
+        }
+    };
+
+    {/* Función para ejecutar la guardada real */}
+    const performSave = async (payload, id) => {
         try {
-            // Si pasamos el id, la mutation llamará a updatePromotion; si es null, usará createPromotion
-            await savePromotion(payload, id); 
+            await savePromotion(payload, id);
             setFormOpen(false);
             setSelectedPromotion(null);
+            setConfirmDialog(prev => ({ ...prev, open: false }));
+            setPendingSave(null);
         } catch (err) {
             console.error("Error al procesar la promoción:", err);
+        }
+    };
+
+    {/* Función para confirmar y ejecutar la eliminación */}
+    const handleConfirmDelete = async (promotionId) => {
+        try {
+            await removePromotion(promotionId);
+            setConfirmDialog(prev => ({ ...prev, open: false }));
+            setSelectedPromotion(null);
+        } catch (err) {
+            console.error("Error al eliminar la promoción:", err);
         }
     };
 
@@ -180,9 +216,19 @@ export const PromotionsPage = () => {
                 open={formOpen}
                 onClose={() => { setFormOpen(false); setSelectedPromotion(null); }}
                 onSave={handleSave}
-                promotion={selectedPromotion} // Se pasa el objeto de la fila al editar o null al crear
+                promotion={selectedPromotion}
                 mode={formMode}
                 loading={saving}
+            />
+
+            <ConfirmDialog
+                open={confirmDialog.open}
+                action={confirmDialog.action}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+                onConfirm={confirmDialog.onConfirm}
+                loading={deleting}
             />
         </PlaceholderPage>  
     );

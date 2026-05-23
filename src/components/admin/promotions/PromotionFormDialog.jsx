@@ -48,20 +48,29 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
       onClose={onClose}
       fullWidth
       maxWidth="md" // Ideal para acomodar dos columnas de inputs cómodamente
-      PaperProps={{
-        sx: {
-          borderRadius: (theme) => `${theme.palette.custom.radius.xxl}px`,
-          bgcolor: 'background.paper',
-          p: 1,
-        },
+      slotProps={{
+        paper : {
+          sx: {
+            borderRadius: (theme) => `${theme.palette.custom.radius.xxl}px`,
+            bgcolor: 'background.paper',
+            p: 1,
+          },
+        }
       }}
     >
       <Box component="form" onSubmit={handleSubmit} noValidate>
         {/* CABECERA */}
         <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5">
+        <Box
+          component="span"
+          sx={{
+            typography: 'h5',
+            fontWeight: '700',
+            color: 'text.primary',
+          }}
+        >
           {isViewMode ? 'Detalles de Promoción' : isEditMode ? 'Editar Promoción' : 'Crear Promoción'}
-        </Typography>
+        </Box>
         <IconButton onClick={onClose} sx={{ color: 'text.primary' }}>
           <CloseIcon sx={{ fontSize: 24 }} />
         </IconButton>
@@ -293,7 +302,6 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
             variant="contained"
             color="primary"
             disabled={loading}
-            onClick={handleSubmit}
             sx={{
               borderRadius: (theme) => `${theme.palette.custom.radius.md}px`,
               px: 4,
