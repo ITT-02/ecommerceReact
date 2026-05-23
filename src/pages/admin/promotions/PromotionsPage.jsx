@@ -1,6 +1,7 @@
 // Página administrativa: Promociones.
 import { useState } from 'react';
 
+import { PromotionDetailDialog } from '../../../components/admin/promotions/PromotionDetailDialog';
 import { PromotionFormDialog } from '../../../components/admin/promotions/PromotionFormDialog';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 
@@ -11,6 +12,7 @@ import { usePromotions } from '../../../hooks/marketing/usePromotions';
 export const PromotionsPage = () => {
 
     const [selectedPromotion, setSelectedPromotion] = useState(null);
+    const [detailOpen, setDetailOpen] = useState(false);
     const [formOpen, setFormOpen] = useState(false);
     const [formMode, setFormMode] = useState('create');
     const [pendingSave, setPendingSave] = useState(null);
@@ -66,8 +68,7 @@ export const PromotionsPage = () => {
                     const promocionCompleta = await getPromotionById(id);
                     if (promocionCompleta) {
                         setSelectedPromotion(promocionCompleta);
-                        setFormMode('view');
-                        setFormOpen(true);
+                        setDetailOpen(true);
                     }
                 } catch (err) {
                     console.error('Error al obtener los detalles completos de la promoción:', err);
@@ -219,6 +220,12 @@ export const PromotionsPage = () => {
                 promotion={selectedPromotion}
                 mode={formMode}
                 loading={saving}
+            />
+
+            <PromotionDetailDialog
+                open={detailOpen}
+                onClose={() => { setDetailOpen(false); setSelectedPromotion(null); }}
+                promotion={selectedPromotion}
             />
 
             <ConfirmDialog
