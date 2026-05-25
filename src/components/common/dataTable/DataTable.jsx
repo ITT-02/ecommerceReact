@@ -33,6 +33,7 @@ import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'; // Para V
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'; // Para Detalle de Transacción
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
+import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'; // Para Asignar Roles
 
 /**
  * Obtiene el valor de una celda usando el nombre del campo.
@@ -117,6 +118,7 @@ const TableActionButton = ({ action, row }) => {
     history: <HistoryOutlinedIcon sx={{ fontSize: 17 }} />,
     receipt: <ReceiptLongOutlinedIcon sx={{ fontSize: 17 }} />,
     add: <AddCircleOutlineRoundedIcon sx={{ fontSize: 17 }} />,
+    assign_roles: <ManageAccountsOutlinedIcon sx={{ fontSize: 17 }} />,
   };
 
   const colorMap = {
@@ -129,6 +131,7 @@ const TableActionButton = ({ action, row }) => {
     history: theme.palette.secondary.main,
     receipt: theme.palette.text.secondary,
     add: theme.palette.primary.main,
+    assign_roles: theme.palette.secondary.main,
   };
 
   const actionColor =
