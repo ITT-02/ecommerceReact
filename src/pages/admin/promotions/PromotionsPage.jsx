@@ -9,6 +9,11 @@ import { AdminResourceTable } from '../../../components/common/dataTable/AdminRe
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 import { usePromotions } from '../../../hooks/marketing/usePromotions';
 
+const toBooleanFilter = (value) => {
+  if (value === '') return null;
+  return value === 'true';
+};
+
 export const PromotionsPage = () => {
 
     const [selectedPromotion, setSelectedPromotion] = useState(null);
@@ -25,7 +30,13 @@ export const PromotionsPage = () => {
     const [pageNumber, setPageNumber] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [search, setSearch] = useState('');
-    const [filters, setFilters] = useState({ esActivo: '' });
+    const [filters, setFilters] = useState({ 
+        esActivo: '', 
+        tipo_promocion: '',
+        tipo_descuento: '',
+        fecha_inicio: '',
+        fecha_fin: '',
+    });
 
 
     const {
@@ -43,7 +54,11 @@ export const PromotionsPage = () => {
         pageNumber,
         pageSize,
         search,
-        esActivo: filters.esActivo === '' ? null : filters.esActivo === 'true',
+        esActivo: toBooleanFilter(filters.esActivo),
+        tipo_promocion: filters.tipo_promocion || null,
+        tipo_descuento: filters.tipo_descuento || null,
+        fecha_inicio: filters.fecha_inicio || null,
+        fecha_fin: filters.fecha_fin || null,
     })
 
     const columns = [
@@ -139,6 +154,18 @@ export const PromotionsPage = () => {
             { label: 'Monto fijo', value: 'monto_fijo' },
             { label: 'Envío gratis', value: 'envio_gratis' },
         ],
+    },
+    {
+        name: 'fecha_inicio',
+        label: 'Creado desde',
+        type: 'date',
+        width: 170,
+    },
+    {
+        name: 'fecha_fin',
+        label: 'Creado hasta',
+        type: 'date',
+        width: 170,
     }
   ];
 
@@ -151,6 +178,28 @@ export const PromotionsPage = () => {
     {/* Cambio de tamaño de página*/}
     const handlePageSizeChange = (value) => {
         setPageSize(value);
+        setPageNumber(1);
+    };
+
+    const handleSearchChange = (value) => {
+        setSearch(value);
+        setPageNumber(1);
+    };
+
+    const handleFilterChange = (name, value) => {
+        setFilters((current) => ({ ...current, [name]: value }));
+        setPageNumber(1);
+    };
+
+    const handleResetFilters = () => {
+        setSearch('');
+        setFilters({
+            esActivo: '',
+            tipo_promocion: '',
+            tipo_descuento: '',
+            fecha_inicio: '',
+            fecha_fin: '',
+        });
         setPageNumber(1);
     };
 
@@ -203,13 +252,20 @@ export const PromotionsPage = () => {
                 columns={columns}
                 actions={actions}
                 pagination={pagination}
-                loading={loading}
-                pagination={pagination}
+                loading={loading || fetching}
                 searchValue={search}
+                searchLabel="Buscar promoción"
                 filters={tableFilters}
+                filterValues={filters}
+                onSearchChange={handleSearchChange}
+                onFilterChange={handleFilterChange}
+                onResetFilters={handleResetFilters}
+                onPageChange={setPageNumber}
                 onPageSizeChange={handlePageSizeChange}
                 primaryActionLabel="Crear promoción"
                 onPrimaryAction={handleCreatePromotion}
+                emptyTitle="No hay promociones"
+                emptyDescription="Intenta ajustar la búsqueda, cambiar los filtros o crear una nueva promoción."
             />
 
             <PromotionFormDialog 

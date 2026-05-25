@@ -7,16 +7,20 @@ export const getPromotions = async ({
   pageSize = 10,
   search = '',
   esActivo = null,
+  tipo_promocion = null,
+  tipo_descuento = null,
+  fecha_inicio = null,
+  fecha_fin = null,
 }) => {
   const response = await restApi.post('/rpc/listar_promociones_admin_paginado', {
     p_page_number: pageNumber,
     p_page_size: pageSize,
     p_search: search,
-    p_tipo_promocion: null,
-    p_tipo_descuento: null,
+    p_tipo_promocion: tipo_promocion,
+    p_tipo_descuento: tipo_descuento,
     p_es_activa: esActivo,
-    p_fecha_inicio: null,
-    p_fecha_fin: null
+    p_fecha_inicio: fecha_inicio,
+    p_fecha_fin: fecha_fin
   });
   
   return response.data;

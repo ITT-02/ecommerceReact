@@ -12,12 +12,25 @@ export const usePromotions = ({
     pageSize = 10,
     search = '',
     esActivo = null,
+    tipo_promocion = null,
+    tipo_descuento = null,
+    fecha_inicio = null,
+    fecha_fin = null,
   } = {}) => {
   const queryClient = useQueryClient();
 
   const promotionsQuery = useQuery({
-    queryKey: ['promotions', pageNumber, pageSize, search, esActivo],
-    queryFn: () => getPromotions({ pageNumber, pageSize, search, esActivo }),
+    queryKey: ['promotions', pageNumber, pageSize, search, esActivo, tipo_promocion, tipo_descuento, fecha_inicio, fecha_fin],
+    queryFn: () => getPromotions({ 
+      pageNumber, 
+      pageSize, 
+      search, 
+      esActivo,
+      tipo_promocion,
+      tipo_descuento,
+      fecha_inicio,
+      fecha_fin
+    }),
   });
 
   const saveMutation = useMutation({
