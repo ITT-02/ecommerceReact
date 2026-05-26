@@ -1,14 +1,27 @@
 // Select reutilizable para formularios controlados.
+import React from 'react';
+import { TextField } from '@mui/material';
+import { Controller } from 'react-hook-form';
 
-import { MenuItem, TextField } from '@mui/material';
-
-export const SelectFieldController = ({ name, label, value, onChange, options = [], getValue = (item) => item.id, getLabel = (item) => item.nombre, ...props }) => {
+export const SelectFieldController = ({ name, control, label, children, ...props }) => {
   return (
-    <TextField select name={name} label={label} value={value} onChange={onChange} {...props}>
-      <MenuItem value="">Seleccione</MenuItem>
-      {options.map((option) => (
-        <MenuItem key={getValue(option)} value={getValue(option)}>{getLabel(option)}</MenuItem>
-      ))}
-    </TextField>
+    <Controller
+      name={name}
+      control={control}
+      render={({ field: { onChange, value }, fieldState: { error } }) => (
+        <TextField
+          select
+          fullWidth
+          label={label}
+          value={value || ''} // Si el valor es undefined, usamos string vacío ''
+          onChange={onChange}
+          error={!!error}
+          helperText={error?.message}
+          {...props}
+        >
+          {children}
+        </TextField>
+      )}
+    />
   );
 };

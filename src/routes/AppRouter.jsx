@@ -39,8 +39,8 @@ import { HomePage } from '../pages/store/HomePage';
 import { MyOrdersPage } from '../pages/store/MyOrdersPage';
 import { OrderTrackingPage } from '../pages/store/OrderTrackingPage';
 import { ProductDetailPage } from '../pages/store/ProductDetailPage';
-import { ProfilePage } from '../pages/store/ProfilePage';
-
+//import { ProfilePage } from '../pages/store/ProfilePage';
+import { MyProfilePage } from '../pages/store/profile/MyProfilePage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
 import { RoleRoute } from './RoleRoute';
@@ -77,7 +77,7 @@ export const AppRouter = () => {
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="mis-pedidos" element={<MyOrdersPage />} />
           <Route path="mis-pedidos/:id" element={<OrderTrackingPage />} />
-          <Route path="perfil" element={<ProfilePage />} />
+          <Route path="perfil" element={<MyProfilePage />} />
           <Route path="direcciones" element={<AddressesPage />} />
         </Route>
       </Route>
