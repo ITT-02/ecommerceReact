@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,15 +12,71 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
-  Box
+  Box,
+  Autocomplete,
+  CircularProgress
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { mapPromotionToFormData, mapFormDataToPayload } from '../../../adapters/promotionsMapper';
+import { getCategoriesForPromotion } from '../../../services/catalog/categoryService';
+import { getProductsForPromotion } from '../../../services/catalog/productService';
+import { getVariantsForPromotion } from '../../../services/catalog/variantService';
 
 export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading, mode = 'create' }) => {
   const isEditMode = mode === 'edit';
   const isViewMode = mode === 'view';
   const [formData, setFormData] = useState(() => mapPromotionToFormData(promotion));
+  const [selectedApplications, setSelectedApplications] = useState([]);
+
+  // Estados para datos del backend
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [variants, setVariants] = useState([]);
+  const [loading_categories, setLoadingCategories] = useState(false);
+  const [loading_products, setLoadingProducts] = useState(false);
+  const [loading_variants, setLoadingVariants] = useState(false);
+
+  // Cargar categorías, productos y variantes cuando se abre el dialog
+  useEffect(() => {
+    if (!open) return;
+
+    const loadData = async () => {
+      try {
+        setLoadingCategories(true);
+        const cats = await getCategoriesForPromotion();
+        setCategories(cats || []);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        setCategories([]);
+      } finally {
+        setLoadingCategories(false);
+      }
+
+      try {
+        setLoadingProducts(true);
+        const prods = await getProductsForPromotion();
+        setProducts(prods || []);
+      } catch (error) {
+        console.error('Error loading products:', error);
+        setProducts([]);
+      } finally {
+        setLoadingProducts(false);
+      }
+
+      try {
+        setLoadingVariants(true);
+        const vars = await getVariantsForPromotion();
+        setVariants(vars || []);
+      } catch (error) {
+        console.error('Error loading variants:', error);
+        setVariants([]);
+      } finally {
+        setLoadingVariants(false);
+      }
+    };
+
+    loadData();
+  }, [open]);
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
@@ -28,13 +84,27 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
+    
+    // Resetear selecciones cuando cambia aplica_a
+    if (name === 'aplica_a') {
+      setSelectedApplications([]);
+    }
+  };
+
+  const handleApplicationsChange = (event, value) => {
+    // Mapear cada selección al formato correcto: {target_tipo, target_id}
+    const mapped = value.map((item) => ({
+      target_tipo: formData.aplica_a,
+      target_id: item.id,
+    }));
+    setSelectedApplications(mapped);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isViewMode) return;
 
-    const payload = mapFormDataToPayload(formData, []);
+    const payload = mapFormDataToPayload(formData, selectedApplications);
     await onSave(payload, promotion?.id || null);
     onClose();
   };
@@ -81,7 +151,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
         <Grid container spacing={2} sx={{ mt: 0.5 }}>
           
           {/* Nombre */}
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, md: 6}}>
             <TextField
               required
               label="Nombre de la promoción"
@@ -90,22 +160,6 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
               onChange={handleChange}
               disabled={isViewMode}
             />
-          </Grid>
-
-          {/* Tipo de Promoción */}
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              select
-              label="Tipo de promoción"
-              name="tipo_promocion"
-              value={formData.tipo_promocion}
-              onChange={handleChange}
-              disabled={isViewMode}
-            >
-              <MenuItem value="descuento_directo">Descuento Directo</MenuItem>
-              <MenuItem value="cupon">Cupón</MenuItem>
-              <MenuItem value="envio_gratis">Envío Gratis</MenuItem>
-            </TextField>
           </Grid>
 
           {/* Descripción */}
@@ -151,6 +205,22 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
             />
           </Grid>
 
+          {/* Tipo de Promoción */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              select
+              label="Tipo de promoción"
+              name="tipo_promocion"
+              value={formData.tipo_promocion}
+              onChange={handleChange}
+              disabled={isViewMode}
+            >
+              <MenuItem value="descuento_directo">Descuento Directo</MenuItem>
+              <MenuItem value="cupon">Cupón</MenuItem>
+              <MenuItem value="envio_gratis">Envío Gratis</MenuItem>
+            </TextField>
+          </Grid>
+
           {/* Código Cupón (Obligatorio solo si tipo_promocion === 'cupon') */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
@@ -165,7 +235,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
           </Grid>
 
           {/* Prioridad */}
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               type="number"
               label="Prioridad (Mayor valor gana prioridad)"
@@ -175,6 +245,8 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
               disabled={isViewMode}
             />
           </Grid>
+
+          <Box sx={{ width: '100%', display: { xs: 'none', sm: 'block' } }} />
 
           {/* Fecha Inicio */}
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -277,6 +349,73 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
               }
             />
           </Grid>
+
+          {/* Elegir aplicaciones */}
+          {formData.aplica_a === 'categoria' && (
+            <Grid size={{ xs: 12 }}>
+              <Autocomplete
+                multiple
+                disabled={isViewMode}
+                options={categories}
+                getOptionLabel={(option) => option.nombre || ''}
+                value={selectedApplications.map((app) => categories.find((c) => c.id === app.target_id)) || []}
+                onChange={handleApplicationsChange}
+                loading={loading_categories}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Seleccionar Categorías"
+                    placeholder="Buscar categorías..."
+                  />
+                )}
+              />
+            </Grid>
+          )}
+
+          {formData.aplica_a === 'producto' && (
+            <Grid size={{ xs: 12 }}>
+              <Autocomplete
+                multiple
+                disabled={isViewMode}
+                options={products}
+                getOptionLabel={(option) => option.nombre || ''}
+                value={selectedApplications.map((app) => products.find((p) => p.id === app.target_id)) || []}
+                onChange={handleApplicationsChange}
+                loading={loading_products}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Seleccionar Productos"
+                    placeholder="Buscar productos..."
+                  />
+                )}
+              />
+            </Grid>
+          )}
+
+          {formData.aplica_a === 'variante' && (
+            <Grid size={{ xs: 12 }}>
+              <Autocomplete
+                multiple
+                disabled={isViewMode}
+                options={variants}
+                getOptionLabel={(option) => `${option.producto_nombre || ''} - ${option.nombre_variante || ''} ${option.atributos_resumen ? `(${option.atributos_resumen})` : ''}`}
+                value={selectedApplications.map((app) => variants.find((v) => v.id === app.target_id)) || []}
+                onChange={handleApplicationsChange}
+                loading={loading_variants}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Seleccionar Variantes"
+                    placeholder="Buscar variantes..."
+                  />
+                )}
+              />
+            </Grid>
+          )}
 
         </Grid>
       </DialogContent>

@@ -84,3 +84,16 @@ export const getProductOptions = async (search = '') => {
     slug: product.slug,
   }));
 };
+
+export const getVariantsForPromotion = async () => {
+  const response = await restApi.post('/rpc/listar_variantes_con_atributos_paginado', {
+    p_page_number: 1,
+    p_page_size: 1000, // Límite alto para obtener todas
+    p_search: null,
+    p_producto_id: null,
+    p_es_activa: null,
+  });
+
+  const items = response.data?.items || response.data?.variantes || [];
+  return items;
+};

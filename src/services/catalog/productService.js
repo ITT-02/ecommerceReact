@@ -139,3 +139,15 @@ export const deleteProduct = async (product) => {
 
   return response.data;
 };
+
+export const getProductsForPromotion = async () => {
+  const response = await restApi.get('/productos', {
+    params: {
+      select: 'id,nombre',
+      es_activo: 'eq.true',
+      order: 'nombre.asc',
+    },
+  });
+
+  return response.data || [];
+};
