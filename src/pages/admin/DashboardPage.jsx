@@ -1,5 +1,4 @@
 // Dashboard administrativo.
-
 import { Container, Grid } from '@mui/material';
 import { AdminStatsCard } from '../../components/admin/AdminStatsCard';
 import { LowStockAlert } from '../../components/admin/LowStockAlert';
