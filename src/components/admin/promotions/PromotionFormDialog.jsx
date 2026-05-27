@@ -38,8 +38,8 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
   // Usar key para resetear estado cuando cambia promotion.id
   const [formData, setFormData] = useState(() => mapPromotionToFormData(promotion));
   const [allApplications, setAllApplications] = useState(() => {
-    if (isEditMode && promotion?.p_aplicaciones && Array.isArray(promotion.p_aplicaciones)) {
-      return promotion.p_aplicaciones;
+    if (isEditMode && promotion?.aplicaciones && Array.isArray(promotion.aplicaciones)) {
+      return promotion.aplicaciones;
     }
     return [];
   });
@@ -153,6 +153,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
 
   const isCupon = formData.tipo_promocion === 'cupon';
   const isEnvioGratis = formData.tipo_promocion === 'envio_gratis' || formData.tipo_descuento === 'envio_gratis';
+
 
   return (
     <Dialog
@@ -462,7 +463,7 @@ export const PromotionFormDialog = ({ open, onClose, onSave, promotion, loading,
               )}
             </>
           )}
-
+          
           {/* Tabla de aplicaciones seleccionadas */}
           {allApplications.length > 0 && (
             <Grid size={{ xs: 12 }}>
