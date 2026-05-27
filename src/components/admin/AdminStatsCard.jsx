@@ -90,7 +90,7 @@ export const AdminStatsCard = ({ title, value }) => {
     <Card
       elevation={0}
       sx={(theme) => ({
-        borderRadius: 18,
+        borderRadius: 2,
         border: '1px solid',
         borderColor: 'divider',
         bgcolor: 'background.paper',

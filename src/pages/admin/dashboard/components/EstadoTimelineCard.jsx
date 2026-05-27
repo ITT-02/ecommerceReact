@@ -40,7 +40,7 @@ const iconByKey = {
   recibo: ReceiptOutlinedIcon,
 };
 
-const badgePalette = (type, estado) => {
+const badgePalette = (_type, estado) => {
   const t = String(estado ?? '').toLowerCase();
 
   switch (t) {
@@ -61,29 +61,6 @@ const badgePalette = (type, estado) => {
     default:
       return { bg: 'rgba(230, 236, 255, 0.55)', color: '#1f2a44' };
   }
-};
-
-const estadoBadge = (type, estado) => {
-  const badge = badgePalette(type, estado);
-
-  return (
-    <Box
-      component="span"
-      sx={{
-        px: 1.25,
-        py: 0.5,
-        borderRadius: 999,
-        bgcolor: badge.bg,
-        color: badge.color,
-        fontWeight: 800,
-        fontSize: '0.76rem',
-        whiteSpace: 'nowrap',
-        letterSpacing: 0.1,
-      }}
-    >
-      {estado}
-    </Box>
-  );
 };
 
 const EstadoTimelineRow = ({
@@ -140,9 +117,7 @@ const EstadoTimelineRow = ({
           {estado}
         </Box>
 
-        <Box sx={{ minWidth: 0 }}>
-          {centro}
-        </Box>
+        <Box sx={{ minWidth: 0 }}>{centro}</Box>
       </Box>
 
       <Box sx={{ flexShrink: 0, textAlign: 'right' }}>
@@ -154,9 +129,6 @@ const EstadoTimelineRow = ({
   );
 };
 
-/**
- * Card/lista vertical compacta estilo dashboard minimalista.
- */
 export const EstadoTimelineCard = ({
   title,
   type,
@@ -168,7 +140,7 @@ export const EstadoTimelineCard = ({
     <Card
       elevation={0}
       sx={(theme) => ({
-        borderRadius: 3,
+        borderRadius: 2,
         bgcolor: theme.palette.background.paper,
         border: '1px solid',
         borderColor: 'divider',

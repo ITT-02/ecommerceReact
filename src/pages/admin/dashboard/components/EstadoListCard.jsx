@@ -17,7 +17,6 @@ import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutli
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import CreditCardOffOutlinedIcon from '@mui/icons-material/CreditCardOffOutlined';
 
 import { formatCurrency } from '../../../../utils/formatters';
 
@@ -42,12 +41,12 @@ const badgePalette = (type, estado) => {
   if (type === 'orders') {
     switch (t) {
       case 'pendiente':
-        return { bg: 'rgba(237, 224, 255, 0.55)', color: '#4c2a86' }; // morado pastel
+        return { bg: 'rgba(237, 224, 255, 0.55)', color: '#4c2a86' };
       case 'confirmado':
       case 'entregado':
-        return { bg: 'rgba(193, 255, 214, 0.55)', color: '#0f5f2e' }; // verde pastel
+        return { bg: 'rgba(193, 255, 214, 0.55)', color: '#0f5f2e' };
       case 'preparando':
-        return { bg: 'rgba(205, 235, 255, 0.65)', color: '#0b4a6e' }; // azul claro
+        return { bg: 'rgba(205, 235, 255, 0.65)', color: '#0b4a6e' };
       case 'enviado':
         return { bg: 'rgba(210, 247, 255, 0.65)', color: '#0a5a74' };
       case 'cancelado':
@@ -84,7 +83,6 @@ const EstadoRow = ({ type, item }) => {
 
   return (
     <Stack direction="row" alignItems="center" spacing={1.25} sx={{ width: '100%' }}>
-      {/* Ícono (extremo izquierdo) */}
       <Box
         sx={{
           width: 34,
@@ -102,7 +100,6 @@ const EstadoRow = ({ type, item }) => {
         <Icon sx={{ fontSize: 18, opacity: 0.9 }} />
       </Box>
 
-      {/* Centro */}
       <Box sx={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box
           component="span"
@@ -128,7 +125,6 @@ const EstadoRow = ({ type, item }) => {
         ) : null}
       </Box>
 
-      {/* Extremo derecho */}
       <Box sx={{ flexShrink: 0, textAlign: 'right' }}>
         <Typography variant="body2" sx={{ fontWeight: 950, color: 'text.primary' }}>
           {item.derecho === 'currency' ? formatMaybeCurrency(item.valor) : item.valor}
@@ -138,9 +134,6 @@ const EstadoRow = ({ type, item }) => {
   );
 };
 
-/**
- * Card con lista vertical compacta para “Estados” (pedidos/pagos).
- */
 export const EstadoListCard = ({
   title,
   type,
@@ -152,7 +145,7 @@ export const EstadoListCard = ({
     <Card
       elevation={0}
       sx={(theme) => ({
-        borderRadius: 3,
+        borderRadius: 2,
         bgcolor: theme.palette.background.paper,
         border: '1px solid',
         borderColor: 'divider',
@@ -160,7 +153,6 @@ export const EstadoListCard = ({
       })}
     >
       <CardContent sx={{ p: 2 }}>
-        {/* Título (arriba izquierda) */}
         <Typography
           variant="subtitle1"
           sx={{
@@ -189,7 +181,6 @@ export const EstadoListCard = ({
           )}
         </Stack>
 
-        {/* Enlace inferior sutil */}
         <Box sx={{ mt: 1.25, display: 'flex', justifyContent: 'flex-end' }}>
           <Link
             component="button"
