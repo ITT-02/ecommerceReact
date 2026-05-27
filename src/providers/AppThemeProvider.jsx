@@ -1,12 +1,6 @@
 // Provider visual del sistema.
 // Administra el modo claro/oscuro y entrega el tema de Material UI.
-// Fuente global del sistema.
-import '@fontsource/poppins/400.css';
-import '@fontsource/poppins/500.css';
-import '@fontsource/poppins/600.css';
-import '@fontsource/poppins/700.css';
-import '@fontsource/poppins/800.css';
-
+// La fuente Poppins se carga desde Google Fonts en index.html.
 import { CssBaseline } from '@mui/material';
 import { createContext, useContext, useMemo, useState } from 'react';
 import { ThemeProvider, responsiveFontSizes } from '@mui/material/styles';
