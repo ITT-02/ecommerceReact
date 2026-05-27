@@ -32,39 +32,37 @@ export const ProgMayoristaComponent = () => {
     ];
 
     return (
-        <>
-            <Box sx={{ backgroundColor: '#0F3D37', padding: '20px', pl: '20%', pr: '20%', pt: '70px', pb: '70px', display: 'flex', flexDirection: 'column' }}>
-                <Typography align="left" sx ={{ color:'#D4A24A', fontFamily:"Montserrat", fontWeight: 500, fontSize: '11px', letterSpacing: '0.25em' }}>
-                    PROGRAMA MAYORISTA
+        <Box sx={{
+            backgroundColor: '#0F3D37',
+            pt: '70px',
+            pb: '70px',
+            px: { xs: 2, sm: 4 },
+        }}>
+            {/* ✅ Un solo Box con maxWidth envuelve títulos Y grid */}
+            <Box sx={{ maxWidth: '1200px', mx: 'auto', width: '100%' }}>
+                <Typography sx={{ color: '#D4A24A', fontFamily: 'Montserrat', fontWeight: 500, fontSize: '11px', letterSpacing: '0.25em', mb: 1 }}>
+                PROGRAMA MAYORISTA
                 </Typography>
-                <Typography align="left" sx ={{ color:'#F6F3EE', fontFamily: 'Cinzel', fontWeight: 500, fontSize: '38px' }}>
-                    ÚNETE A NUESTRA RED DE DISTRIBUIDORES
+                <Typography sx={{ color: '#F6F3EE', fontFamily: 'Cinzel', fontWeight: 500, fontSize: { xs: '28px', md: '38px' }, mb: 2 }}>
+                ÚNETE A NUESTRA RED DE DISTRIBUIDORES
                 </Typography>
-                <Typography align="left" sx ={{ color:'#F6F3EE', fontFamily: 'Montserrat', fontWeight: 400, fontSize: '16px' }}>
-                    Accede a precios exclusivos, stock completo y soporte personalizado. Más de 1,200 mayoristas activos ya confían en Aliqora.
+                <Typography sx={{ color: '#F6F3EE', fontFamily: 'Montserrat', fontWeight: 400, fontSize: '16px', mb: 4, maxWidth: '700px' }}>
+                Accede a precios exclusivos, stock completo y soporte personalizado. Más de 1,200 mayoristas activos ya confían en Aliqora.
                 </Typography>
 
-                <Grid
-                    container 
-                    spacing={3} 
-                    sx={{ 
-                    maxWidth: '1200px', 
-                    width: '100%', 
-                    mx: 'auto' 
-                    }}
-                >
+                <Box sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'repeat(3, 1fr)',
+                    },
+                    gap: 3,
+                    }}>
                     {beneficios.map((item, index) => (
-                    // xs=12 (1 por fila en cel), sm=4 (3 por fila en PC)
-                    <Grid item xs={12} sm={4} key={index}>
-                        <BoxItemComponent
-                            icon={item.icon}
-                            title={item.title}
-                            description={item.description}
-                        />
-                    </Grid>
+                        <BoxItemComponent key={index} {...item} />
                     ))}
-                </Grid>
+                </Box>
             </Box>
-        </>
+        </Box>
     );
 }

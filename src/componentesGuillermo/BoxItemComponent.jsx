@@ -17,7 +17,6 @@ export const BoxItemComponent = ({icon, title, description}) => {
                 variant="outlined"
                 sx={{
                     height: '100%',
-                    width: '100%',
                     boxSizing: 'border-box',
                     display: 'flex',
                     flexDirection: 'column',
@@ -37,7 +36,7 @@ export const BoxItemComponent = ({icon, title, description}) => {
                     },
                 }}
                 >
-                <CardContent sx={{ p: 0, '&:last-child': { paddingBottom: 0 } }}>
+                <CardContent sx={{ p: 0, height: '100%', '&:last-child': { paddingBottom: 0 } }}>
                     {/* Contenedor del Ícono / Emoji */}
                     <Box sx={{ fontSize: '2.5rem', mb: 2, display: 'inline-block' }}>
                     {icon}

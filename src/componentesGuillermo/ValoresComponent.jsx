@@ -38,42 +38,34 @@ export const ValoresComponent = () => {
 
     return (
         <>
-            <Box sx={{ backgroundColor: '#0F3D37',
+            <Box sx={{
+                backgroundColor: '#0F3D37',
                 pt: '70px',
                 pb: '70px',
-                // Reemplazamos los porcentajes por espaciados fijos y responsivos del tema
-                px: { xs: 3, sm: 6, md: 8 }, 
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
+                px: { xs: 2, sm: 4 },
             }}>
-                <Typography align="center" sx ={{ color:'#D4A24A', fontFamily:"Montserrat", fontWeight: 500, fontSize: '11px', letterSpacing: '0.25em' }}>
+                <Typography align="center" sx={{ color: '#D4A24A', fontFamily: 'Montserrat', fontWeight: 500, fontSize: '11px', letterSpacing: '0.25em' }}>
                     NUESTROS VALORES
                 </Typography>
-                <Typography align="center" sx ={{ color:'#F6F3EE', fontFamily: 'Cinzel', fontWeight: 500, fontSize: '38px' }}>
+                <Typography align="center" sx={{ color: '#F6F3EE', fontFamily: 'Cinzel', fontWeight: 500, fontSize: '38px', mb: 5 }}>
                     LO QUE NOS GUÍA
                 </Typography>
 
-                <Grid
-                    container 
-                    spacing={3} 
-                    sx={{ 
-                    maxWidth: '1200px', 
-                    width: '100%', 
-                    mx: 'auto' 
-                    }}
-                >
-                    {valores.map((item, index) => (
-                    // xs=12 (1 por fila en cel), sm=6 (2 por fila en tablet), md=3 (4 por fila en PC)
-                    <Grid item xs={12} sm={6} md={3} key={index}>
-                        <BoxItemComponent
-                            icon={item.icon}
-                            title={item.title}
-                            description={item.description}
-                        />
-                    </Grid>
-                    ))}
-                </Grid>
+                <Box sx={{ maxWidth: '1200px', mx: 'auto', width: '100%' }}>
+                    <Box sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'repeat(2, 1fr)',
+                        md: 'repeat(4, 1fr)',   // 👈 4 en una fila en desktop
+                        },
+                        gap: 3,
+                    }}>
+                        {valores.map((item, index) => (
+                        <BoxItemComponent key={index} {...item} />
+                        ))}
+                    </Box>
+                </Box>
             </Box>
         </>
     );
