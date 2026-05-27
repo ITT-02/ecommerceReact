@@ -141,7 +141,7 @@ function StepNode({ paso, status, evento, isLast, onClick }) {
           )
         }
 
-        {/* Línea conectora — equivale a la View con position:'absolute' de React Native
+        {/* Línea conectora — 
             La línea interna se llena de verde con transition (height: isCompleted ? '100%' : '0%') */}
         {!isLast && (
           <Box sx={{ width: 2, flexGrow: 1, minHeight: 28, bgcolor: 'grey.200', borderRadius: 1, overflow: 'hidden', my: 0.5 }}>
@@ -150,7 +150,6 @@ function StepNode({ paso, status, evento, isLast, onClick }) {
                 width:      '100%',
                 bgcolor:    'success.main',
                 // Animación: la línea se llena hacia abajo cuando el paso se completa
-                // Equivale a height: isCompleted ? '100%' : '0%' con LayoutAnimation
                 height:     status === 'done' ? '100%' : '0%',
                 transition: 'height 0.4s ease',
               }}
