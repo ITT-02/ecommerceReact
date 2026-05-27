@@ -41,6 +41,8 @@ import { useThemeMode } from '../../../providers/AppThemeProvider';
 import { StoreCartButton } from './StoreCartButton';
 import { StoreMobileDrawer } from './StoreMobileDrawer';
 import { StoreUserMenu } from './StoreUserMenu';
+import { AboutUsModal } from '../../../components/common/AboutUsModal';
+
 import {
   storeCatalogMenuItems,
   storeMainMenuItems,
@@ -54,6 +56,9 @@ export const StoreNavbar = () => {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [catalogAnchorEl, setCatalogAnchorEl] = useState(null);
+  
+  // Estado para nuestro nuevo modal
+  const [aboutUsOpen, setAboutUsOpen] = useState(false); 
 
   const isLoggedIn = isAuthenticated ?? Boolean(user);
   const isCatalogOpen = Boolean(catalogAnchorEl);
@@ -178,7 +183,21 @@ export const StoreNavbar = () => {
                 gap: 0.5,
               }}
             >
+              {/* Esto pinta el botón "Inicio" y el otro de "Nosotros" original */}
               {storeMainMenuItems.map(renderMainNavButton)}
+              
+              {/* ---> BOTÓN NUEVO: "Quiénes Somos" <--- */}
+              <Button
+                onClick={() => setAboutUsOpen(true)}
+                color="inherit"
+                sx={{
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  '&:hover': { color: 'primary.main' }
+                }}
+              >
+                Quiénes Somos
+              </Button>
 
               <Button
                 onClick={handleOpenCatalogMenu}
@@ -284,6 +303,13 @@ export const StoreNavbar = () => {
         catalogMenuItems={storeCatalogMenuItems}
         onClose={handleDrawerToggle}
       />
+
+      {/* ---> NUESTRO MODAL <--- */}
+      <AboutUsModal 
+        open={aboutUsOpen} 
+        onClose={() => setAboutUsOpen(false)} 
+      />
+
     </>
   );
 };
