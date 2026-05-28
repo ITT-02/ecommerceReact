@@ -155,7 +155,6 @@ export const InventoryAdjustDialog = ({
             value={formData.notas}
             onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
             fullWidth
-            placeholder="Detalle opcional de la corrección"
             disabled={loading}
           />
         </Box>

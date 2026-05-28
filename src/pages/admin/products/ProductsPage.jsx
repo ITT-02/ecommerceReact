@@ -24,6 +24,11 @@ import {
 } from '../../../adapters/catalog/productAdapter';
 import { useProducts } from '../../../hooks/catalog/useProducts';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
+import { useCustomizationOptions } from '../../../hooks/catalog/useCustomizationOptions';
+import {
+  getProductCustomizationOptions,
+  saveProductCustomizationOptions,
+} from '../../../services/catalog/customizationService';
 
 const toBooleanFilter = (value) => {
   if (value === '') return null;
@@ -39,6 +44,7 @@ export const ProductsPage = () => {
     esActivo: '',
     destacado: '',
     requiereCotizacion: '',
+    venderSinStock: '',
   });
   const [confirm, setConfirm] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -47,6 +53,12 @@ export const ProductsPage = () => {
   const [editingId, setEditingId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formError, setFormError] = useState('');
+
+  const {
+    options: customizationOptions,
+    loading: loadingCustomizationOptions,
+    error: customizationError,
+  } = useCustomizationOptions({ onlyActive: true });
 
   const {
     products,
@@ -68,6 +80,7 @@ export const ProductsPage = () => {
     esActivo: toBooleanFilter(filters.esActivo),
     destacado: toBooleanFilter(filters.destacado),
     requiereCotizacion: toBooleanFilter(filters.requiereCotizacion),
+    venderSinStock: toBooleanFilter(filters.venderSinStock),
   });
 
   
@@ -90,6 +103,7 @@ export const ProductsPage = () => {
       esActivo: '',
       destacado: '',
       requiereCotizacion: '',
+      venderSinStock: '',
     });
     setPageNotice('');
     setPageNumber(1);
@@ -141,7 +155,11 @@ export const ProductsPage = () => {
       setFormLoading(true);
       const productDetail = await getProductById(product.id);
       if (productDetail) {
-        setFormData(productToFormData(productDetail));
+        const productOptions = await getProductCustomizationOptions(product.id);
+        setFormData({
+          ...productToFormData(productDetail),
+          personalizacion_opciones: productOptions,
+        });
       }
     } catch (err) {
       setFormError(err.message);
@@ -173,7 +191,20 @@ export const ProductsPage = () => {
 
     try {
       const productData = formDataToProductPayload(formData);
-      await saveProduct(productData, editingId);
+      const savedProduct = await saveProduct(productData, editingId);
+      const savedProductId =
+        editingId ||
+        savedProduct?.producto?.id ||
+        savedProduct?.id ||
+        savedProduct?.[0]?.id;
+
+      if (savedProductId) {
+        await saveProductCustomizationOptions({
+          productId: savedProductId,
+          options: productData.es_personalizable ? productData.personalizacion_opciones : [],
+        });
+      }
+
       setPageNotice(editingId ? 'Producto actualizado correctamente.' : 'Producto creado correctamente.');
       resetForm();
     } catch (err) {
@@ -251,6 +282,16 @@ export const ProductsPage = () => {
       falseColor: 'default',
     },
     {
+      field: 'vender_sin_stock',
+      headerName: 'Disponibilidad',
+      type: 'boolean',
+      width: 155,
+      trueLabel: 'Bajo pedido',
+      falseLabel: 'Solo con stock',
+      trueColor: 'warning',
+      falseColor: 'default',
+    },
+    {
       field: 'es_activo',
       headerName: 'Estado',
       type: 'boolean',
@@ -298,6 +339,16 @@ export const ProductsPage = () => {
         { label: 'No requiere', value: 'false' },
       ],
     },
+    {
+      name: 'venderSinStock',
+      label: 'Disponibilidad',
+      type: 'select',
+      width: 190,
+      options: [
+        { label: 'Bajo pedido', value: 'true' },
+        { label: 'Solo con stock', value: 'false' },
+      ],
+    },
   ];
 
   const actions = [
@@ -316,7 +367,7 @@ export const ProductsPage = () => {
   return (
     <PlaceholderPage title="Productos" description="Administra productos base, categorias, estado comercial y visibilidad en tienda.">
       <Stack spacing={2}>
-        <ErrorMessage message={error } />
+        <ErrorMessage message={error || customizationError} />
 
         {pageNotice && (
           <Alert severity="info" onClose={() => setPageNotice('')}>
@@ -396,6 +447,8 @@ export const ProductsPage = () => {
             categories={categories}
             loading={saving || formLoading}
             error={formError}
+            customizationOptions={customizationOptions}
+            loadingCustomizationOptions={loadingCustomizationOptions}
             onCancel={handleCloseForm}
             onChange={handleInputChange}
             onMediaChange={handleFormFieldChange}

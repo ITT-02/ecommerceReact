@@ -1,12 +1,5 @@
 /**
  * Navbar público de la tienda.
- *
- * Responsabilidad:
- * - Mostrar marca.
- * - Mostrar navegación desktop.
- * - Mostrar menú de catálogo.
- * - Mostrar acciones de sesión/carrito/tema.
- * - Abrir drawer móvil.
  */
 
 import { useState } from 'react';
@@ -41,16 +34,37 @@ import { useThemeMode } from '../../../providers/AppThemeProvider';
 import { StoreCartButton } from './StoreCartButton';
 import { StoreMobileDrawer } from './StoreMobileDrawer';
 import { StoreUserMenu } from './StoreUserMenu';
-import {
-  storeCatalogMenuItems,
-  storeMainMenuItems,
-} from './storeNavigationConfig';
+import { storeAfterCatalogMenuItems, storeCatalogMenuItems, storeMainMenuItems } from './storeNavigationConfig';
+
+import { StoreBrandLogo } from './StoreBrandLogo';
+
+const getNavButtonSx = (isActive = false) => (theme) => {
+  const nav = theme.palette.custom.semantic.storeNavigation;
+
+  return {
+    fontWeight: 700,
+    color: isActive ? nav.brandText : nav.textMuted,
+    borderRadius: theme.palette.custom.radius.sm,
+    px: 1.5,
+    bgcolor: isActive ? nav.activeBg : 'transparent',
+    '&:hover': {
+      color: nav.brandText,
+      bgcolor: nav.hoverBg,
+      transform: 'none',
+      boxShadow: 'none',
+    },
+    '&.active': {
+      color: nav.brandText,
+      bgcolor: nav.activeBg,
+    },
+  };
+};
 
 export const StoreNavbar = () => {
   const location = useLocation();
 
   const { mode, toggleColorMode } = useThemeMode();
-  const { user, isAuthenticated } = useAuth();
+  const { user, roles, isAuthenticated } = useAuth();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [catalogAnchorEl, setCatalogAnchorEl] = useState(null);
@@ -60,33 +74,12 @@ export const StoreNavbar = () => {
   const isCatalogActive = location.pathname === '/catalogo';
   const currentUrl = `${location.pathname}${location.search}`;
 
-  const handleDrawerToggle = () => {
-    setMobileOpen((prev) => !prev);
-  };
-
-  const handleOpenCatalogMenu = (event) => {
-    setCatalogAnchorEl(event.currentTarget);
-  };
-
-  const handleCloseCatalogMenu = () => {
-    setCatalogAnchorEl(null);
-  };
+  const handleDrawerToggle = () => setMobileOpen((prev) => !prev);
+  const handleOpenCatalogMenu = (event) => setCatalogAnchorEl(event.currentTarget);
+  const handleCloseCatalogMenu = () => setCatalogAnchorEl(null);
 
   const renderMainNavButton = (item) => (
-    <Button
-      key={item.to}
-      component={NavLink}
-      to={item.to}
-      color="inherit"
-      sx={{
-        fontWeight: 600,
-        color: 'text.primary',
-        '&.active': {
-          color: 'primary.main',
-          fontWeight: 800,
-        },
-      }}
-    >
+    <Button key={item.to} component={NavLink} to={item.to} color="inherit" sx={getNavButtonSx()}>
       {item.label}
     </Button>
   );
@@ -94,16 +87,20 @@ export const StoreNavbar = () => {
   return (
     <>
       <Box
-        sx={(theme) => ({
-          borderBottom: 1,
-          borderColor: 'divider',
-          bgcolor: theme.palette.custom.semantic.primarySofter,
-        })}
+        sx={(theme) => {
+          const nav = theme.palette.custom.semantic.storeNavigation;
+
+          return {
+            borderBottom: `1px solid ${nav.border}`,
+            bgcolor: nav.bg,
+            color: nav.text,
+          };
+        }}
       >
         <Container maxWidth="xl">
           <Box
             sx={{
-              py: 1.2,
+              py: 1,
               display: 'flex',
               flexDirection: { xs: 'column', md: 'row' },
               justifyContent: 'space-between',
@@ -111,13 +108,13 @@ export const StoreNavbar = () => {
               gap: 1,
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.textMuted })}>
               Empaques premium para cajas, bolsas y presentación de marca
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Chip label="Envíos rápidos" size="small" />
-              <Chip label="Atención personalizada" size="small" />
+              <Chip label="Envíos rápidos" color="primary" size="small" />
+              <Chip label="Atención personalizada" color="secondary" size="small" />
             </Box>
           </Box>
         </Container>
@@ -126,11 +123,14 @@ export const StoreNavbar = () => {
       <AppBar
         position="sticky"
         elevation={0}
-        color="inherit"
-        sx={{
-          borderBottom: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
+        sx={(theme) => {
+          const nav = theme.palette.custom.semantic.storeNavigation;
+
+          return {
+            borderBottom: `1px solid ${nav.border}`,
+            bgcolor: nav.bg,
+            color: nav.text,
+          };
         }}
       >
         <Toolbar sx={{ px: { xs: 1, sm: 2 } }}>
@@ -143,59 +143,46 @@ export const StoreNavbar = () => {
               gap: 2,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <IconButton
-                color="primary"
-                onClick={handleDrawerToggle}
-                sx={{ display: { xs: 'inline-flex', md: 'none' } }}
-                aria-label="Abrir menú"
-              >
-                <Menu />
-              </IconButton>
-
-              <Box component={NavLink} to="/" sx={{ textDecoration: 'none' }}>
-                <Typography
-                  variant="h4"
-                  color="primary.main"
-                  sx={{
-                    fontWeight: 800,
-                    fontSize: { xs: '1.35rem', sm: '1.8rem' },
-                  }}
-                >
-                  Aliqora
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                  Empaques
-                </Typography>
-              </Box>
-            </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <IconButton
+              onClick={handleDrawerToggle}
+              sx={(theme) => ({
+                display: { xs: 'inline-flex', md: 'none' },
+                color: theme.palette.custom.semantic.storeNavigation.brandText,
+              })}
+              aria-label="Abrir menú"
+            >
+              <Menu />
+            </IconButton>
 
             <Box
+              component={NavLink}
+              to="/"
               sx={{
-                display: { xs: 'none', md: 'flex' },
+                display: 'flex',
                 alignItems: 'center',
-                gap: 0.5,
+                flexShrink: 0,
+                textDecoration: 'none',
               }}
             >
+              <StoreBrandLogo />
+            </Box>
+          </Box>
+    
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
               {storeMainMenuItems.map(renderMainNavButton)}
 
               <Button
                 onClick={handleOpenCatalogMenu}
                 endIcon={<KeyboardArrowDown />}
-                sx={{
-                  color: isCatalogActive ? 'primary.main' : 'text.primary',
-                  fontWeight: isCatalogActive ? 800 : 600,
-                }}
+                sx={getNavButtonSx(isCatalogActive)}
               >
                 Catálogo
               </Button>
 
-              <MuiMenu
-                anchorEl={catalogAnchorEl}
-                open={isCatalogOpen}
-                onClose={handleCloseCatalogMenu}
-              >
+              {storeAfterCatalogMenuItems.map(renderMainNavButton)}
+
+              <MuiMenu anchorEl={catalogAnchorEl} open={isCatalogOpen} onClose={handleCloseCatalogMenu}>
                 {storeCatalogMenuItems.map((item) => (
                   <MenuItem
                     key={item.to}
@@ -210,22 +197,10 @@ export const StoreNavbar = () => {
               </MuiMenu>
             </Box>
 
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: { xs: 0.5, sm: 1 },
-                flexShrink: 0,
-              }}
-            >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexShrink: 0 }}>
               <StoreCartButton />
 
-              <IconButton
-                onClick={toggleColorMode}
-                color="primary"
-                size="small"
-                aria-label="Cambiar tema"
-              >
+              <IconButton onClick={toggleColorMode} size="small" aria-label="Cambiar tema" sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.brandText })}>
                 {mode === 'light' ? <DarkMode /> : <LightMode />}
               </IconButton>
 
@@ -236,35 +211,27 @@ export const StoreNavbar = () => {
                   <IconButton
                     component={NavLink}
                     to="/login"
-                    color="primary"
                     size="small"
-                    sx={{ display: { xs: 'inline-flex', md: 'none' } }}
+                    sx={(theme) => ({ display: { xs: 'inline-flex', md: 'none' }, color: theme.palette.custom.semantic.storeNavigation.brandText })}
                     aria-label="Ingresar"
                   >
                     <AccountCircle />
                   </IconButton>
 
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{ display: { xs: 'none', md: 'flex' } }}
-                  >
-                    <Button
-                      component={NavLink}
-                      to="/login"
-                      variant="contained"
-                      size="small"
-                      sx={{ minWidth: 'auto' }}
-                    >
+                  <Stack direction="row" spacing={1} sx={{ display: { xs: 'none', md: 'flex' } }}>
+                    <Button component={NavLink} to="/login" variant="contained" size="small" sx={{ minWidth: 'auto' }}>
                       Ingresar
                     </Button>
-
                     <Button
                       component={NavLink}
                       to="/registro"
                       variant="outlined"
                       size="small"
-                      sx={{ minWidth: 'auto' }}
+                      sx={(theme) => ({
+                        minWidth: 'auto',
+                        color: theme.palette.custom.semantic.storeNavigation.brandText,
+                        borderColor: theme.palette.custom.semantic.storeNavigation.actionBorder,
+                      })}
                     >
                       Crear cuenta
                     </Button>
@@ -282,6 +249,8 @@ export const StoreNavbar = () => {
         currentUrl={currentUrl}
         mainMenuItems={storeMainMenuItems}
         catalogMenuItems={storeCatalogMenuItems}
+        afterCatalogMenuItems={storeAfterCatalogMenuItems}
+        roles={roles}
         onClose={handleDrawerToggle}
       />
     </>

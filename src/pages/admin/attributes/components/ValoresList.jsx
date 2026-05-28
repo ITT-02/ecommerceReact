@@ -59,7 +59,7 @@ export const ValoresList = ({ atributoSeleccionado, onChangeEvent }) => {
               <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 1 }}>
                 Gestión de Atributo
               </Typography>
-              <Typography variant="h4" sx={{ color: '#D9984A', fontWeight: 700, mt: 0.5 }}>
+              <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 700, mt: 0.5 }}>
                 {atributoSeleccionado.nombre}
               </Typography>
             </Box>
@@ -108,7 +108,7 @@ export const ValoresList = ({ atributoSeleccionado, onChangeEvent }) => {
                   }}
                 >
                   <Typography variant="body1" color="text.secondary">Aún no has agregado ningún valor.</Typography>
-                  <Typography variant="body2" color="text.disabled" mt={1}>(Ej: Pequeño, Rojo, Algodón, etc.)</Typography>
+                  <Typography variant="body2" color="text.disabled" mt={1}>Agrega valores para este atributo.</Typography>
                 </Paper>
               ) : (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%' }}>
@@ -127,7 +127,7 @@ export const ValoresList = ({ atributoSeleccionado, onChangeEvent }) => {
                           {v.color_hex ? (
                             <Box sx={{ width: 24, height: 24, borderRadius: '50%', bgcolor: v.color_hex, flexShrink: 0, border: '1px solid', borderColor: 'divider' }} />
                           ) : (
-                            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#D9984A', flexShrink: 0 }} />
+                            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'primary.main', flexShrink: 0 }} />
                           )}
                           <Typography sx={{ fontWeight: 600, color: 'text.primary', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {v.valor}

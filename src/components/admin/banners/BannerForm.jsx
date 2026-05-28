@@ -55,7 +55,6 @@ export const BannerForm = ({
                 label="Texto del boton"
                 value={formData.boton_texto}
                 onChange={onChange}
-                placeholder="Ver catalogo"
               />
             </Grid>
             <FileUploadField

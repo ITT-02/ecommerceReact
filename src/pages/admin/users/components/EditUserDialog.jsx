@@ -29,8 +29,6 @@ const ESTADO_OPTIONS = [
   { value: 'bloqueado',label: 'Bloqueado',color: 'error',   desc: 'Restringido' },
 ];
 
-const PALETTE_COLOR = { success: '#4caf50', default: '#9e9e9e', error: '#f44336' };
-
 // Reglas por tipo de documento
 const DOC_RULES = {
   DNI:       { maxLength: 8,  exactLength: 8,  onlyDigits: true,  helper: '8 dígitos numéricos' },
@@ -127,6 +125,12 @@ export const EditUserDialog = ({ open, usuario, isSaving, onClose, onConfirm }) 
     ? `${form.documento_identidad.length} / ${docRules.exactLength}`
     : `${form.documento_identidad.length} / ${docRules.maxLength}`;
 
+  const getEstadoColor = (colorKey) => ({
+    success: theme.palette.success.main,
+    default: theme.palette.text.disabled,
+    error: theme.palette.error.main,
+  }[colorKey] || theme.palette.text.secondary);
+
   return (
     <Dialog open={open} onClose={isSaving ? undefined : onClose} maxWidth="sm" fullWidth>
       <Box component="form" onSubmit={handleSubmit}>
@@ -181,7 +185,7 @@ export const EditUserDialog = ({ open, usuario, isSaving, onClose, onConfirm }) 
                 fullWidth
               >
                 {ESTADO_OPTIONS.map((opt) => {
-                  const color = PALETTE_COLOR[opt.color];
+                  const color = getEstadoColor(opt.color);
                   const selected = form.estado === opt.value;
                   return (
                     <ToggleButton
@@ -239,9 +243,11 @@ export const EditUserDialog = ({ open, usuario, isSaving, onClose, onConfirm }) 
                 value={form.documento_identidad}
                 onChange={handleDocumentoChange}
                 disabled={isSaving}
-                inputProps={{
-                  maxLength: docRules.maxLength,
-                  inputMode: docRules.onlyDigits ? 'numeric' : 'text',
+                slotProps={{
+                  htmlInput: {
+                    maxLength: docRules.maxLength,
+                    inputMode: docRules.onlyDigits ? 'numeric' : 'text',
+                  },
                 }}
                 helperText={
                   <Box component="span" sx={{ display: 'flex', justifyContent: 'space-between' }}>

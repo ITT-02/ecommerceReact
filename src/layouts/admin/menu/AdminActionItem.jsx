@@ -1,10 +1,6 @@
 /**
  * Item reutilizable para acciones del sidebar/drawer administrativo.
  *
- * Ejemplos:
- * - Cerrar sesión.
- * - Ir a tienda.
- * - Acción adicional del layout.
  */
 
 import {
@@ -16,12 +12,28 @@ import {
 
 import { NavLink } from 'react-router-dom';
 
+const getActionTone = (theme, tone) => {
+  const nav = theme.palette.custom.semantic.adminNavigation;
+
+  if (tone === 'danger') {
+    return {
+      color: nav.actionDanger,
+      hoverBg: nav.actionDangerBg,
+    };
+  }
+
+  return {
+    color: nav.itemText,
+    hoverBg: nav.itemHoverBg,
+  };
+};
+
 export const AdminActionItem = ({
   label,
   icon,
   to,
   onClick,
-  color,
+  tone = 'default',
   minWidthIcon = 40,
 }) => {
   const buttonProps = to
@@ -38,17 +50,25 @@ export const AdminActionItem = ({
     <ListItemButton
       {...buttonProps}
       onClick={onClick}
-      sx={{
-        borderRadius: 3,
-        color: color || 'text.primary',
-        textDecoration: 'none',
-        justifyContent: label ? 'flex-start' : 'center',
+      sx={(theme) => {
+        const actionTone = getActionTone(theme, tone);
+
+        return {
+          borderRadius: theme.palette.custom.radius.md,
+          color: actionTone.color,
+          textDecoration: 'none',
+          justifyContent: label ? 'flex-start' : 'center',
+          '&:hover': {
+            bgcolor: actionTone.hoverBg,
+            color: actionTone.color,
+          },
+        };
       }}
     >
       <ListItemIcon
         sx={{
           minWidth: minWidthIcon,
-          color: color || 'text.secondary',
+          color: 'inherit',
           justifyContent: 'center',
         }}
       >
@@ -58,7 +78,7 @@ export const AdminActionItem = ({
       {label && (
         <ListItemText
           primary={
-            <Typography component="span" sx={{ fontSize: 14, fontWeight: 600 }}>
+            <Typography component="span" sx={{ color: 'inherit', fontSize: 14, fontWeight: 600 }}>
               {label}
             </Typography>
           }

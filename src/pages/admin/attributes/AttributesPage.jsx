@@ -70,7 +70,7 @@ const ValoresSummary = ({ atributoId, tipoDato, refreshKey }) => {
                fontSize: '0.75rem', 
                maxWidth: '120px', 
                // ADAPTADO AL MODO OSCURO AUTOMÁTICAMENTE:
-               bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : '#f5f5f5', 
+               bgcolor: theme.palette.custom.semantic.paperWarm, 
                color: 'text.primary',
                fontWeight: 600,
                border: '1px solid',
@@ -85,7 +85,7 @@ const ValoresSummary = ({ atributoId, tipoDato, refreshKey }) => {
       {valores.length > maxDisplay && (
         <Typography variant="caption" sx={{ 
           color: 'text.secondary', fontWeight: 700, ml: 0.5, px: 1, py: 0.2, borderRadius: 2,
-          bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : '#f0f0f0', 
+          bgcolor: theme.palette.custom.semantic.primarySofter, 
         }}>
           +{valores.length - maxDisplay}
         </Typography>

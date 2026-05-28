@@ -1,5 +1,6 @@
-// Página: Mis direcciones.
+// Alias de navegación para direcciones.
+// Se muestra la misma pantalla de perfil porque allí vive la gestión de direcciones.
 
-import { PlaceholderPage } from '../../components/common/PlaceholderPage';
+import { ProfilePage } from './ProfilePage';
 
-export const AddressesPage = () => <PlaceholderPage title="Mis direcciones" description="Permite gestionar direcciones de entrega." />;
+export const AddressesPage = () => <ProfilePage />;

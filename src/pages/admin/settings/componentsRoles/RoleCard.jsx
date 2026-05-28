@@ -11,6 +11,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import GppGoodOutlinedIcon from '@mui/icons-material/GppGoodOutlined';
 import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
@@ -20,37 +22,58 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 import { fmtDate, getModuleColor, moduleFromCode } from './roleHelpers';
 
+const getTone = (theme, toneName = 'neutral') => {
+  const tones = theme.palette.custom.semantic.entityTone;
+
+  return tones?.[toneName] || {
+    bg: theme.palette.action.selected,
+    fg: theme.palette.text.secondary,
+    border: theme.palette.divider,
+  };
+};
+
 export const RoleCard = ({ role, canManagePermissions, onDetail, onEdit, onAssign }) => {
+  const theme = useTheme();
+
   const isSuperAdmin = role.codigo === 'super_admin';
   const isCliente = role.codigo === 'cliente';
 
   const editDisabled = !role.puede_editar || isSuperAdmin;
   const assignDisabled = !canManagePermissions || isSuperAdmin || isCliente;
 
+  const protectedTone = getTone(theme, 'warning');
+  const regularTone = getTone(theme, 'info');
+  const roleTone = role.es_protegido ? protectedTone : regularTone;
+
   const editTooltip = isSuperAdmin
     ? 'Rol protegido — no editable'
     : !role.puede_editar
-    ? 'Sin permisos para editar este rol'
-    : 'Editar nombre y descripción';
+      ? 'Sin permisos para editar este rol'
+      : 'Editar nombre y descripción';
 
   const assignTooltip = isSuperAdmin
     ? 'Rol protegido — permisos fijos'
     : isCliente
-    ? 'El cliente no recibe permisos administrativos'
-    : !canManagePermissions
-    ? 'Solo administrador o super_admin pueden asignar permisos'
-    : 'Asignar permisos';
+      ? 'El cliente no recibe permisos administrativos'
+      : !canManagePermissions
+        ? 'Solo super_admin pueden asignar permisos'
+        : 'Asignar permisos';
 
   return (
     <Card
       variant="outlined"
-      sx={{
+      sx={(muiTheme) => ({
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'box-shadow .15s ease',
-        '&:hover': { boxShadow: 2 },
-      }}
+        transition: muiTheme.transitions.create(['box-shadow', 'border-color'], {
+          duration: muiTheme.transitions.duration.shorter,
+        }),
+        '&:hover': {
+          boxShadow: muiTheme.palette.custom.shadows.md,
+          borderColor: muiTheme.palette.custom.semantic.borderStrong,
+        },
+      })}
     >
       <CardHeader
         sx={{ pb: 1 }}
@@ -60,8 +83,10 @@ export const RoleCard = ({ role, canManagePermissions, onDetail, onEdit, onAssig
               width: 40,
               height: 40,
               borderRadius: 1.5,
-              bgcolor: role.es_protegido ? '#fef3c7' : '#dbeafe',
-              color: role.es_protegido ? '#92400e' : '#1e40af',
+              bgcolor: roleTone.bg,
+              color: roleTone.fg,
+              border: '1px solid',
+              borderColor: roleTone.border,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -82,7 +107,10 @@ export const RoleCard = ({ role, canManagePermissions, onDetail, onEdit, onAssig
         subheader={
           <Typography
             variant="caption"
-            sx={{ fontFamily: 'ui-monospace, monospace', color: 'text.secondary' }}
+            sx={{
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+              color: 'text.secondary',
+            }}
           >
             {role.codigo}
           </Typography>
@@ -96,10 +124,15 @@ export const RoleCard = ({ role, canManagePermissions, onDetail, onEdit, onAssig
                 icon={<LockOutlinedIcon />}
                 sx={{
                   mt: 0.5,
-                  bgcolor: '#fef3c7',
-                  color: '#92400e',
+                  bgcolor: protectedTone.bg,
+                  color: protectedTone.fg,
+                  border: '1px solid',
+                  borderColor: protectedTone.border,
                   fontWeight: 500,
-                  '& .MuiChip-icon': { color: '#92400e', fontSize: 14 },
+                  '& .MuiChip-icon': {
+                    color: protectedTone.fg,
+                    fontSize: 14,
+                  },
                 }}
               />
             </Tooltip>
@@ -108,16 +141,27 @@ export const RoleCard = ({ role, canManagePermissions, onDetail, onEdit, onAssig
       />
 
       <CardContent sx={{ pt: 0, flex: 1 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ minHeight: 40, mb: 1.5 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ minHeight: 40, mb: 1.5 }}
+        >
           {role.descripcion || (
-            <Box component="em" sx={{ color: '#94a3b8' }}>
+            <Box component="em" sx={{ color: 'text.disabled' }}>
               Sin descripción
             </Box>
           )}
         </Typography>
 
-        <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 1 }}>
+        <Stack
+          direction="row"
+          spacing={0.75}
+          sx={{
+            alignItems: 'center',
+          }}
+        >
           <KeyOutlinedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+
           <Typography variant="body2" color="text.secondary">
             <Box component="b" sx={{ color: 'text.primary' }}>
               {role.total_permisos}
@@ -132,17 +176,29 @@ export const RoleCard = ({ role, canManagePermissions, onDetail, onEdit, onAssig
             const codigo = isStr ? p : (p.codigo ?? p.code ?? p.permiso ?? '');
             const nombre = isStr ? p : (p.nombre ?? p.name ?? p.codigo ?? p.code ?? p);
             const descripcion = isStr ? '' : (p.descripcion ?? p.description ?? '');
-            const c = getModuleColor(moduleFromCode(codigo));
+            const c = getModuleColor(moduleFromCode(codigo), theme);
+
             return (
-              <Tooltip key={codigo || i} title={[codigo, descripcion].filter(Boolean).join(' — ') || nombre}>
+              <Tooltip
+                key={codigo || i}
+                title={[codigo, descripcion].filter(Boolean).join(' — ') || nombre}
+              >
                 <Chip
                   size="small"
                   label={nombre}
-                  sx={{ bgcolor: c.bg, color: c.fg, fontWeight: 500, height: 22 }}
+                  sx={{
+                    height: 22,
+                    bgcolor: c.bg,
+                    color: c.fg,
+                    border: '1px solid',
+                    borderColor: c.border || 'transparent',
+                    fontWeight: 500,
+                  }}
                 />
               </Tooltip>
             );
           })}
+
           {role.total_permisos > (role.permisos_preview?.length || 0) && (
             <Chip
               size="small"
@@ -151,6 +207,7 @@ export const RoleCard = ({ role, canManagePermissions, onDetail, onEdit, onAssig
               sx={{ height: 22 }}
             />
           )}
+
           {role.total_permisos === 0 && (
             <Typography variant="caption" color="text.disabled">
               Sin permisos
@@ -165,12 +222,14 @@ export const RoleCard = ({ role, canManagePermissions, onDetail, onEdit, onAssig
         <Typography variant="caption" color="text.secondary">
           {fmtDate(role.created_at)}
         </Typography>
+
         <Stack direction="row" spacing={0.5}>
           <Tooltip title="Ver detalle">
             <IconButton size="small" onClick={() => onDetail(role)}>
               <VisibilityOutlinedIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
+
           <Tooltip title={editTooltip}>
             <span>
               <IconButton size="small" onClick={() => onEdit(role)} disabled={editDisabled}>
@@ -178,6 +237,7 @@ export const RoleCard = ({ role, canManagePermissions, onDetail, onEdit, onAssig
               </IconButton>
             </span>
           </Tooltip>
+
           <Tooltip title={assignTooltip}>
             <span>
               <IconButton size="small" onClick={() => onAssign(role)} disabled={assignDisabled}>

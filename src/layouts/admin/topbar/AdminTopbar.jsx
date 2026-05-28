@@ -1,11 +1,5 @@
 /**
  * Barra superior del panel administrativo.
- *
- * Responsabilidad:
- * - Abrir el menú móvil.
- * - Mostrar título/contexto del panel.
- * - Cambiar tema.
- * - Abrir menú de usuario.
  */
 
 import {
@@ -19,7 +13,12 @@ import {
   Typography,
 } from '@mui/material';
 
-import { DarkMode, LightMode, KeyboardArrowDown as KeyboardArrowDownIcon, Menu as MenuIcon } from '@mui/icons-material';
+import {
+  DarkMode,
+  LightMode,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  Menu as MenuIcon,
+} from '@mui/icons-material';
 
 import { AdminUserMenu } from './AdminUserMenu';
 
@@ -39,14 +38,14 @@ export const AdminTopbar = ({
     <AppBar
       position="sticky"
       elevation={0}
-      sx={{
-        bgcolor: 'background.paper',
+      sx={(theme) => ({
+        bgcolor: theme.palette.custom.semantic.appBar,
         color: 'text.primary',
-        borderBottom: 1,
-        borderColor: 'divider',
-      }}
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        backdropFilter: 'blur(12px)',
+      })}
     >
-      <Toolbar sx={{ gap: 2 }}>
+      <Toolbar sx={{ gap: 2, px: { xs: 2, md: 3 } }}>
         <IconButton
           onClick={onOpenMobileMenu}
           sx={{ display: { xs: 'inline-flex', lg: 'none' } }}
@@ -60,7 +59,7 @@ export const AdminTopbar = ({
             Panel administrativo
           </Typography>
           <Typography variant="caption" color="text.secondary" noWrap>
-            Gestión de catálogo, ventas e inventario
+            Catálogo, ventas, inventario y logística
           </Typography>
         </Box>
 
@@ -68,23 +67,25 @@ export const AdminTopbar = ({
           {mode === 'light' ? <DarkMode /> : <LightMode />}
         </IconButton>
 
-        {/* Botón usuario: 
-          móvil y desktop*/}
         <Button
           onClick={onOpenAccountMenu}
           color="inherit"
           endIcon={<KeyboardArrowDownIcon fontSize="small" />}
-          sx={{ minWidth: 'auto', px: 1, py: 0.5, borderRadius: 2, textTransform: 'none' }}
+          sx={{
+            minWidth: 'auto',
+            px: 1,
+            py: 0.5,
+            borderRadius: 1.5,
+            textTransform: 'none',
+            '&:hover': { transform: 'none' },
+          }}
         >
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            
-            {/* Avatar */}
-            <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
+            <Avatar sx={{ width: 36, height: 36 }}>
               {user?.nombreCompleto?.[0]?.toUpperCase() || 'I'}
             </Avatar>
 
-            {/* Nombre y rol (solo desktop) */}
-            <Stack sx={{ display: { xs: 'none', md: 'flex' } }}>
+            <Stack sx={{ display: { xs: 'none', md: 'flex' }, minWidth: 0 }}>
               <Typography variant="subtitle2" noWrap>
                 {user?.nombreCompleto || 'Invitado'}
               </Typography>
@@ -92,7 +93,6 @@ export const AdminTopbar = ({
                 {user?.rol || 'Administrador'}
               </Typography>
             </Stack>
-
           </Stack>
         </Button>
 

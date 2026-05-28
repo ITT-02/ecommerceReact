@@ -15,6 +15,7 @@ import {
   IconButton,
   InputLabel,
   Stack,
+  Typography,
 } from '@mui/material';
 
 export const FileUploadField = ({
@@ -149,9 +150,10 @@ export const FileUploadField = ({
     return <InsertDriveFileOutlined sx={iconStyles} />;
   };
 
-  // Preview de imagen o video.
+  // Preview de imagen, video o documento.
   const renderPreview = (item, index) => {
     const isVideo = item.type?.startsWith('video/');
+    const isImage = item.type?.startsWith('image/') || (!item.type && item.src);
 
     return (
       <Box
@@ -178,7 +180,7 @@ export const FileUploadField = ({
               display: 'block',
             }}
           />
-        ) : (
+        ) : isImage ? (
           <Box
             component="img"
             src={item.src}
@@ -190,6 +192,23 @@ export const FileUploadField = ({
               display: 'block',
             }}
           />
+        ) : (
+          <Stack
+            spacing={1}
+            sx={{
+              width: '100%',
+              height: '100%',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              px: 2,
+            }}
+          >
+            <InsertDriveFileOutlined sx={{ fontSize: 54, color: 'text.secondary' }} />
+            <Typography variant="body2" fontWeight={700} sx={{ wordBreak: 'break-word' }}>
+              {item.name || 'Documento adjunto'}
+            </Typography>
+          </Stack>
         )}
 
         {/* Quitar archivo */}

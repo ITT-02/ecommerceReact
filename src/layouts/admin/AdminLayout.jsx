@@ -1,11 +1,5 @@
 /**
  * Layout principal del panel administrativo.
- *
- * Responsabilidad:
- * - Armar la estructura general del admin.
- * - Conectar sidebar, drawer móvil, topbar y contenido interno.
- *
- * No define opciones del menú ni lógica de autenticación directamente.
  */
 
 import { Box, Container } from '@mui/material';
@@ -73,7 +67,7 @@ export const AdminLayout = () => {
           onLogout={handleLogout}
         />
 
-        <Container component="main" maxWidth="xl" sx={{ py: 4 }}>
+        <Container component="main" maxWidth="xl" sx={{ py: { xs: 3, md: 4 } }}>
           <Outlet />
         </Container>
       </Box>

@@ -72,7 +72,7 @@ export const ValorForm = ({ open, isEdit, valorInicial, tipoDatoPadre, onClose, 
         <DialogContent dividers>
           <Stack spacing={3}>
             <TextField
-              label="Valor (ej: XL, Algodón, Verde)"
+              label="Valor"
               name="valor"
               value={formData.valor}
               onChange={handleChange}
@@ -86,7 +86,7 @@ export const ValorForm = ({ open, isEdit, valorInicial, tipoDatoPadre, onClose, 
                   name="color_hex"
                   value={formData.color_hex}
                   onChange={handleChange}
-                  style={{ width: 56, height: 56, padding: 0, cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc' }}
+                  style={{ width: 56, height: 56, padding: 0, cursor: 'pointer', borderRadius: '4px', border: '1px solid currentColor' }}
                 />
                 <TextField
                   label="Color Hexagonal"

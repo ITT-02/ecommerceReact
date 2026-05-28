@@ -25,6 +25,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+
 import CloseIcon from '@mui/icons-material/Close';
 import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -37,6 +39,22 @@ import SearchOffIcon from '@mui/icons-material/SearchOff';
 
 import { backendMsg, getModuleColor, groupByModule } from './roleHelpers';
 
+const getDataTable = (theme) => theme.palette.custom.semantic.dataTable;
+
+const getCodeChipSx = (theme) => {
+  const table = getDataTable(theme);
+
+  return {
+    height: 20,
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    bgcolor: table?.codeBg || theme.palette.action.selected,
+    color: table?.codeText || theme.palette.text.secondary,
+    border: '1px solid',
+    borderColor: table?.codeBorder || theme.palette.divider,
+    fontWeight: 500,
+  };
+};
+
 export const RoleAssignPermissionsDialog = ({
   open,
   role,
@@ -46,6 +64,8 @@ export const RoleAssignPermissionsDialog = ({
   onClose,
   onSave,
 }) => {
+  const theme = useTheme();
+
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [selected, setSelected] = useState(new Set());
   const [filter, setFilter] = useState('');
@@ -55,15 +75,20 @@ export const RoleAssignPermissionsDialog = ({
 
   useEffect(() => {
     if (!open || !role) return;
+
     let cancelled = false;
 
     const load = async () => {
       setLoadingDetail(true);
       setError(null);
       setFilter('');
+
       try {
         const detail = await getRoleDetail(role.id);
-        if (!cancelled) setSelected(new Set((detail.permisos || []).map((p) => p.codigo)));
+
+        if (!cancelled) {
+          setSelected(new Set((detail.permisos || []).map((p) => p.codigo)));
+        }
       } catch (err) {
         if (!cancelled) setError(err);
       } finally {
@@ -72,16 +97,21 @@ export const RoleAssignPermissionsDialog = ({
     };
 
     load();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, [open, role, getRoleDetail]);
 
   const grouped = useMemo(() => {
     const q = filter.trim().toLowerCase();
+
     const filtered = q
       ? permissionOptions.filter((p) =>
           [p.codigo, p.nombre, p.descripcion].join(' ').toLowerCase().includes(q)
         )
       : permissionOptions;
+
     return groupByModule(filtered);
   }, [permissionOptions, filter]);
 
@@ -94,7 +124,13 @@ export const RoleAssignPermissionsDialog = ({
   const toggle = (codigo) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(codigo) ? next.delete(codigo) : next.add(codigo);
+
+      if (next.has(codigo)) {
+        next.delete(codigo);
+      } else {
+        next.add(codigo);
+      }
+
       return next;
     });
   };
@@ -102,7 +138,15 @@ export const RoleAssignPermissionsDialog = ({
   const toggleModule = (items, allOn) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      items.forEach((p) => (allOn ? next.delete(p.codigo) : next.add(p.codigo)));
+
+      items.forEach((p) => {
+        if (allOn) {
+          next.delete(p.codigo);
+        } else {
+          next.add(p.codigo);
+        }
+      });
+
       return next;
     });
   };
@@ -111,9 +155,15 @@ export const RoleAssignPermissionsDialog = ({
     setConfirmOpen(false);
     setSaving(true);
     setError(null);
+
     try {
       const permisos = permissionOptions.filter((p) => selected.has(p.codigo));
-      await onSave({ id: role.id, permisos });
+
+      await onSave({
+        id: role.id,
+        permisos,
+      });
+
       onClose();
     } catch (e) {
       setError(e);
@@ -129,7 +179,13 @@ export const RoleAssignPermissionsDialog = ({
         onClose={saving ? undefined : onClose}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { height: 'calc(100vh - 80px)' } }}
+        slotProps={{
+          paper: {
+            sx: {
+              height: 'calc(100vh - 80px)',
+            },
+          },
+        }}
       >
         <DialogTitle
           sx={{
@@ -141,14 +197,17 @@ export const RoleAssignPermissionsDialog = ({
           }}
         >
           <KeyOutlinedIcon fontSize="small" />
+
           <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
             Asignar permisos
+
             <Tooltip title="Solo un super administrador puede modificar permisos. Los roles super_admin y cliente están protegidos.">
               <IconButton size="small" sx={{ ml: 0.5 }}>
                 <InfoOutlinedIcon sx={{ fontSize: 16 }} />
               </IconButton>
             </Tooltip>
           </Box>
+
           <IconButton size="small" onClick={onClose} disabled={saving}>
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -164,17 +223,20 @@ export const RoleAssignPermissionsDialog = ({
               sx={{ mb: 2 }}
             >
               <AlertTitle>Permisos bloqueados</AlertTitle>
+
               {isSuperAdmin && (
                 <>
                   El rol <b>super_admin</b> tiene todos los permisos por diseño y no puede
                   modificarse.
                 </>
               )}
+
               {isCliente && (
                 <>
                   El rol <b>cliente</b> no recibe permisos administrativos.
                 </>
               )}
+
               {!isSuperAdmin && !isCliente && (
                 <>Este rol no acepta cambios de permisos en este momento.</>
               )}
@@ -192,6 +254,7 @@ export const RoleAssignPermissionsDialog = ({
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField fullWidth size="small" label="Rol" value={role.nombre} disabled />
             </Grid>
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
@@ -200,19 +263,31 @@ export const RoleAssignPermissionsDialog = ({
                 value={role.codigo}
                 disabled
                 slotProps={{
-                  input: { sx: { fontFamily: 'ui-monospace, monospace' } },
+                  input: {
+                    sx: {
+                      fontFamily:
+                        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                    },
+                  },
                 }}
               />
             </Grid>
           </Grid>
 
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1.5 }}>
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={2}
+              sx={{
+                mb: 1.5,
+                alignItems: { xs: 'stretch', md: 'center' },
+              }}
+            >
             <TextField
               size="small"
               placeholder="Filtrar permisos…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              sx={{ flex: 1, maxWidth: 360 }}
+              sx={{ flex: 1, maxWidth: { md: 360 } }}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -223,7 +298,9 @@ export const RoleAssignPermissionsDialog = ({
                 },
               }}
             />
-            <Box sx={{ flex: 1 }} />
+
+            <Box sx={{ flex: 1, display: { xs: 'none', md: 'block' } }} />
+
             <Typography variant="body2" color="text.secondary">
               <Box component="b" sx={{ color: 'text.primary' }}>
                 {selected.size}
@@ -242,9 +319,10 @@ export const RoleAssignPermissionsDialog = ({
 
           {!loadingDetail &&
             grouped.map((g) => {
-              const c = getModuleColor(g.modulo);
+              const c = getModuleColor(g.modulo, theme);
               const allOn = g.items.every((p) => selected.has(p.codigo));
               const someOn = g.items.some((p) => selected.has(p.codigo));
+
               return (
                 <Accordion
                   key={g.modulo}
@@ -253,17 +331,20 @@ export const RoleAssignPermissionsDialog = ({
                   sx={{
                     mb: 1,
                     border: '1px solid',
-                    borderColor: 'divider',
+                    borderColor: c.border || 'divider',
                     borderRadius: 1.5,
                     '&:before': { display: 'none' },
                     overflow: 'hidden',
                   }}
                 >
                   <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
+                    expandIcon={<ExpandMoreIcon sx={{ color: c.fg }} />}
                     sx={{
                       bgcolor: c.bg,
-                      '& .MuiAccordionSummary-content': { alignItems: 'center', gap: 1 },
+                      '& .MuiAccordionSummary-content': {
+                        alignItems: 'center',
+                        gap: 1,
+                      },
                     }}
                   >
                     <Checkbox
@@ -276,21 +357,33 @@ export const RoleAssignPermissionsDialog = ({
                       sx={{
                         p: 0.5,
                         color: c.fg,
-                        '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: c.fg },
+                        '&.Mui-checked, &.MuiCheckbox-indeterminate': {
+                          color: c.fg,
+                        },
                       }}
                     />
+
                     <Typography
-                      sx={{ fontWeight: 600, color: c.fg, textTransform: 'capitalize' }}
+                      sx={{
+                        fontWeight: 500,
+                        color: c.fg,
+                        textTransform: 'capitalize',
+                      }}
                     >
                       {g.modulo}
                     </Typography>
+
                     <Chip
                       size="small"
                       label={`${g.items.filter((p) => selected.has(p.codigo)).length}/${g.items.length}`}
                       sx={{
                         height: 20,
-                        bgcolor: 'rgba(255,255,255,.7)',
+                        bgcolor: (muiTheme) =>
+                          muiTheme.palette.custom.semantic.dataTable?.rowBg ||
+                          muiTheme.palette.background.paper,
                         color: c.fg,
+                        border: '1px solid',
+                        borderColor: c.border || 'divider',
                         fontWeight: 500,
                       }}
                     />
@@ -318,22 +411,27 @@ export const RoleAssignPermissionsDialog = ({
                             onChange={() => toggle(p.codigo)}
                             sx={{ p: 0.5, mt: -0.25 }}
                           />
+
                           <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              sx={{
+                                mb: 0.25,
+                                alignItems: 'center',
+                              }}
+                            >
                               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                 {p.nombre}
                               </Typography>
+
                               <Chip
                                 size="small"
                                 label={p.codigo}
-                                sx={{
-                                  height: 20,
-                                  fontFamily: 'ui-monospace, monospace',
-                                  bgcolor: '#f1f5f9',
-                                  color: '#475569',
-                                }}
+                                sx={getCodeChipSx}
                               />
                             </Stack>
+
                             <Typography variant="caption" color="text.secondary">
                               {p.descripcion}
                             </Typography>
@@ -358,6 +456,7 @@ export const RoleAssignPermissionsDialog = ({
               }}
             >
               <SearchOffIcon sx={{ fontSize: 28 }} />
+
               <Typography variant="body2" sx={{ mt: 1 }}>
                 No hay permisos que coincidan con &quot;{filter}&quot;
               </Typography>
@@ -365,13 +464,22 @@ export const RoleAssignPermissionsDialog = ({
           )}
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
           <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
             Se reemplazarán todos los permisos del rol al guardar.
           </Typography>
+
           <Button onClick={onClose} color="inherit" disabled={saving}>
             Cancelar
           </Button>
+
           <Button
             onClick={() => setConfirmOpen(true)}
             variant="contained"
@@ -397,22 +505,26 @@ export const RoleAssignPermissionsDialog = ({
         fullWidth
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <WarningAmberOutlinedIcon sx={{ color: '#d97706' }} />
+          <WarningAmberOutlinedIcon sx={{ color: 'warning.main' }} />
           Confirmar cambio de permisos
         </DialogTitle>
+
         <DialogContent>
           <Typography variant="body2">
             Esto <b>reemplazará todos los permisos actuales</b> del rol{' '}
             <b>{role.nombre}</b> por los seleccionados ({selected.size}).
           </Typography>
+
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             La acción es inmediata y queda registrada.
           </Typography>
         </DialogContent>
+
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)} color="inherit">
             Cancelar
           </Button>
+
           <Button onClick={handleSave} variant="contained" color="warning">
             Sí, reemplazar
           </Button>

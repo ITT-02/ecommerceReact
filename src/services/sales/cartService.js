@@ -1,5 +1,5 @@
 // Servicio para carrito de compras.
-// Usa funciones RPC para respetar reglas de negocio del backend externo.
+// Usa RPC para respetar stock, venta bajo pedido y reglas comerciales.
 
 import { restApi } from '../../api/restApi';
 
@@ -9,16 +9,8 @@ export const createOrGetActiveCart = async () => {
 };
 
 export const getActiveCart = async () => {
-  const response = await restApi.get('/carritos', {
-    params: {
-      estado: 'eq.activo',
-      select: '*,carrito_items(*,producto_variantes(*,productos(id,nombre,slug)))',
-      order: 'created_at.desc',
-      limit: 1,
-    },
-  });
-
-  return response.data[0] || null;
+  const response = await restApi.post('/rpc/obtener_carrito_actual', {});
+  return response.data || { items: [], subtotal: 0, total: 0 };
 };
 
 export const addItemToCart = async ({ varianteId, cantidad }) => {
@@ -30,17 +22,16 @@ export const addItemToCart = async ({ varianteId, cantidad }) => {
 };
 
 export const updateCartItem = async (itemId, cantidad) => {
-  const response = await restApi.patch('/carrito_items', { cantidad }, {
-    params: { id: `eq.${itemId}`, select: '*' },
-    headers: { Prefer: 'return=representation' },
+  const response = await restApi.post('/rpc/actualizar_item_carrito', {
+    p_item_id: itemId,
+    p_cantidad: cantidad,
   });
-  return response.data[0] || null;
+  return response.data;
 };
 
 export const removeCartItem = async (itemId) => {
-  const response = await restApi.delete('/carrito_items', {
-    params: { id: `eq.${itemId}`, select: '*' },
-    headers: { Prefer: 'return=representation' },
+  const response = await restApi.post('/rpc/eliminar_item_carrito', {
+    p_item_id: itemId,
   });
-  return response.data[0] || null;
+  return response.data;
 };

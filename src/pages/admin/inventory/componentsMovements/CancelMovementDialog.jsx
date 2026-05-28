@@ -61,7 +61,6 @@ export const CancelMovementDialog = ({ open, movimiento, onClose, onConfirm, isC
               setMotivo(e.target.value);
               if(errorMsg) setErrorMsg(''); // Limpia el error mientras escribe
             }}
-            placeholder="Ej: Error de digitación, Variante equivocada, etc..."
           />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>

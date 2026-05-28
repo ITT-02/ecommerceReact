@@ -19,6 +19,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+
 import CloseIcon from '@mui/icons-material/Close';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import GppGoodOutlinedIcon from '@mui/icons-material/GppGoodOutlined';
@@ -30,16 +32,36 @@ import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 
 import { backendMsg, fmtDate, getModuleColor, groupByModule } from './roleHelpers';
 
+const getDataTable = (theme) => theme.palette.custom.semantic.dataTable;
+
+const getCodeChipSx = (theme) => {
+  const table = getDataTable(theme);
+
+  return {
+    height: 20,
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    bgcolor: table?.codeBg || theme.palette.action.selected,
+    color: table?.codeText || theme.palette.text.secondary,
+    border: '1px solid',
+    borderColor: table?.codeBorder || theme.palette.divider,
+    fontWeight: 500,
+  };
+};
+
 export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
+  const theme = useTheme();
+
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!open || !roleId) return;
+
     setLoading(true);
     setError(null);
     setData(null);
+
     getRoleDetail(roleId)
       .then(setData)
       .catch(setError)
@@ -52,7 +74,13 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{ sx: { height: 'calc(100vh - 80px)' } }}
+      slotProps={{
+        paper: {
+          sx: {
+            height: 'calc(100vh - 80px)',
+          },
+        },
+      }}
     >
       <DialogTitle
         sx={{
@@ -64,19 +92,25 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
         }}
       >
         <VisibilityOutlinedIcon fontSize="small" />
+
         <Box sx={{ flex: 1 }}>
           Detalle del rol
+
           {data && (
             <Typography
               component="span"
               variant="caption"
               color="text.secondary"
-              sx={{ ml: 1, fontFamily: 'ui-monospace, monospace' }}
+              sx={{
+                ml: 1,
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+              }}
             >
               {data.codigo}
             </Typography>
           )}
         </Box>
+
         <IconButton size="small" onClick={onClose}>
           <CloseIcon fontSize="small" />
         </IconButton>
@@ -106,6 +140,7 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
             <Typography variant="overline" color="text.secondary">
               Datos del rol
             </Typography>
+
             <Grid container spacing={2} sx={{ mt: 0.5, mb: 2 }}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
@@ -116,6 +151,7 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
                   disabled
                 />
               </Grid>
+
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
@@ -124,10 +160,16 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
                   value={data.codigo}
                   disabled
                   slotProps={{
-                    input: { sx: { fontFamily: 'ui-monospace, monospace' } },
+                    input: {
+                      sx: {
+                        fontFamily:
+                          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                      },
+                    },
                   }}
                 />
               </Grid>
+
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
@@ -139,6 +181,7 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
                   disabled
                 />
               </Grid>
+
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
@@ -153,6 +196,7 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
             <Typography variant="overline" color="text.secondary">
               Estado
             </Typography>
+
             <Stack spacing={1} sx={{ mt: 0.5, mb: 2 }}>
               <Alert
                 severity={data.es_protegido ? 'warning' : 'info'}
@@ -172,11 +216,13 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
                   <>Rol regular. Puede editarse según permisos del usuario actual.</>
                 )}
               </Alert>
+
               {!data.puede_editar && (
                 <Alert severity="info" icon={<EditOffOutlinedIcon fontSize="inherit" />}>
                   El nombre y descripción de este rol <b>no son editables</b> en este momento.
                 </Alert>
               )}
+
               {!data.puede_asignar_permisos && (
                 <Alert severity="info" icon={<LockOutlinedIcon fontSize="inherit" />}>
                   {data.codigo === 'cliente'
@@ -189,6 +235,7 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
             <Typography variant="overline" color="text.secondary">
               Permisos asignados ({data.permisos?.length || 0})
             </Typography>
+
             <Box sx={{ mt: 0.5 }}>
               {(!data.permisos || data.permisos.length === 0) && (
                 <Box
@@ -202,6 +249,7 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
                   }}
                 >
                   <BlockOutlinedIcon sx={{ fontSize: 28 }} />
+
                   <Typography variant="body2" sx={{ mt: 1 }}>
                     Este rol no tiene permisos asignados.
                   </Typography>
@@ -209,9 +257,18 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
               )}
 
               {groupByModule(data.permisos || []).map((g) => {
-                const c = getModuleColor(g.modulo);
+                const c = getModuleColor(g.modulo, theme);
+
                 return (
-                  <Paper key={g.modulo} variant="outlined" sx={{ mb: 1.5, overflow: 'hidden' }}>
+                  <Paper
+                    key={g.modulo}
+                    variant="outlined"
+                    sx={{
+                      mb: 1.5,
+                      overflow: 'hidden',
+                      borderColor: c.border || 'divider',
+                    }}
+                  >
                     <Box
                       sx={{
                         px: 2,
@@ -220,47 +277,59 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
+                        borderBottom: '1px solid',
+                        borderColor: c.border || 'divider',
                       }}
                     >
                       <FolderOutlinedIcon sx={{ fontSize: 16, color: c.fg }} />
+
                       <Typography
                         variant="subtitle2"
-                        sx={{ color: c.fg, textTransform: 'capitalize' }}
+                        sx={{
+                          color: c.fg,
+                          textTransform: 'capitalize',
+                          fontWeight: 600,
+                        }}
                       >
                         {g.modulo}{' '}
+
                         <Typography
                           component="span"
                           variant="caption"
-                          sx={{ color: c.fg, opacity: 0.8, ml: 0.5 }}
+                          sx={{
+                            color: c.fg,
+                            opacity: 0.8,
+                            ml: 0.5,
+                          }}
                         >
                           ({g.items.length})
                         </Typography>
                       </Typography>
                     </Box>
+
                     <Box sx={{ p: 1.5 }}>
                       <Stack divider={<Divider flexItem />} spacing={1.25}>
                         {g.items.map((p) => (
                           <Box key={p.codigo}>
                             <Stack
                               direction="row"
-                              alignItems="center"
                               spacing={1}
-                              sx={{ mb: 0.25 }}
+                              sx={{
+                                mb: 0.25,
+                                alignItems: 'center',
+                              }}
                             >
                               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                 {p.nombre}
                               </Typography>
+
                               <Chip
                                 size="small"
                                 label={p.codigo}
-                                sx={{
-                                  height: 20,
-                                  fontFamily: 'ui-monospace, monospace',
-                                  bgcolor: '#f1f5f9',
-                                  color: '#475569',
-                                }}
+                                sx={getCodeChipSx}
                               />
                             </Stack>
+
                             <Typography variant="caption" color="text.secondary">
                               {p.descripcion}
                             </Typography>
@@ -276,7 +345,14 @@ export const RoleDetailDialog = ({ open, roleId, getRoleDetail, onClose }) => {
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+      <DialogActions
+        sx={{
+          px: 3,
+          py: 2,
+          borderTop: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
         <Button onClick={onClose} variant="contained">
           Cerrar
         </Button>

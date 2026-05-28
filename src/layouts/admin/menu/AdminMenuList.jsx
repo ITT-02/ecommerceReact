@@ -1,13 +1,12 @@
 /**
  * Lista del menú administrativo.
  *
- * Responsabilidad:
- * - Renderizar los grupos definidos en adminMenuConfig.js.
- * - Mostrar versión expandida o colapsada.
- * - No conoce autenticación ni lógica de roles; recibe el menú ya filtrado.
+ * Los colores no se definen en el componente. Se consumen desde
+ * theme.palette.custom.semantic.adminNavigation para mantener el diseño
+ * centralizado en el theme de Aliqora.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
 import {
@@ -24,44 +23,39 @@ import {
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-const getInitialOpenGroups = (groups) => {
-  return groups.reduce((acc, group, index) => {
-    acc[group.title] = index === 0;
-    return acc;
-  }, {});
+const getAdminNavigation = (theme) => theme.palette.custom.semantic.adminNavigation;
+
+const getMenuItemSx = (theme, collapsed = false) => {
+  const nav = getAdminNavigation(theme);
+
+  return {
+    borderRadius: theme.palette.custom.radius.xs,
+    color: nav.itemText,
+    textDecoration: 'none',
+    mx: collapsed ? 0 : 0.25,
+    '& .MuiListItemIcon-root': {
+      color: nav.itemIcon,
+    },
+    '&:hover': {
+      bgcolor: nav.itemHoverBg,
+      color: nav.itemHoverText,
+      '& .MuiListItemIcon-root': { color: nav.itemActiveText },
+    },
+    '&.active': {
+      bgcolor: nav.itemActiveBg,
+      color: nav.itemActiveText,
+      borderLeft: collapsed ? 0 : 2,
+      borderColor: nav.itemActiveText,
+      '& .MuiListItemIcon-root': { color: nav.itemActiveText },
+    },
+  };
 };
 
-const menuItemSx = {
-  borderRadius: 3,
-  color: 'text.primary',
-  textDecoration: 'none',
+export const AdminMenuList = ({ groups = [], collapsed = false, onItemClick }) => {
+  const [openGroupTitle, setOpenGroupTitle] = useState(() => groups[0]?.title ?? null);
 
-  '&.active': {
-    bgcolor: 'primary.main',
-    color: 'primary.contrastText',
-  },
+  const flatItems = useMemo(() => groups.flatMap((group) => group.items), [groups]);
 
-  '&.active .MuiListItemIcon-root': {
-    color: 'primary.contrastText',
-  },
-};
-
-export const AdminMenuList = ({
-  groups = [],
-  collapsed = false,
-  onItemClick,
-}) => {
- 
-  const [openGroupTitle, setOpenGroupTitle] = useState(() => 
-    groups[0]?.title ?? null
-  );
-
-  const flatItems = useMemo(
-    () => groups.flatMap((group) => group.items),
-    [groups],
-  );
-
-  
   const toggleGroup = (groupTitle) => {
     setOpenGroupTitle((prev) => (prev === groupTitle ? null : groupTitle));
   };
@@ -73,25 +67,19 @@ export const AdminMenuList = ({
           const Icon = item.icon;
 
           return (
-            <Tooltip key={item.path} title={item.label} placement="right">
+            <Tooltip key={item.path} title={item.label} placement="right" arrow>
               <ListItemButton
                 component={NavLink}
                 to={item.path}
                 onClick={onItemClick}
-                sx={{
-                  ...menuItemSx,
+                sx={(theme) => ({
+                  ...getMenuItemSx(theme, true),
                   mb: 0.75,
                   minHeight: 44,
                   justifyContent: 'center',
-                }}
+                })}
               >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 0,
-                    color: 'text.secondary',
-                    justifyContent: 'center',
-                  }}
-                >
+                <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center' }}>
                   <Icon fontSize="small" />
                 </ListItemIcon>
               </ListItemButton>
@@ -106,38 +94,82 @@ export const AdminMenuList = ({
     <Box sx={{ overflowY: 'auto', pr: 0.5 }}>
       {groups.map((group) => {
         const isOpen = openGroupTitle === group.title;
+        const GroupIcon = group.icon;
 
         return (
-          <Box key={group.title} sx={{ mb: 1 }}>
+          <Box key={group.title} sx={{ mb: 1.25 }}>
             <ListItemButton
               onClick={() => toggleGroup(group.title)}
-              sx={{
-                borderRadius: 2,
-                px: 1.5,
-                py: 1,
+              sx={(theme) => {
+                const nav = getAdminNavigation(theme);
+
+                return {
+                  borderRadius: theme.palette.custom.radius.xs,
+                  px: 1.5,
+                  py: 1,
+                  color: nav.groupTextMuted,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.25,
+                  '&:hover': {
+                    bgcolor: nav.groupHoverBg,
+                  },
+                };
               }}
             >
-              <ListItemText
-                primary={
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    sx={{
-                      fontWeight: 800,
-                      color: 'text.secondary',
-                      textTransform: 'uppercase',
-                      letterSpacing: 0.6,
-                    }}
-                  >
-                    {group.title}
-                  </Typography>
-                }
-              />
+              {GroupIcon && (
+                <Box
+                  sx={(theme) => {
+                    const nav = getAdminNavigation(theme);
+
+                    return {
+                      width: 28,
+                      height: 28,
+                      minWidth: 28,
+                      borderRadius: theme.palette.custom.radius.xs,
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: nav.groupText,
+                      bgcolor: nav.groupHoverBg,
+                    };
+                  }}
+                >
+                  <GroupIcon sx={{ fontSize: 18 }} />
+                </Box>
+              )}
+
+              <Typography
+                component="span"
+                variant="caption"
+                sx={(theme) => ({
+                  flex: 1,
+                  minWidth: 0,
+                  color: getAdminNavigation(theme).groupText,
+                  fontWeight: 500,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.16em',
+                  lineHeight: 1.2,
+                })}
+              >
+                {group.title}
+              </Typography>
 
               {isOpen ? (
-                <ExpandLessIcon fontSize="small" />
+                <ExpandLessIcon
+                  fontSize="small"
+                  sx={{
+                    color: 'inherit',
+                    flexShrink: 0,
+                  }}
+                />
               ) : (
-                <ExpandMoreIcon fontSize="small" />
+                <ExpandMoreIcon
+                  fontSize="small"
+                  sx={{
+                    color: 'inherit',
+                    flexShrink: 0,
+                  }}
+                />
               )}
             </ListItemButton>
 
@@ -152,21 +184,28 @@ export const AdminMenuList = ({
                       component={NavLink}
                       to={item.path}
                       onClick={onItemClick}
-                      sx={{
-                        ...menuItemSx,
+                      sx={(theme) => ({
+                        ...getMenuItemSx(theme, false),
                         mt: 0.5,
                         pl: 2,
                         pr: 1.5,
-                        py: 1.15,
-                      }}
+                        py: 1.1,
+                      })}
                     >
-                      <ListItemIcon sx={{ minWidth: 38, color: 'text.secondary' }}>
+                      <ListItemIcon sx={{ minWidth: 38 }}>
                         <Icon fontSize="small" />
                       </ListItemIcon>
 
                       <ListItemText
                         primary={
-                          <Typography component="span" sx={{ fontSize: 15, fontWeight: 600 }}>
+                          <Typography
+                            component="span"
+                            sx={{
+                              color: 'inherit',
+                              fontSize: 14,
+                              fontWeight: 500,
+                            }}
+                          >
                             {item.label}
                           </Typography>
                         }

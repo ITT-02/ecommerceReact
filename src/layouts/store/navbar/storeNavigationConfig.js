@@ -1,19 +1,30 @@
 /**
  * Configuración de navegación de la tienda pública.
  *
- * Separar estos datos permite reutilizarlos en:
- * - navbar desktop
- * - drawer móvil
- * - menú desplegable de catálogo
+ * Se separa el catálogo porque en desktop se muestra como menú desplegable,
+ * mientras que las demás páginas son enlaces directos.
  */
 
 export const storeMainMenuItems = [
   { label: 'Inicio', to: '/' },
-  { label: 'Nosotros', to: '/nosotros' },
+];
+
+export const storeAfterCatalogMenuItems = [
+  { label: 'Mayoristas', to: '/mayoristas' },
+  { label: 'Nuestra Historia', to: '/nuestra-historia' },
+  { label: 'Contacto', to: '/contacto' },
 ];
 
 export const storeCatalogMenuItems = [
   { label: 'Todos los productos', to: '/catalogo' },
-  { label: 'Cajas', to: '/catalogo?categoria=cajas' },
-  { label: 'Bolsas', to: '/catalogo?categoria=bolsas' },
+  { label: 'Compra directa', to: '/catalogo?tipo=compra_directa' },
+  { label: 'Bajo pedido', to: '/catalogo?tipo=bajo_pedido' },
+  { label: 'Productos destacados', to: '/catalogo?destacado=true' },
+];
+
+export const storeCustomerMenuItems = [
+  { label: 'Mi perfil', to: '/perfil' },
+  { label: 'Mis pedidos', to: '/mis-pedidos' },
+  { label: 'Mis cotizaciones', to: '/mis-cotizaciones' },
+  { label: 'Mis direcciones', to: '/direcciones' },
 ];

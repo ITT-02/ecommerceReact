@@ -1,19 +1,17 @@
 /**
  * Sidebar de escritorio del panel administrativo.
  *
- * Responsabilidad:
- * - Mostrar marca del panel.
- * - Mostrar menú administrativo.
- * - Permitir colapsar/expandir.
- * - Mostrar acciones finales del layout.
+ * Los colores del menú se controlan desde theme.palette.custom.semantic.adminNavigation.
  */
 
 import { Box, Drawer, IconButton, Stack, Typography } from '@mui/material';
-
 import { ChevronLeft, ChevronRight, Logout } from '@mui/icons-material';
 
 import { AdminActionItem } from '../menu/AdminActionItem';
 import { AdminMenuList } from '../menu/AdminMenuList';
+import { AdminBrandLogo } from '../components/AdminBrandLogo';
+
+const getAdminNavigation = (theme) => theme.palette.custom.semantic.adminNavigation;
 
 export const AdminSidebar = ({
   collapsed,
@@ -28,29 +26,38 @@ export const AdminSidebar = ({
   return (
     <Drawer
       variant="permanent"
-      sx={{
-        display: { xs: 'none', lg: 'block' },
-        width: desktopDrawerWidth,
-        flexShrink: 0,
+      sx={(theme) => {
+        const nav = getAdminNavigation(theme);
 
-        '& .MuiDrawer-paper': {
+        return {
+          display: { xs: 'none', lg: 'block' },
           width: desktopDrawerWidth,
-          boxSizing: 'border-box',
-          p: 2,
-          overflowX: 'hidden',
-          transition: 'width 0.25s ease',
-          bgcolor: 'background.default',
-        },
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: desktopDrawerWidth,
+            boxSizing: 'border-box',
+            p: 2,
+            overflowX: 'hidden',
+            transition: `width ${theme.palette.custom.motion.durationBase} ${theme.palette.custom.motion.easeOut}`,
+            bgcolor: nav.drawerBg,
+            color: nav.drawerText,
+            borderRight: `1px solid ${nav.divider}`,
+          },
+        };
       }}
     >
       <Stack sx={{ height: '100%', minHeight: 0 }} spacing={2}>
         <Box
-          sx={{
-            p: 1.5,
-            borderRadius: 3,
-            bgcolor: 'background.paper',
-            border: 1,
-            borderColor: 'divider',
+          sx={(theme) => {
+            const nav = getAdminNavigation(theme);
+
+            return {
+              px: collapsed ? 0.5 : 1.25,
+              py: 1.5,
+              borderRadius: theme.palette.custom.radius.xs,
+              border: `1px solid ${nav.brandBorder}`,
+              bgcolor: nav.brandSurface,
+            };
           }}
         >
           <Box
@@ -62,21 +69,28 @@ export const AdminSidebar = ({
             }}
           >
             {!collapsed && (
-              <Box>
-                <Typography variant="h5" color="primary.main" sx={{ fontWeight: 700 }}>
-                  Aliqora
-                </Typography>
-
-                <Typography variant="caption" color="text.secondary">
-                  Panel administrativo
-                </Typography>
+              <Box sx={{ minWidth: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                 <AdminBrandLogo collapsed={collapsed} />
+                </Box>
               </Box>
             )}
 
             <IconButton
               onClick={onToggleCollapsed}
-              color="primary"
               aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+              sx={(theme) => {
+                const nav = getAdminNavigation(theme);
+
+                return {
+                  color: nav.brandTitle,
+                  bgcolor: nav.toggleBg,
+                  '&:hover': {
+                    bgcolor: nav.toggleHoverBg,
+                    color: nav.brandTitle,
+                  },
+                };
+              }}
             >
               {collapsed ? <ChevronRight /> : <ChevronLeft />}
             </IconButton>
@@ -95,12 +109,17 @@ export const AdminSidebar = ({
           <AdminMenuList groups={filteredMenu} collapsed={collapsed} />
         </Box>
 
-        <Box sx={{ pt: 1.5, borderTop: 1, borderColor: 'divider' }}>
+        <Box
+          sx={(theme) => ({
+            pt: 1.5,
+            borderTop: `1px solid ${getAdminNavigation(theme).divider}`,
+          })}
+        >
           <AdminActionItem
             label={collapsed ? '' : 'Cerrar sesión'}
             icon={<Logout fontSize="small" />}
             onClick={onLogout}
-            color="error.main"
+            tone="danger"
             minWidthIcon={collapsed ? 0 : 40}
           />
         </Box>

@@ -9,7 +9,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import AddIcon from '@mui/icons-material/Add';
 import { useVariantAttributes, useProductOptions  } from '../../../hooks/catalog/useVariants';
 
-export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
+export const VariantFormModal = ({ open, variant = null, defaultProduct = null, onClose, onSave }) => {
   const isEditing = !!variant;
   
   // States
@@ -36,9 +36,11 @@ export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
   });
 
   const [dynamicAttributes, setDynamicAttributes] = useState([]); // Array de { id_uuid_temporal, atributoId, valorId }
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   useEffect(() => {
     if (open) {
+      setSubmitAttempted(false);
       if (isEditing) {
         // Hydrate from variant (would need exact mappings if editing, keeping simple for now)
         setFormData({
@@ -72,16 +74,35 @@ export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
         
         setDynamicAttributes(loadedAttributes);
       } else {
-        // Reset
+        // Reset para creación. Si la acción viene desde una fila padre,
+        // el producto ya queda seleccionado para evitar errores de carga.
         setFormData({
-          producto_id: null, codigo_referencia: '', nombre_variante: '', medida_largo: '', medida_ancho: '',
-          medida_alto: '', unidad_medida: 'cm', etiqueta_medida: '', peso_gramos: '', precio: '',
-          precio_comparacion: '', costo: '', stock_minimo: 5, es_predeterminada: false, es_activa: true
+          producto_id: defaultProduct
+            ? {
+                id: defaultProduct.id,
+                nombre: defaultProduct.nombre || defaultProduct.label || 'Producto seleccionado',
+                label: defaultProduct.label || defaultProduct.nombre || 'Producto seleccionado',
+              }
+            : null,
+          codigo_referencia: '',
+          nombre_variante: '',
+          medida_largo: '',
+          medida_ancho: '',
+          medida_alto: '',
+          unidad_medida: 'cm',
+          etiqueta_medida: '',
+          peso_gramos: '',
+          precio: '',
+          precio_comparacion: '',
+          costo: '',
+          stock_minimo: 5,
+          es_predeterminada: false,
+          es_activa: true
         });
         setDynamicAttributes([]);
       }
     }
-  }, [open, variant, isEditing]);
+  }, [open, variant, isEditing, defaultProduct]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -99,6 +120,15 @@ export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
 
   const handleAddAttribute = () => {
     const generateId = () => window.crypto?.randomUUID?.() || Math.random().toString(36).substring(2);
+     const safeAttributes = Array.isArray(allowedAttributes) ? allowedAttributes : [];
+
+    // Atributos cuyo tipo ya está seleccionado en alguna fila
+    const usedAtributoIds = new Set(dynamicAttributes.map(a => a.atributoId).filter(Boolean));
+
+    // Verificar si aún quedan tipos de atributo disponibles para agregar
+    const availableTypes = safeAttributes.filter(a => !usedAtributoIds.has(a.id));
+    if (availableTypes.length === 0 && safeAttributes.length > 0) return; 
+
     setDynamicAttributes(prev => [...prev, { id: generateId(), atributoId: '', valorId: '' }]);
   };
 
@@ -107,17 +137,34 @@ export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
   };
 
   const handleAttributeChange = (id, field, value) => {
-    setDynamicAttributes(prev => prev.map(attr => {
-      if (attr.id === id) {
-        return { ...attr, [field]: value, ...(field === 'atributoId' ? { valorId: '' } : {}) };
+    setDynamicAttributes(prev => {
+      // Si cambia el tipo de atributo, verificar que no esté ya usado por otra fila
+      if (field === 'atributoId' && value) {
+        const alreadyUsed = prev.some(attr => attr.id !== id && attr.atributoId === value);
+        if (alreadyUsed) return prev; // ignorar selección duplicada
       }
-      return attr;
-    }));
+      return prev.map(attr => {
+        if (attr.id === id) {
+          return { ...attr, [field]: value, ...(field === 'atributoId' ? { valorId: '' } : {}) };
+        }
+        return attr;
+      });
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+        setSubmitAttempted(true);
+
+    // Validar atributos incompletos, tipos repetidos o valores duplicados — sin alert, el campo se pone rojo
+    const incompletos = dynamicAttributes.filter(a => !a.atributoId || !a.valorId);
+    if (incompletos.length > 0) return;
+
+    const atributoIds = dynamicAttributes.map(a => a.atributoId);
+    if (atributoIds.length !== new Set(atributoIds).size) return;
+
+    const valorIds = dynamicAttributes.map(a => a.valorId);
+    if (valorIds.length !== new Set(valorIds).size) return;
     // Prepare payload
     const payload = {
       variant: {
@@ -166,7 +213,7 @@ export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
             <Grid size={{ xs: 12, sm: 6 }}>
               <Autocomplete
                 options={productOptions}
-                getOptionLabel={(option) => option.nombre}
+                getOptionLabel={(option) => option?.nombre || option?.label || ''}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 loading={productsLoading}
                 onInputChange={(e, newInputValue) => setProductSearch(newInputValue)}
@@ -181,7 +228,7 @@ export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
               <TextField
                 fullWidth label="Nombre / Título Variante *" name="nombre_variante"
                 value={formData.nombre_variante} onChange={handleChange} size="small"
-                placeholder="Ej: Caja e-commerce 30x30x10 Kraft" required
+                required
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -213,7 +260,7 @@ export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
               </Grid>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField fullWidth label="Etiqueta visible (Ej: 30x30x10 cm)" name="etiqueta_medida" value={formData.etiqueta_medida} onChange={handleChange} size="small" />
+              <TextField fullWidth label="Etiqueta visible" name="etiqueta_medida" value={formData.etiqueta_medida} onChange={handleChange} size="small" />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField fullWidth label="Peso (Gramos)" name="peso_gramos" type="number" value={formData.peso_gramos} onChange={handleChange} size="small" />
@@ -264,21 +311,27 @@ export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
               </Stack>
               
               {dynamicAttributes.length === 0 && (
-                <Typography variant="body2" color="text.secondary" fontStyle="italic">Sin atributos adicionales. Puedes agregarlos para que el cliente seleccione opciones (Ej: Color: Rojo).</Typography>
+                <Typography variant="body2" color="text.secondary" fontStyle="italic">Sin atributos adicionales. Agrega valores para que el cliente seleccione opciones.</Typography>
               )}
 
               {dynamicAttributes.map((attr, index) => {
                 const safeAttributes = Array.isArray(allowedAttributes) ? allowedAttributes : [];
                 const selectedAttributeDef = safeAttributes.find(a => a.id === attr.atributoId);
                 const valuesOptions = Array.isArray(selectedAttributeDef?.valores) ? selectedAttributeDef.valores : [];
+              // IDs de tipos de atributo usados en OTRAS filas (para deshabilitarlos en este selector)
+                const usedElsewhere = new Set(
+                  dynamicAttributes
+                    .filter(a => a.id !== attr.id && a.atributoId)
+                    .map(a => a.atributoId)
+                );
 
                 return (
-                  <Box 
-                    key={attr.id} 
-                    sx={{ 
-                      p: 2, 
-                      mb: 2, 
-                      borderRadius: 2, 
+                  <Box
+                    key={attr.id}
+                    sx={{
+                      p: 2,
+                      mb: 2,
+                      borderRadius: 2,
                       border: '1px solid', 
                       borderColor: 'divider',
                       backgroundColor: 'background.default'
@@ -296,7 +349,13 @@ export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
                         >
                           <MenuItem value="" disabled>Seleccione un atributo</MenuItem>
                           {safeAttributes.map(a => (
-                            <MenuItem key={a.id || Math.random()} value={a.id || ''}>{a.nombre}</MenuItem>
+                              <MenuItem
+                              key={a.id || Math.random()}
+                              value={a.id || ''}
+                              disabled={usedElsewhere.has(a.id)}
+                            >
+                              {a.nombre}{usedElsewhere.has(a.id) ? ' (ya agregado)' : ''}
+                            </MenuItem>
                           ))}
                         </TextField>
                       </Grid>
@@ -308,13 +367,14 @@ export const VariantFormModal = ({ open, variant = null, onClose, onSave }) => {
                             getOptionLabel={(option) => option.valor || ''}
                             isOptionEqualToValue={(option, value) => option?.id === value?.id}
                             value={valuesOptions.find(v => v.id === attr.valorId) || null}
-                            onChange={(e, newValue) => handleAttributeChange(attr.id, 'valorId', newValue ? newValue.id : '')}
+                            onChange={(_e, newValue) => handleAttributeChange(attr.id, 'valorId', newValue ? newValue.id : '')}
                             renderInput={(params) => (
-                              <TextField 
-                                {...params} 
-                                label={`Valor ${index + 1}`} 
-                                size="small" 
-                                placeholder="Busca o selecciona un valor..." 
+                                 <TextField
+                                {...params}
+                                label={`Valor ${index + 1}`}
+                                size="small"
+                                placeholder="Busca o selecciona un valor..."
+                                error={submitAttempted && !attr.valorId}
                               />
                             )}
                             noOptionsText="No hay valores configurados"

@@ -112,7 +112,7 @@ export const RelatedOrderDialog = ({ open, pedidoId, onClose }) => {
 
             {/* 2. Middle Section: Client & Items */}
             <Grid container spacing={3} sx={{ alignItems: 'flex-start' }}>
-              <Grid item="true" xs={12} md={5}>
+              <Grid size={{ xs: 12, md: 5 }}>
                 <SectionCard title="Datos del Cliente" icon={<PersonIcon fontSize="small" color="primary" />}sx={{ height: 'auto' }}>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     <Box>
@@ -128,7 +128,7 @@ export const RelatedOrderDialog = ({ open, pedidoId, onClose }) => {
                 </SectionCard>
               </Grid>
 
-              <Grid item="true" xs={12} md={7}>
+              <Grid size={{ xs: 12, md: 7 }}>
                 <SectionCard title="Items del Pedido" icon={<Inventory2Icon fontSize="small" color="primary" />}>
                   <Table size="small">
                     <TableHead>
@@ -167,7 +167,7 @@ export const RelatedOrderDialog = ({ open, pedidoId, onClose }) => {
                 </Typography>
                 <Grid container spacing={2}>
                   {order.pagos.map((pago, idx) => (
-                    <Grid item="true" xs={12} sm={6} key={idx}>
+                    <Grid size={{ xs: 12, sm: 6 }} key={idx}>
                       <Paper 
                         variant="outlined" 
                         sx={{ 

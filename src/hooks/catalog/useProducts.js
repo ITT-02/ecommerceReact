@@ -21,6 +21,7 @@ export const useProducts = ({
   esActivo = null,
   destacado = null,
   requiereCotizacion = null,
+  venderSinStock = null,
 } = {}) => {
   const queryClient = useQueryClient();
 
@@ -34,6 +35,7 @@ export const useProducts = ({
       esActivo,
       destacado,
       requiereCotizacion,
+      venderSinStock,
     ],
     queryFn: () =>
       getProducts({
@@ -44,6 +46,7 @@ export const useProducts = ({
         esActivo,
         destacado,
         requiereCotizacion,
+        venderSinStock,
       }),
   });
 
@@ -97,9 +100,8 @@ export const useProducts = ({
     deleting: deleteMutation.isPending || deactivateMutation.isPending,
     getProductById,
     saveProduct: async (product, id = null) => {
-      if (id) await updateMutation.mutateAsync({ id, product });
-      else await createMutation.mutateAsync(product);
-      return true;
+      if (id) return updateMutation.mutateAsync({ id, product });
+      return createMutation.mutateAsync(product);
     },
     removeProduct: async (product) => {
       await deleteMutation.mutateAsync(product);

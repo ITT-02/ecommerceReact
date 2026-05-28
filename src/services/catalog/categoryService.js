@@ -101,3 +101,15 @@ export const deleteCategory = async (category) => {
 
   return response.data[0] || null;
 };
+
+export const getCategoriesForPromotion = async () => {
+  const response = await restApi.get('/categorias', {
+    params: {
+      select: 'id,nombre',
+      es_activa: 'eq.true',
+      order: 'nombre.asc',
+    },
+  });
+
+  return response.data || [];
+};

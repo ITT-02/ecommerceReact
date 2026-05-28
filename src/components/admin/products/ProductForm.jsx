@@ -15,6 +15,8 @@ import {
 import { AdminSectionCard } from '../AdminSectionCard';
 import { FileUploadField } from '../../common/Field/FileUploadField';
 import { TextFieldController } from '../../forms/TextFieldController';
+import { ProductMediaSettings } from './ProductMediaSettings';
+import { ProductCustomizationSettings } from './ProductCustomizationSettings';
 
 const normalizeMediaFile = (media) => {
   if (media instanceof File) return media;
@@ -37,6 +39,8 @@ export const ProductForm = ({
   categories = [],
   loading = false,
   error = '',
+  customizationOptions = [],
+  loadingCustomizationOptions = false,
   onCancel,
   onChange,
   onMediaChange,
@@ -132,24 +136,31 @@ export const ProductForm = ({
         </AdminSectionCard>
 
         <AdminSectionCard title="Multimedia">
-          <Stack spacing={1.5}>
+          <Stack spacing={2}>
             <FileUploadField
               label={editingId ? 'Imagenes/videos del producto' : 'Imagenes/videos'}
               accept="image/*,video/*"
               value={mediaFiles}
               multiple
-              maxFiles={5}
+              maxFiles={8}
               height={170}
               helperText={
                 editingId
-                  ? 'Aqui puedes ver, quitar, reemplazar o agregar multimedia.'
-                  : 'Puedes subir imagenes o videos.'
+                  ? 'Puedes ver, quitar, reemplazar o agregar multimedia. Luego configura portada, orden, visibilidad y variante.'
+                  : 'Puedes subir imagenes o videos. La primera imagen se marcará como portada automáticamente.'
               }
               onChange={(files) => handleFieldChange(mediaFieldName, files)}
               onRemove={handleMediaRemove}
             />
 
-            
+            {editingId && (
+              <ProductMediaSettings
+                media={formData[mediaFieldName] || []}
+                variants={formData.variantes || []}
+                productName={formData.nombre}
+                onChange={(nextMedia) => handleFieldChange(mediaFieldName, nextMedia)}
+              />
+            )}
           </Stack>
         </AdminSectionCard>
 
@@ -179,6 +190,22 @@ export const ProductForm = ({
                 }
                 label="Producto destacado"
               />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    name="vender_sin_stock"
+                    checked={Boolean(formData.vender_sin_stock)}
+                    onChange={onChange}
+                  />
+                }
+                label="Permitir venta sin stock"
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', pl: 1 }}>
+                Se mostrará como venta bajo pedido cuando no exista inventario.
+              </Typography>
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -220,6 +247,16 @@ export const ProductForm = ({
               />
             </Grid>
           </Grid>
+        </AdminSectionCard>
+
+        <AdminSectionCard title="Personalización permitida">
+          <ProductCustomizationSettings
+            enabled={Boolean(formData.es_personalizable)}
+            options={customizationOptions}
+            selectedRules={formData.personalizacion_opciones || []}
+            loading={loadingCustomizationOptions}
+            onChange={(nextRules) => handleFieldChange('personalizacion_opciones', nextRules)}
+          />
         </AdminSectionCard>
       </Stack>
 

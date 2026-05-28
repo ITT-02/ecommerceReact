@@ -1,24 +1,27 @@
 // Une los providers globales de la aplicación.
-// El orden es importante: tema visual, router, TanStack Query y autenticación.
+// El orden es importante: tema visual, router, TanStack Query, autenticación y date pickers.
 
 import { BrowserRouter } from 'react-router-dom';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import 'dayjs/locale/es';
 import { validateEnv } from '../config/env';
 import { AppThemeProvider } from './AppThemeProvider';
 import { AuthProvider } from './AuthProvider';
 import { QueryProvider } from './QueryProvider';
-
-
 
 validateEnv();
 
 export const AppProviders = ({ children }) => {
   return (
     <AppThemeProvider>
-      <BrowserRouter>
-        <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </QueryProvider>
-      </BrowserRouter>
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+        <BrowserRouter>
+          <QueryProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </QueryProvider>
+        </BrowserRouter>
+      </LocalizationProvider>
     </AppThemeProvider>
   );
 };

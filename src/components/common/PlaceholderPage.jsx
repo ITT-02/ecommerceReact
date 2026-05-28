@@ -1,35 +1,19 @@
-// src/components/common/PlaceholderPage.jsx
+// Contenedor base reutilizable para páginas con encabezado y superficie principal.
 
-/**
- * Página base temporal para módulos que todavía no se implementan.
- *
- * También puede usarse como contenedor simple para páginas reales.
- *
- * Uso básico:
- * <PlaceholderPage title="Productos" />
- *
- * Uso con contenido:
- * <PlaceholderPage title="Productos">
- *   <ProductList />
- * </PlaceholderPage>
- */
-
-import { Card, CardContent, Stack, Typography } from '@mui/material';
+import { Card, CardContent, Stack } from '@mui/material';
 import { PageHeader } from './PageHeader';
 
 export const PlaceholderPage = ({
   title,
-  description = 'Módulo preparado para implementar.',
+  description = 'Gestiona la información del módulo.',
   children,
 }) => {
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2.5}>
       <PageHeader title={title} description={description} />
 
       <Card>
-          <CardContent>
-           {children}
-          </CardContent>
+        <CardContent>{children}</CardContent>
       </Card>
     </Stack>
   );

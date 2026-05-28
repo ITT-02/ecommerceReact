@@ -21,6 +21,7 @@ import { MovementsPage } from '../pages/admin/inventory/MovementsPage';
 
 import { WarehousesPage } from '../pages/admin/inventory/WarehousesPage';
 import { OrdersPage } from '../pages/admin/orders/OrdersPage';
+import { QuotesPage } from '../pages/admin/quotes/QuotesPage';
 import { PaymentsPage } from '../pages/admin/payments/PaymentsPage';
 import { PaymentMethodsPage } from '../pages/admin/payments/PaymentMethodsPage';
 import { ProductsPage } from '../pages/admin/products/ProductsPage';
@@ -29,17 +30,33 @@ import { RolesPage } from '../pages/admin/settings/RolesPage';
 import { PermissionsPage } from '../pages/admin/settings/PermissionsPage';
 import { UsersPage } from '../pages/admin/users/UsersPage';
 import { ProductVariantsPage } from '../pages/admin/variants/ProductVariantsPage';
+import { FinancePage } from '../pages/admin/finance/FinancePage';
+import { ManualSalesPage } from '../pages/admin/manualSales/ManualSalesPage';
+import { SellerFollowUpPage } from '../pages/admin/sellerFollowUp/SellerFollowUpPage';
+import { CarriersPage } from '../pages/admin/carriers/CarriersPage';
+import { ProcurementPage } from '../pages/admin/procurement/ProcurementPage';
+import { GoodsReceptionPage } from '../pages/admin/reception/GoodsReceptionPage';
+import { RefundsPage } from '../pages/admin/refunds/RefundsPage';
+import { ShipmentsPage } from '../pages/admin/shipments/ShipmentsPage';
+import { StoreCustomizationPage } from '../pages/admin/storeSettings/StoreCustomizationPage';
+import { SuppliersPage } from '../pages/admin/suppliers/SuppliersPage';
+import { ProductPersonalizationPage } from '../pages/admin/productsPersonalization/ProductPersonalizationPage';
 
-import { AboutPage } from '../pages/store/AboutPage';
 import { AddressesPage } from '../pages/store/AddressesPage';
 import { CartPage } from '../pages/store/CartPage';
 import { CatalogPage } from '../pages/store/CatalogPage';
+import { ContactPage } from '../pages/store/ContactPage';
 import { CheckoutPage } from '../pages/store/CheckoutPage';
 import { HomePage } from '../pages/store/HomePage';
+import { WholesalePage } from '../pages/store/WholesalePage';
 import { MyOrdersPage } from '../pages/store/MyOrdersPage';
+import { MyQuotesPage } from '../pages/store/MyQuotesPage';
+import { QuoteDetailPage } from '../pages/store/QuoteDetailPage';
+import { QuoteRequestPage } from '../pages/store/QuoteRequestPage';
 import { OrderTrackingPage } from '../pages/store/OrderTrackingPage';
 import { ProductDetailPage } from '../pages/store/ProductDetailPage';
 import { ProfilePage } from '../pages/store/ProfilePage';
+import { StoryPage } from '../pages/store/StoryPage';
 
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
@@ -50,6 +67,7 @@ import {
   CATALOG_ROLES,
   DASHBOARD_ROLES,
   INVENTORY_ROLES,
+  FINANCE_ROLES,
   MARKETING_ROLES,
   SALES_ROLES,
 } from '../utils/access/accessControl';
@@ -66,7 +84,10 @@ export const AppRouter = () => {
       {/* Rutas públicas de tienda */}
       <Route element={<StoreLayout />}>
         <Route index element={<HomePage />} />
-        <Route path="nosotros" element={<AboutPage />} />
+        <Route path="nosotros" element={<Navigate to="/nuestra-historia" replace />} />
+        <Route path="nuestra-historia" element={<StoryPage />} />
+        <Route path="mayoristas" element={<WholesalePage />} />
+        <Route path="contacto" element={<ContactPage />} />
         <Route path="catalogo" element={<CatalogPage />} />
         <Route path="productos/:slug" element={<ProductDetailPage />} />
         <Route path="no-autorizado" element={<NotAuthorizedPage />} />
@@ -75,6 +96,9 @@ export const AppRouter = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="carrito" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="cotizacion/:slug" element={<QuoteRequestPage />} />
+          <Route path="mis-cotizaciones" element={<MyQuotesPage />} />
+          <Route path="mis-cotizaciones/:id" element={<QuoteDetailPage />} />
           <Route path="mis-pedidos" element={<MyOrdersPage />} />
           <Route path="mis-pedidos/:id" element={<OrderTrackingPage />} />
           <Route path="perfil" element={<ProfilePage />} />
@@ -95,11 +119,15 @@ export const AppRouter = () => {
           <Route path="atributos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><AttributesPage /></RoleRoute>} />
           <Route path="productos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductsPage /></RoleRoute>} />
           <Route path="variantes" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductVariantsPage /></RoleRoute>} />
+          <Route path="personalizacion-productos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductPersonalizationPage /></RoleRoute>} />
 
           {/* Inventario */}
           <Route path="almacenes" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><WarehousesPage /></RoleRoute>} />
           <Route path="inventario" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><InventoryPage /></RoleRoute>} />
           <Route path="movimientos" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><MovementsPage /></RoleRoute>} />
+          <Route path="proveedores" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><SuppliersPage /></RoleRoute>} />
+          <Route path="abastecimiento" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><ProcurementPage /></RoleRoute>} />
+          <Route path="recepcion-mercaderia" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><GoodsReceptionPage /></RoleRoute>} />
 
           {/* Marketing */}
           <Route path="promociones" element={<RoleRoute allowedRoles={MARKETING_ROLES}><PromotionsPage /></RoleRoute>} />
@@ -107,8 +135,18 @@ export const AppRouter = () => {
 
           {/* Ventas */}
           <Route path="pedidos" element={<RoleRoute allowedRoles={SALES_ROLES}><OrdersPage /></RoleRoute>} />
+          <Route path="cotizaciones" element={<RoleRoute allowedRoles={SALES_ROLES}><QuotesPage /></RoleRoute>} />
+          <Route path="venta-manual" element={<RoleRoute allowedRoles={SALES_ROLES}><ManualSalesPage /></RoleRoute>} />
+          <Route path="seguimiento-vendedor" element={<RoleRoute allowedRoles={SALES_ROLES}><SellerFollowUpPage /></RoleRoute>} />
+          <Route path="envios" element={<RoleRoute allowedRoles={SALES_ROLES}><ShipmentsPage /></RoleRoute>} />
           <Route path="pagos" element={<RoleRoute allowedRoles={SALES_ROLES}><PaymentsPage /></RoleRoute>} />
           <Route path="metodos-pago" element={<RoleRoute allowedRoles={SALES_ROLES}><PaymentMethodsPage /></RoleRoute>} />
+          <Route path="transportistas" element={<RoleRoute allowedRoles={SALES_ROLES}><CarriersPage /></RoleRoute>} />
+          <Route path="personalizacion-tienda" element={<RoleRoute allowedRoles={ADMIN_ROLES}><StoreCustomizationPage /></RoleRoute>} />
+
+          {/* Finanzas */}
+          <Route path="finanzas" element={<RoleRoute allowedRoles={FINANCE_ROLES}><FinancePage /></RoleRoute>} />
+          <Route path="reembolsos" element={<RoleRoute allowedRoles={FINANCE_ROLES}><RefundsPage /></RoleRoute>} />
 
           {/* Administración */}
           <Route path="usuarios" element={<RoleRoute allowedRoles={ADMIN_ROLES}><UsersPage /></RoleRoute>} />

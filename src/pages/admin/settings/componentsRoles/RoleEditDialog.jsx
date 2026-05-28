@@ -15,6 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+
 import CloseIcon from '@mui/icons-material/Close';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import GppGoodOutlinedIcon from '@mui/icons-material/GppGoodOutlined';
@@ -47,15 +48,19 @@ export const RoleEditDialog = ({ open, role, onClose, onSave }) => {
 
   const handleSave = async () => {
     setTouched(true);
+
     if (nameInvalid) return;
+
     setSaving(true);
     setError(null);
+
     try {
       await onSave({
         id: role.id,
         nombre: nombre.trim(),
         descripcion: descripcion.trim() || null,
       });
+
       onClose();
     } catch (e) {
       setError(e);
@@ -65,7 +70,12 @@ export const RoleEditDialog = ({ open, role, onClose, onSave }) => {
   };
 
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={saving ? undefined : onClose}
+      maxWidth="sm"
+      fullWidth
+    >
       <DialogTitle
         sx={{
           display: 'flex',
@@ -76,17 +86,23 @@ export const RoleEditDialog = ({ open, role, onClose, onSave }) => {
         }}
       >
         <EditOutlinedIcon fontSize="small" />
+
         <Box sx={{ flex: 1 }}>
           Editar rol
+
           <Typography
             component="span"
             variant="caption"
             color="text.secondary"
-            sx={{ ml: 1, fontFamily: 'ui-monospace, monospace' }}
+            sx={{
+              ml: 1,
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+            }}
           >
             {role.codigo}
           </Typography>
         </Box>
+
         <IconButton size="small" onClick={onClose} disabled={saving}>
           <CloseIcon fontSize="small" />
         </IconButton>
@@ -105,11 +121,13 @@ export const RoleEditDialog = ({ open, role, onClose, onSave }) => {
             <b>super_admin</b> es un rol del sistema y no puede modificarse desde el panel.
           </Alert>
         )}
+
         {!isSuperAdmin && !role.puede_editar && (
           <Alert severity="info" sx={{ mb: 2 }}>
             No tienes permisos para editar este rol en este momento.
           </Alert>
         )}
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             <AlertTitle>Error al guardar</AlertTitle>
@@ -126,9 +144,15 @@ export const RoleEditDialog = ({ open, role, onClose, onSave }) => {
             disabled
             helperText="El código es inmutable y no se envía al backend."
             slotProps={{
-              input: { sx: { fontFamily: 'ui-monospace, monospace' } },
+              input: {
+                sx: {
+                  fontFamily:
+                    'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                },
+              },
             }}
           />
+
           <TextField
             fullWidth
             size="small"
@@ -140,6 +164,7 @@ export const RoleEditDialog = ({ open, role, onClose, onSave }) => {
             error={touched && nameInvalid}
             helperText={touched && nameInvalid ? 'El nombre es obligatorio' : ''}
           />
+
           <TextField
             fullWidth
             size="small"
@@ -155,10 +180,18 @@ export const RoleEditDialog = ({ open, role, onClose, onSave }) => {
         </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+      <DialogActions
+        sx={{
+          px: 3,
+          py: 2,
+          borderTop: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
         <Button onClick={onClose} color="inherit" disabled={saving}>
           Cancelar
         </Button>
+
         <Button
           onClick={handleSave}
           variant="contained"

@@ -251,7 +251,7 @@ export const PaymentDetailDialog = ({ open, pagoId, onClose }) => {
                 }}
                 >
                 {detail.url_comprobante ? (
-                    detail.url_comprobante.match(/\.(jpeg|jpg|gif|png|webp)$/i) || detail.url_comprobante.includes('via.placeholder') ? (
+                    detail.url_comprobante.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? (
                     <img src={detail.url_comprobante} alt="Comprobante" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                     ) : (
                     <Button variant="contained" startIcon={<FileOpenIcon />} href={detail.url_comprobante} target="_blank" rel="noopener noreferrer" disableElevation>

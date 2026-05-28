@@ -1,6 +1,28 @@
 // Servicio CRUD de variantes de producto.
 import { restApi } from '../../api/restApi';
 
+
+export const getProductsWithVariantsGrouped = async ({
+  page = 1,
+  limit = 10,
+  search = '',
+  categoryId = null,
+  isActive = null,
+  hasVariants = null,
+} = {}) => {
+  const payload = {
+    p_page_number: page,
+    p_page_size: limit,
+    p_search: search || null,
+    p_categoria_id: categoryId || null,
+    p_es_activa: isActive,
+    p_tiene_variantes: hasVariants,
+  };
+
+  const response = await restApi.post('/rpc/listar_productos_con_variantes_admin_paginado', payload);
+  return response.data;
+};
+
 export const getVariants = async ({ page = 1, limit = 10, search = '', productId = null, isActive = null } = {}) => {
   const payload = {
     p_page_number: page,
@@ -83,4 +105,17 @@ export const getProductOptions = async (search = '') => {
     nombre: product.nombre,
     slug: product.slug,
   }));
+};
+
+export const getVariantsForPromotion = async () => {
+  const response = await restApi.post('/rpc/listar_variantes_con_atributos_paginado', {
+    p_page_number: 1,
+    p_page_size: 1000, // Límite alto para obtener todas
+    p_search: null,
+    p_producto_id: null,
+    p_es_activa: null,
+  });
+
+  const items = response.data?.items || response.data?.variantes || [];
+  return items;
 };

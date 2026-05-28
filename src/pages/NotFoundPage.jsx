@@ -1,20 +1,19 @@
 // Página 404.
 
-import { Button, Container, Typography, Box, Paper } from '@mui/material';
+import { Button, Container, Typography, Box, Paper, useTheme } from '@mui/material';
 import { Link } from 'react-router-dom';
 
 export const NotFoundPage = () => {
+  const theme = useTheme();
+  const primary = theme.palette.primary.main;
+  const secondary = theme.palette.secondary.main;
+  const info = theme.palette.info.main;
+
   return (
     <Container maxWidth="sm" sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 3, transition: 'transform 0.3s ease-in-out', '&:hover': { transform: 'scale(1.02)' } }}>
+      <Paper sx={{ p: 4, borderRadius: 2, textAlign: 'center' }}>
         <Box sx={{ mb: 4 }}>
-          {/* SVG Animado 404 */}
-          <svg
-            width="200"
-            height="200"
-            viewBox="0 0 200 200"
-            style={{ margin: '0 auto 20px', display: 'block' }}
-          >
+          <svg width="200" height="200" viewBox="0 0 200 200" style={{ margin: '0 auto 20px', display: 'block' }}>
             <defs>
               <style>{`
                 @keyframes float {
@@ -29,30 +28,27 @@ export const NotFoundPage = () => {
                 .spinning { animation: spin 20s linear infinite; }
               `}</style>
             </defs>
-            
-            {/* Círculo de fondo girando */}
-            <circle cx="100" cy="100" r="90" fill="none" stroke="#ff6b6b" strokeWidth="2" opacity="0.3" className="spinning" />
-            
-            {/* Número 404 flotante */}
+
+            <circle cx="100" cy="100" r="90" fill="none" stroke={primary} strokeWidth="2" opacity="0.3" className="spinning" />
+
             <g className="floating">
-              <text x="100" y="120" fontSize="80" fontWeight="bold" textAnchor="middle" fill="#ff6b6b">
+              <text x="100" y="120" fontSize="80" fontWeight="bold" textAnchor="middle" fill={primary}>
                 404
               </text>
             </g>
-            
-            {/* Pequeñas luces parpadeantes */}
-            <circle cx="30" cy="50" r="5" fill="#4ecdc4" opacity="0.6">
+
+            <circle cx="30" cy="50" r="5" fill={secondary} opacity="0.6">
               <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" />
             </circle>
-            <circle cx="170" cy="60" r="5" fill="#f9b233" opacity="0.6">
+            <circle cx="170" cy="60" r="5" fill={info} opacity="0.6">
               <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
             </circle>
-            <circle cx="40" cy="160" r="5" fill="#a8e6cf" opacity="0.6">
+            <circle cx="40" cy="160" r="5" fill={theme.palette.success.main} opacity="0.6">
               <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite" />
             </circle>
           </svg>
 
-          <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, color: 'error.main' }}>
+          <Typography variant="h3" sx={{ mb: 1 }}>
             ¡Oops!
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
@@ -62,7 +58,7 @@ export const NotFoundPage = () => {
             Lo sentimos, la página que buscas no existe o ha sido movida.
           </Typography>
         </Box>
-        <Button component={Link} to="/" variant="contained" size="large" sx={{ px: 4, py: 1.5, borderRadius: 2 }}>
+        <Button component={Link} to="/" variant="contained" size="large">
           Volver al inicio
         </Button>
       </Paper>

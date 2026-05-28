@@ -48,6 +48,7 @@ export const getProducts = async ({
   esActivo = null,
   destacado = null,
   requiereCotizacion = null,
+  venderSinStock = null,
 } = {}) => {
   const response = await restApi.post('/rpc/listar_productos_paginado', {
     p_page_number: pageNumber,
@@ -57,6 +58,7 @@ export const getProducts = async ({
     p_es_activo: esActivo,
     p_destacado: destacado,
     p_requiere_cotizacion: requiereCotizacion,
+    p_vender_sin_stock: venderSinStock,
   });
 
   return normalizeProductPaginatedResponse(response.data, pageNumber, pageSize);
@@ -99,12 +101,18 @@ export const createProduct = async (product) => {
 
 export const updateProduct = async (id, product) => {
   const p_producto = mapProductToRpcPayload(product);
+
   const currentMedia = (product.newMediaFiles || []).filter((media) => !isLocalFile(media));
-  const hasCurrentCover = currentMedia.some((media) => Boolean(media.es_portada));
+
+  // Solo revisa portada general del producto. Las portadas de variante son independientes.
+  const hasCurrentProductCover = currentMedia.some(
+    (media) => Boolean(media.es_portada) && !media.variante_id
+  );
+
   const p_multimedia_nueva = await uploadProductMedia({
     files: product.newMediaFiles,
     productName: product.nombre,
-    hasCurrentCover,
+    hasCurrentCover: hasCurrentProductCover,
   });
 
   const response = await restApi.post('/rpc/actualizar_producto_con_multimedia', {
@@ -112,6 +120,7 @@ export const updateProduct = async (id, product) => {
     p_producto,
     p_multimedia_nueva,
     p_multimedia_eliminada: product.removedMediaIds || [],
+    p_multimedia_actualizada: product.updatedMedia || [],
   });
 
   await deleteRemovedMediaFromStorage(product.removedMedia);
@@ -138,4 +147,16 @@ export const deleteProduct = async (product) => {
   });
 
   return response.data;
+};
+
+export const getProductsForPromotion = async () => {
+  const response = await restApi.get('/productos', {
+    params: {
+      select: 'id,nombre',
+      es_activo: 'eq.true',
+      order: 'nombre.asc',
+    },
+  });
+
+  return response.data || [];
 };

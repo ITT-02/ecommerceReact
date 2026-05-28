@@ -63,7 +63,7 @@ export const MovementDetailDialog = ({ open, movimiento, onClose }) => {
 
         <Grid container spacing={5}>
           {/* COLUMNA 1: BASE */}
-          <Grid xs={12} md={6} sx={{ alignSelf: 'stretch' }}>
+          <Grid size={{ xs: 12, md: 6 }} sx={{ alignSelf: 'stretch' }}>
              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
                 <InfoOutlinedIcon color="primary" fontSize="small" />
                 <Typography variant="subtitle1" fontWeight="bold" color="primary">
@@ -85,7 +85,7 @@ export const MovementDetailDialog = ({ open, movimiento, onClose }) => {
           </Grid>
 
           {/* COLUMNA 2: ITEM */}
-          <Grid xs={12} md={6} sx={{ alignSelf: 'stretch' }}>
+          <Grid size={{ xs: 12, md: 6 }} sx={{ alignSelf: 'stretch' }}>
              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
                 <Inventory2OutlinedIcon color="primary" fontSize="small" />
                 <Typography variant="subtitle1" fontWeight="bold" color="primary">
@@ -113,12 +113,12 @@ export const MovementDetailDialog = ({ open, movimiento, onClose }) => {
            </Box>
 
            <Grid container spacing={3}>
-              <Grid xs={12} sm={6} sx={{ alignSelf: 'stretch' }}>
+              <Grid size={{ xs: 12, sm: 6 }} sx={{ alignSelf: 'stretch' }}>
                 <Typography variant="overline" color="text.disabled" sx={{ display: 'block', mb: 1, pl: 0.5 }}>Stock Disponible</Typography>
                 <DetailRow label="Antes del mov." value={movimiento.stock_disponible_antes} />
                 <DetailRow label="Después del mov." value={movimiento.stock_disponible_despues} />
               </Grid>
-              <Grid xs={12} sm={6} sx={{ alignSelf: 'stretch' }}>
+              <Grid size={{ xs: 12, sm: 6 }} sx={{ alignSelf: 'stretch' }}>
                 <Typography variant="overline" color="text.disabled" sx={{ display: 'block', mb: 1, pl: 0.5 }}>Stock Reservado</Typography>
                 <DetailRow label="Antes del mov." value={movimiento.stock_reservado_antes} />
                 <DetailRow label="Después del mov." value={movimiento.stock_reservado_despues} />

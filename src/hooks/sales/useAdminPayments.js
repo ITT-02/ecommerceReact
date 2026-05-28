@@ -19,12 +19,12 @@ export const useAdminPayments = (filters = {}) => {
   });
 
   // 2. Mutación para cambiar estados
-  const { mutateAsync: updateStatus, isLoading: isUpdating } = useMutation({
+  const { mutateAsync: updateStatus, isPending: isUpdating } = useMutation({
     mutationFn: changePaymentStatus,
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-payments']);
-      queryClient.invalidateQueries(['admin-payment-detail']);
-      queryClient.invalidateQueries(['admin-orders']); 
+      queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-payment-detail'] });
+      queryClient.invalidateQueries({ queryKey: ['orders-admin'] }); 
     },
   });
 

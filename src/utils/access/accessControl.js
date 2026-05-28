@@ -1,6 +1,5 @@
 /**
  * Roles disponibles en el sistema.
- *
  * Estos valores deben coincidir exactamente con los roles que devuelve el backend.
  */
 export const ROLES = {
@@ -10,14 +9,12 @@ export const ROLES = {
   INVENTARIO: 'inventario',
   VENTAS: 'ventas',
   MARKETING: 'marketing',
+  CLIENTE: 'cliente',
 };
 
 /**
  * Prioridad de roles.
- *
  * Si un usuario tiene varios roles, se toma primero el rol más importante.
- * Ejemplo:
- * ['cliente', 'ventas'] => 'ventas'
  */
 export const ROLE_PRIORITY = [
   ROLES.SUPER_ADMIN,
@@ -41,51 +38,15 @@ export const INTERNAL_ROLES = [
   ROLES.MARKETING,
 ];
 
-/**
- * Roles que tienen acceso general de administrador.
- */
-export const ADMIN_ROLES = [
-  ROLES.SUPER_ADMIN,
-  ROLES.ADMINISTRADOR,
-];
-
-/**
- * Roles permitidos para ver el dashboard.
- */
+export const ADMIN_ROLES = [ROLES.SUPER_ADMIN, ROLES.ADMINISTRADOR];
 export const DASHBOARD_ROLES = INTERNAL_ROLES;
+export const CATALOG_ROLES = [ROLES.SUPER_ADMIN, ROLES.ADMINISTRADOR, ROLES.CATALOGO];
+export const INVENTORY_ROLES = [ROLES.SUPER_ADMIN, ROLES.ADMINISTRADOR, ROLES.INVENTARIO];
+export const SALES_ROLES = [ROLES.SUPER_ADMIN, ROLES.ADMINISTRADOR, ROLES.VENTAS];
+export const MARKETING_ROLES = [ROLES.SUPER_ADMIN, ROLES.ADMINISTRADOR, ROLES.MARKETING];
 
 /**
- * Roles permitidos para el módulo catálogo.
+ * Finanzas permite revisar utilidad, margen, ventas pagadas y rentabilidad.
+ * Se habilita para administradores y ventas porque ventas necesita controlar cierre comercial.
  */
-export const CATALOG_ROLES = [
-  ROLES.SUPER_ADMIN,
-  ROLES.ADMINISTRADOR,
-  ROLES.CATALOGO,
-];
-
-/**
- * Roles permitidos para el módulo inventario.
- */
-export const INVENTORY_ROLES = [
-  ROLES.SUPER_ADMIN,
-  ROLES.ADMINISTRADOR,
-  ROLES.INVENTARIO,
-];
-
-/**
- * Roles permitidos para el módulo ventas.
- */
-export const SALES_ROLES = [
-  ROLES.SUPER_ADMIN,
-  ROLES.ADMINISTRADOR,
-  ROLES.VENTAS,
-];
-
-/**
- * Roles permitidos para el módulo marketing.
- */
-export const MARKETING_ROLES = [
-  ROLES.SUPER_ADMIN,
-  ROLES.ADMINISTRADOR,
-  ROLES.MARKETING,
-];
+export const FINANCE_ROLES = [ROLES.SUPER_ADMIN, ROLES.ADMINISTRADOR, ROLES.VENTAS];

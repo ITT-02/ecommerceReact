@@ -51,12 +51,35 @@ export const PaymentsPage = () => {
 
     // --- Helpers visuales ---
     const getStatusColor = (estado) => {
-        const colors = { 
-            pendiente: 'warning', 
-            aprobado: 'success', 
-            rechazado: 'error' 
+        const colors = {
+            pendiente: 'warning',
+            validando: 'info',
+            en_validacion: 'info',
+            aprobado: 'success',
+            pagado: 'success',
+            rechazado: 'error',
+            vencido: 'error',
+            cancelado: 'default',
+            reembolso_pendiente: 'warning',
+            reembolsado: 'info',
         };
         return colors[estado] || 'default';
+    };
+
+    const getStatusLabel = (estado) => {
+        const labels = {
+            pendiente: 'Pendiente',
+            validando: 'En validación',
+            en_validacion: 'En validación',
+            aprobado: 'Aprobado',
+            pagado: 'Pagado',
+            rechazado: 'Rechazado',
+            vencido: 'Vencido',
+            cancelado: 'Cancelado',
+            reembolso_pendiente: 'Reembolso pendiente',
+            reembolsado: 'Reembolsado',
+        };
+        return labels[estado] || estado || '-';
     };
 
     const formatCurrency = (amount) => {
@@ -92,7 +115,7 @@ export const PaymentsPage = () => {
             field: 'estado', headerName: 'Estado', width: 130, 
             renderCell: (row) => (
                 <Chip 
-                    label={row.estado} 
+                    label={getStatusLabel(row.estado)} 
                     size="small" 
                     color={getStatusColor(row.estado)} 
                     variant="filled"
@@ -112,7 +135,7 @@ export const PaymentsPage = () => {
         },
         { 
             type: 'edit',
-            label: 'Cambiar Estado', 
+            label: 'Validar pago', 
             onClick: (row) => setPagoCambiarEstado(row)
         },
         { 
@@ -130,8 +153,10 @@ export const PaymentsPage = () => {
             type: 'select',
             options: [
             { label: 'Pendientes', value: 'pendiente' },
+            { label: 'En validación', value: 'validando' },
             { label: 'Aprobados', value: 'aprobado' },
             { label: 'Rechazados', value: 'rechazado' },
+            { label: 'Vencidos', value: 'vencido' },
             ],
         },
         {

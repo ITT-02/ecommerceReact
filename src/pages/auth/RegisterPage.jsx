@@ -10,7 +10,6 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 
 import { initialRegisterFormData, validateRegisterForm } from '../../adapters/auth/authAdapter';
 import { useAuth } from '../../hooks/auth/useAuth';
-import { colors } from '../../styles/theme';
 
 export const RegisterPage = () => {
   const [formData, setFormData] = useState(initialRegisterFormData);
@@ -48,10 +47,6 @@ export const RegisterPage = () => {
     }
   };
 
-  const inputStyles = {
-    // Retenido temporalmente si es necesario para otros overrides
-  };
-
   return (
     <Box component="section" sx={{display:'flex', minHeight:'100vh' }}>
       
@@ -67,12 +62,12 @@ export const RegisterPage = () => {
           <Box sx ={{ display: 'flex', alignItems: 'center', gap: 1.5}}>
             <Box sx={{ width: 42,
                         height: 42, borderRadius:2.5,
-                        bgcolor: 'rgba(0,0,0,0.12)',
+                        bgcolor: (theme) => theme.palette.custom.semantic.storeNavigation.brandSurface,
                         display :'flex',alignItems: 'center',justifyContent: 'center',
             }}>
-              <InventoryIcon sx={{color : 'white'}}></InventoryIcon>
+              <InventoryIcon sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.text })}></InventoryIcon>
             </Box>
-            <Typography variant='h5' fontWeight={700} sx={{ color: colors.primary[50] }}>
+            <Typography variant='h5' fontWeight={700} sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.text })}>
               Aliqora
             </Typography>
           </Box>
@@ -81,10 +76,10 @@ export const RegisterPage = () => {
           <Box sx={{flex:1,display:'flex', flexDirection: 'column',
                     justifyContent:'center', gap: 2
           }}>
-            <Typography variant='h4' fontWeight={700} sx={{color :colors.primary[50] }}>
+            <Typography variant='h4' fontWeight={700} sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.text })}>
               Tu plataforma de empaques, en un solo lugar
             </Typography>
-            <Typography sx={{lineHeight:1.8, color : colors.primary[50] }}>
+            <Typography sx={(theme) => ({ lineHeight: 1.8, color: theme.palette.custom.semantic.storeNavigation.textMuted })}>
               Únete a nuestra plataforma y gestiona todo de forma sencilla y eficiente.
             </Typography>
           </Box>
@@ -98,7 +93,7 @@ export const RegisterPage = () => {
             borderRadius: 2, px: 1, py: 1.5,
           }}>
             <Box sx={{ width: 6, height: 6, borderRadius: '10%',
-                       bgcolor: 'white', flexShrink: 0 }} />
+                       bgcolor: (theme) => theme.palette.custom.semantic.storeNavigation.text, flexShrink: 0 }} />
             <Typography fontSize={13} sx={{ color: (theme) => theme.palette.primary.contrastText}} fontWeight={500}>
               {feat}
             </Typography>

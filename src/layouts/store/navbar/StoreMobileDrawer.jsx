@@ -1,127 +1,143 @@
 /**
  * Drawer móvil de la tienda pública.
- *
- * Es parte del navbar porque representa la navegación pública en móvil.
  */
 
-import {
-  Box,
-  Button,
-  Divider,
-  Drawer,
-  Stack,
-  Typography,
-} from '@mui/material';
-
+import { Box, Button, Divider, Drawer, Stack, Typography } from '@mui/material';
 import { Link as RouterLink, NavLink } from 'react-router-dom';
+
+import { hasInternalRole } from '../../../utils/access/menuByRole';
+
+const navButtonSx = (isSelected = false) => (theme) => {
+  const nav = theme.palette.custom.semantic.storeNavigation;
+
+  return {
+    justifyContent: 'flex-start',
+    fontWeight: isSelected ? 800 : 600,
+    color: isSelected ? nav.brandText : nav.textMuted,
+    '&.active': {
+      color: nav.brandText,
+      bgcolor: nav.activeBg,
+      fontWeight: 800,
+    },
+    '&:hover': {
+      color: nav.brandText,
+      bgcolor: nav.hoverBg,
+      transform: 'none',
+      boxShadow: 'none',
+    },
+  };
+};
 
 export const StoreMobileDrawer = ({
   open,
   isLoggedIn,
+  roles = [],
   currentUrl,
   mainMenuItems,
   catalogMenuItems,
+  afterCatalogMenuItems = [],
   onClose,
 }) => {
-  const renderMainNavButton = (item) => (
-    <Button
-      key={item.to}
-      component={NavLink}
-      to={item.to}
-      onClick={onClose}
-      color="inherit"
-      sx={{
-        justifyContent: 'flex-start',
-        fontWeight: 600,
-        color: 'text.primary',
-        '&.active': {
-          color: 'primary.main',
-          fontWeight: 800,
-        },
-      }}
-    >
-      {item.label}
-    </Button>
-  );
+  const isInternalUser = hasInternalRole(roles);
 
-  const renderCatalogButton = (item) => (
-    <Button
-      key={item.to}
-      component={RouterLink}
-      to={item.to}
-      onClick={onClose}
-      color="inherit"
-      sx={{
-        justifyContent: 'flex-start',
-        fontWeight: currentUrl === item.to ? 800 : 600,
-        color: currentUrl === item.to ? 'primary.main' : 'text.primary',
-      }}
-    >
-      {item.label}
-    </Button>
-  );
+  const renderNavButton = (item, useExactMatch = false) => {
+    const isSelected = useExactMatch && currentUrl === item.to;
+
+    return (
+      <Button
+        key={item.to}
+        component={useExactMatch ? RouterLink : NavLink}
+        to={item.to}
+        onClick={onClose}
+        color="inherit"
+        sx={navButtonSx(isSelected)}
+      >
+        {item.label}
+      </Button>
+    );
+  };
 
   return (
     <Drawer
       anchor="left"
       open={open}
       onClose={onClose}
-      sx={{ display: { xs: 'block', md: 'none' } }}
+      sx={(theme) => ({
+        display: { xs: 'block', md: 'none' },
+        '& .MuiDrawer-paper': {
+          bgcolor: theme.palette.custom.semantic.storeNavigation.bg,
+          color: theme.palette.custom.semantic.storeNavigation.text,
+        },
+      })}
     >
-      <Box sx={{ width: 280, p: 2 }}>
-        <Typography variant="h5" color="primary.main" sx={{ fontWeight: 800 }}>
+      <Box sx={{ width: 300, p: 2 }}>
+        <Typography
+          variant="h5"
+          sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.brandText, fontWeight: 600, letterSpacing: '0.16em' })}
+        >
           Aliqora
         </Typography>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography
+          variant="caption"
+          sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.brandSubtext, mb: 2, display: 'block', letterSpacing: '0.18em', textTransform: 'uppercase' })}
+        >
           Empaques
         </Typography>
 
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={(theme) => ({ mb: 2, borderColor: theme.palette.custom.semantic.storeNavigation.divider })} />
 
         <Stack spacing={1}>
-          {mainMenuItems.map(renderMainNavButton)}
+          {mainMenuItems.map((item) => renderNavButton(item))}
 
-          <Divider sx={{ my: 1 }} />
+          <Divider sx={(theme) => ({ my: 1, borderColor: theme.palette.custom.semantic.storeNavigation.divider })} />
 
           <Typography
             variant="caption"
-            sx={{
-              px: 1,
-              fontWeight: 800,
-              color: 'text.secondary',
-              textTransform: 'uppercase',
-              letterSpacing: 0.8,
-            }}
+            sx={(theme) => ({ px: 1, fontWeight: 800, color: theme.palette.custom.semantic.storeNavigation.brandText, textTransform: 'uppercase', letterSpacing: '0.16em' })}
           >
             Catálogo
           </Typography>
 
-          {catalogMenuItems.map(renderCatalogButton)}
+          {catalogMenuItems.map((item) => renderNavButton(item, true))}
 
-          <Divider sx={{ my: 1 }} />
+          {afterCatalogMenuItems.length > 0 && (
+            <>
+              <Divider sx={(theme) => ({ my: 1, borderColor: theme.palette.custom.semantic.storeNavigation.divider })} />
+
+              <Typography
+                variant="caption"
+                sx={(theme) => ({ px: 1, fontWeight: 800, color: theme.palette.custom.semantic.storeNavigation.brandText, textTransform: 'uppercase', letterSpacing: '0.16em' })}
+              >
+                Información
+              </Typography>
+
+              {afterCatalogMenuItems.map((item) => renderNavButton(item))}
+            </>
+          )}
+
+          <Divider sx={(theme) => ({ my: 1, borderColor: theme.palette.custom.semantic.storeNavigation.divider })} />
 
           {isLoggedIn ? (
             <>
-              <Button
-                component={NavLink}
-                to="/mis-pedidos"
-                onClick={onClose}
-                color="inherit"
-                sx={{ justifyContent: 'flex-start' }}
+              <Typography
+                variant="caption"
+                sx={(theme) => ({ px: 1, fontWeight: 800, color: theme.palette.custom.semantic.storeNavigation.brandText, textTransform: 'uppercase', letterSpacing: '0.16em' })}
               >
-                Mis pedidos
-              </Button>
+                Mi cuenta
+              </Typography>
 
-              <Button
-                component={NavLink}
-                to="/perfil"
-                onClick={onClose}
-                color="inherit"
-                sx={{ justifyContent: 'flex-start' }}
-              >
-                Mi perfil
-              </Button>
+              {renderNavButton({ label: 'Mi perfil', to: '/perfil' })}
+              {renderNavButton({ label: 'Mis pedidos', to: '/mis-pedidos' })}
+              {renderNavButton({ label: 'Mis cotizaciones', to: '/mis-cotizaciones' })}
+              {renderNavButton({ label: 'Mis direcciones', to: '/direcciones' })}
+
+              {isInternalUser && (
+                <>
+                  <Divider sx={(theme) => ({ my: 1, borderColor: theme.palette.custom.semantic.storeNavigation.divider })} />
+                  {renderNavButton({ label: 'Panel administrativo', to: '/admin/dashboard' })}
+                </>
+              )}
             </>
           ) : (
             <>
@@ -129,7 +145,16 @@ export const StoreMobileDrawer = ({
                 Ingresar
               </Button>
 
-              <Button component={NavLink} to="/registro" onClick={onClose} variant="outlined">
+              <Button
+                component={NavLink}
+                to="/registro"
+                onClick={onClose}
+                variant="outlined"
+                sx={(theme) => ({
+                  color: theme.palette.custom.semantic.storeNavigation.brandText,
+                  borderColor: theme.palette.custom.semantic.storeNavigation.actionBorder,
+                })}
+              >
                 Crear cuenta
               </Button>
             </>

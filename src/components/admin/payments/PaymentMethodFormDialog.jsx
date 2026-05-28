@@ -117,7 +117,7 @@ export const PaymentMethodFormDialog = ({
                 fullWidth
                 required
                 disabled={isEdit} // Normalmente el código interno no debería cambiar si es uniqueness
-                helperText="Ej: yape_plin"
+                helperText="Código interno."
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -128,7 +128,7 @@ export const PaymentMethodFormDialog = ({
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Ej: Yape / Plin"
+                helperText="Nombre visible para el cliente."
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>

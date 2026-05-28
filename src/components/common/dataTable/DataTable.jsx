@@ -33,6 +33,7 @@ import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'; // Para V
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'; // Para Detalle de Transacción
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
+import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'; // Para Asignar Roles
 
 /**
  * Obtiene el valor de una celda usando el nombre del campo.
@@ -117,6 +118,7 @@ const TableActionButton = ({ action, row }) => {
     history: <HistoryOutlinedIcon sx={{ fontSize: 17 }} />,
     receipt: <ReceiptLongOutlinedIcon sx={{ fontSize: 17 }} />,
     add: <AddCircleOutlineRoundedIcon sx={{ fontSize: 17 }} />,
+    assign_roles: <ManageAccountsOutlinedIcon sx={{ fontSize: 17 }} />,
   };
 
   const colorMap = {
@@ -129,6 +131,7 @@ const TableActionButton = ({ action, row }) => {
     history: theme.palette.secondary.main,
     receipt: theme.palette.text.secondary,
     add: theme.palette.primary.main,
+    assign_roles: theme.palette.secondary.main,
   };
 
   const actionColor =
@@ -519,11 +522,7 @@ export const DataTable = ({
     ? Math.max((maxVisibleActions * 38) + 20, 72)
     : 0;
 
-  const headerBackground =
-    theme.palette.mode === 'dark'
-      ? theme.palette.primary.dark
-      : theme.palette.primary.light;
-
+  const headerBackground = theme.palette.custom.semantic.tableHeader;
 
   return (
     <Paper
@@ -594,7 +593,7 @@ export const DataTable = ({
                     backgroundImage: 'none',
                     borderLeft: `1px solid ${theme.palette.divider}`,
                     borderBottom: `1px solid ${theme.palette.divider}`,
-                    boxShadow: '-8px 0 12px -10px rgba(0,0,0,0.35)',
+                    boxShadow: `-8px 0 12px -10px ${theme.palette.custom.semantic.shadowColor}`,
                     backgroundClip: 'padding-box',
                   }}
                 >
@@ -663,7 +662,7 @@ export const DataTable = ({
                         backgroundColor: theme.palette.background.paper,
                         backgroundImage: 'none',
                         borderLeft: `1px solid ${theme.palette.divider}`,
-                        boxShadow: '-8px 0 12px -10px rgba(0,0,0,0.22)',
+                        boxShadow: `-8px 0 12px -10px ${theme.palette.custom.semantic.shadowColor}`,
                         backgroundClip: 'padding-box',
                       }}
                     >

@@ -11,6 +11,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -19,7 +20,6 @@ import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { useRoles } from '../../../hooks/users/useRoles';
 import { useAuth } from '../../../hooks/auth/useAuth';
 import { hasAllowedRole } from '../../../utils/access/menuByRole';
-import { ADMIN_ROLES } from '../../../utils/access/accessControl';
 
 import { RoleCard } from './componentsRoles/RoleCard';
 import { RoleDetailDialog } from './componentsRoles/RoleDetailDialog';
@@ -33,7 +33,9 @@ export const RolesPage = () => {
   const [assignRole, setAssignRole] = useState(null);
 
   const { roles: userRoles } = useAuth();
-  const canManagePermissions = hasAllowedRole(userRoles, ADMIN_ROLES);
+  const SUPER_ADMIN_ROLES = ['super_admin'];
+
+  const canManagePermissions = hasAllowedRole(userRoles, SUPER_ADMIN_ROLES);
 
   const {
     roles,
@@ -74,7 +76,11 @@ export const RolesPage = () => {
                   ),
                   endAdornment: search ? (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setSearch('')}>
+                      <IconButton
+                        size="small"
+                        onClick={() => setSearch('')}
+                        aria-label="Limpiar búsqueda"
+                      >
                         <CloseIcon fontSize="small" />
                       </IconButton>
                     </InputAdornment>
@@ -88,16 +94,34 @@ export const RolesPage = () => {
             {loading &&
               Array.from({ length: 6 }).map((_, i) => (
                 <Grid key={i} size={{ xs: 12, sm: 6, lg: 4 }}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1.5 }}>
+                  <Paper
+                    variant="outlined"
+                    sx={(theme) => ({
+                      p: 2,
+                      bgcolor:
+                        theme.palette.custom.semantic.dataTable?.rowBg ||
+                        theme.palette.background.paper,
+                    })}
+                  >
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    sx={{
+                      mb: 1.5,
+                      alignItems: 'center',
+                    }}
+                  >
                       <Skeleton variant="rounded" width={40} height={40} />
+
                       <Box sx={{ flex: 1 }}>
                         <Skeleton width="70%" />
                         <Skeleton width="40%" />
                       </Box>
                     </Stack>
+
                     <Skeleton width="100%" />
                     <Skeleton width="90%" />
+
                     <Box sx={{ mt: 2, display: 'flex', gap: 0.5 }}>
                       <Skeleton variant="rounded" width={80} height={22} />
                       <Skeleton variant="rounded" width={80} height={22} />
@@ -109,15 +133,21 @@ export const RolesPage = () => {
             {!loading && roles.length === 0 && (
               <Grid size={{ xs: 12 }}>
                 <Box
-                  sx={{
+                  sx={(theme) => ({
                     p: 4,
                     borderRadius: 3,
                     border: '1px dashed',
-                    borderColor: 'divider',
+                    borderColor:
+                      theme.palette.custom.semantic.dataTable?.cellBorder ||
+                      theme.palette.divider,
                     textAlign: 'center',
-                  }}
+                    bgcolor:
+                      theme.palette.custom.semantic.dataTable?.rowBg ||
+                      theme.palette.background.paper,
+                  })}
                 >
                   <Typography variant="h6">No se encontraron roles</Typography>
+
                   <Typography variant="body2" color="text.secondary">
                     {search
                       ? 'Ajusta la búsqueda o límpiala.'
