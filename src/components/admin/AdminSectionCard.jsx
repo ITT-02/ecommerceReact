@@ -8,7 +8,7 @@ export const AdminSectionCard = ({ title, description, action, children, sx }) =
     <Card
       variant="outlined"
       sx={(theme) => ({
-        borderRadius: theme.palette.custom.radius.lg,
+        borderRadius: theme.palette.custom.radius.xs,
         backgroundColor: theme.palette.custom.semantic.form.surface,
         ...sx,
       })}

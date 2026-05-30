@@ -99,7 +99,7 @@ export const ProductMediaSettings = ({
       <Box
         sx={{
           p: 2,
-          borderRadius: 2,
+          borderRadius: 1,
           border: '1px dashed',
           borderColor: 'divider',
           bgcolor: 'background.default',
@@ -136,7 +136,7 @@ export const ProductMediaSettings = ({
                     sx={{
                       width: '100%',
                       height: 120,
-                      borderRadius: 2,
+                      borderRadius: 1,
                       border: '1px solid',
                       borderColor: 'divider',
                       overflow: 'hidden',

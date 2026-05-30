@@ -3,23 +3,22 @@ import { Box, Typography, Chip } from '@mui/material';
 import { MovementForm } from './componentsMovements/MovementForm';
 import { CancelMovementDialog } from './componentsMovements/CancelMovementDialog';
 import { MovementDetailDialog } from './componentsMovements/MovementDetailDialog';
-// Ajusta las rutas de los imports según tu estructura
+
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { useInventoryMovements } from '../../../hooks/inventory/useInventoryMovements';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 
 export const MovementsPage = () => {
-    // 1. Estados para los parámetros de la tabla (Paginación, Filtros y Búsqueda)
+    // Estados para los parámetros de la tabla (Paginación, Filtros y Búsqueda)
     const [pageNumber, setPageNumber] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [search, setSearch] = useState('');
     const [filterValues, setFilterValues] = useState({});
 
-    // 2. Extraer el valor del filtro de "Tipo" si el usuario lo selecciona
+    //Extrae el valor del filtro de "Tipo" si el usuario lo selecciona
     const tipoMovimiento = filterValues?.tipoMovimiento === 'todos' ? null : filterValues?.tipoMovimiento;
 
-    // 3. Ejecutar el hook con los parámetros actuales
     const { 
         movements, 
         pagination, 
@@ -35,15 +34,10 @@ export const MovementsPage = () => {
         tipoMovimiento: tipoMovimiento || null
     });
 
-    // 4. Estados temporales para los modales
+    // Estados temporales para los modales
     const [movimientoAnular, setMovimientoAnular] = useState(null);
     const [openRegistrarModal, setOpenRegistrarModal] = useState(false);
     const [movimientoDetalle, setMovimientoDetalle] = useState(null);
-    // TODO: En los próximos pasos agregaremos los siguientes modales:
-    // const [openDetalleModal, setOpenDetalleModal] = useState(null);
-    // const [openRegistrarModal, setOpenRegistrarModal] = useState(false);
-
-    // ---> Funciones auxiliares de UX/UI
     const getTipoColor = (tipo) => {
         const colors = { entrada: 'info', salida: 'warning', ajuste: 'secondary', reserva: 'primary', liberacion: 'success' };
         return colors[tipo] || 'default';
@@ -54,7 +48,6 @@ export const MovementsPage = () => {
         return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(fechaStr));
     };
 
-    // ---> Definición de las columnas según tu README
     const columns = [
         { field: 'created_at', headerName: 'Fecha', width: 150, renderCell: (row) => <Typography variant="caption">{formatFecha(row.created_at)}</Typography> },
         { 
@@ -82,7 +75,6 @@ export const MovementsPage = () => {
         }
     ];
 
-    // ---> Acciones de la tabla y Filtros disponibles
     const rowActions = [
         { 
             type: 'view',
@@ -92,7 +84,7 @@ export const MovementsPage = () => {
         { 
             type:'cancel', 
             label: 'Anular', 
-            disabled: (row) => row.anulado || row.referencia_tipo === 'anulacion',
+            disabled: (row) => row.anulado || row.referencia_tipo === 'anulacion' || row.referencia_tipo === 'recepcion_mercaderia',
             onClick: (row) => setMovimientoAnular(row) 
         }
     ];
@@ -115,7 +107,7 @@ export const MovementsPage = () => {
     return (
         <PlaceholderPage
             title="Movimientos de Inventario"
-            description="Registra entradas, salidas, ajustes, reservas y liberaciones de stock."
+            description="Registra entradas, salidas, ajustes, reservas y liberaciones de stock. Las entradas generadas por recepción se anulan desde Recepción de mercadería."
         >
 
             <AdminResourceTable
@@ -158,7 +150,7 @@ export const MovementsPage = () => {
                 />
             )}
 
-            {/* 2. Modal de Anulación Personalizado (Que pide un motivo) */}
+            {/* 2. Modal de Anulación Personalizado */}
             <CancelMovementDialog
                 open={Boolean(movimientoAnular)}
                 movimiento={movimientoAnular}

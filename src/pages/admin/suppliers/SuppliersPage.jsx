@@ -1,16 +1,27 @@
 // Página administrativa: Proveedores.
-// Base para abastecimiento de productos bajo pedido o reposición de inventario.
+// Centraliza proveedores, datos de contacto y costos de compra por variante.
 
 import { useState } from 'react';
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, MenuItem, Stack, TextField } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { Alert, Chip, Stack } from '@mui/material';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
-import { useResourceTable } from '../../../hooks/admin/useResourceTable';
+import { useProcurementOptions, useSuppliersAdmin } from '../../../hooks/procurement/useProcurement';
+import { normalizeApiError } from '../../../utils/api/normalizeApiError';
+import { SupplierDialog } from './components/SupplierDialog';
+import { SupplierProductsDialog } from './components/SupplierProductsDialog';
 
-const initialForm = { id: '', ruc: '', razon_social: '', contacto: '', telefono: '', correo: '', direccion: '', notas: '', es_activo: true };
+const ACTIVE_OPTIONS = [
+  { value: 'true', label: 'Activos' },
+  { value: 'false', label: 'Inactivos' },
+];
+
+const toBooleanFilter = (value) => {
+  if (value === '') return null;
+  return value === 'true';
+};
 
 export const SuppliersPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
@@ -18,92 +29,183 @@ export const SuppliersPage = () => {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({ es_activo: '' });
   const [formOpen, setFormOpen] = useState(false);
-  const [form, setForm] = useState(initialForm);
+  const [productsOpen, setProductsOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [formError, setFormError] = useState('');
   const [notice, setNotice] = useState('');
 
-  const { rows, pagination, loading, fetching, error, saving, save, patch } = useResourceTable({
-    queryKey: ['suppliers-admin'],
-    table: 'proveedores',
+  const { variantes } = useProcurementOptions('');
+
+  const {
+    rows,
+    pagination,
+    loading,
+    fetching,
+    saving,
+    error,
+    saveSupplier,
+    saveSupplierProducts,
+  } = useSuppliersAdmin({
     pageNumber,
     pageSize,
     search,
-    searchColumns: ['ruc', 'razon_social', 'contacto', 'telefono', 'correo'],
-    filters: filters.es_activo === '' ? {} : { es_activo: `eq.${filters.es_activo}` },
-    order: 'razon_social.asc',
+    isActive: toBooleanFilter(filters.es_activo),
   });
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (!form.razon_social.trim()) {
-      setFormError('Ingresa la razón social o nombre del proveedor.');
-      return;
-    }
+  const handleOpenForm = (supplier = null) => {
+    setSelectedSupplier(supplier);
+    setFormError('');
+    setFormOpen(true);
+  };
+
+  const handleSaveSupplier = async (payload) => {
+    setFormError('');
+
     try {
-      await save({ ...form, ruc: form.ruc || null, contacto: form.contacto || null, telefono: form.telefono || null, correo: form.correo || null, direccion: form.direccion || null, notas: form.notas || null });
-      setNotice(form.id ? 'Proveedor actualizado.' : 'Proveedor registrado.');
+      await saveSupplier(payload);
+      setFormError('');
+      setNotice(payload.id ? 'Proveedor actualizado correctamente.' : 'Proveedor registrado correctamente.');
       setFormOpen(false);
-      setForm(initialForm);
+      setSelectedSupplier(null);
     } catch (err) {
-      setFormError(err?.response?.data?.message || err.message);
+      setFormError(normalizeApiError(err) || 'No se pudo guardar el proveedor.');
+    }
+  };
+
+  const handleDeactivate = async (supplier) => {
+    setFormError('');
+
+    try {
+      await saveSupplier({ ...supplier, es_activo: false });
+      setFormError('');
+      setNotice('Proveedor desactivado correctamente.');
+    } catch (err) {
+      setFormError(normalizeApiError(err) || 'No se pudo desactivar el proveedor.');
+    }
+  };
+
+  const handleSaveSupplierProducts = async (payload) => {
+    setFormError('');
+
+    try {
+      await saveSupplierProducts(payload);
+      setFormError('');
+      setNotice('Costos por proveedor actualizados correctamente.');
+    } catch (err) {
+      setFormError(normalizeApiError(err) || 'No se pudieron guardar los productos del proveedor.');
+      throw err;
     }
   };
 
   return (
-    <PlaceholderPage title="Proveedores" description="Registra proveedores para compras, abastecimiento y productos bajo pedido.">
+    <PlaceholderPage
+      title="Proveedores"
+      description="Registra proveedores, costos de compra, tiempos de abastecimiento y relación con variantes."
+    >
       <Stack spacing={2}>
         <ErrorMessage message={error || formError} />
         {notice && <Alert severity="success" onClose={() => setNotice('')}>{notice}</Alert>}
+
         <AdminResourceTable
           rows={rows}
           columns={[
             { field: 'ruc', headerName: 'RUC', width: 120, emptyText: '-' },
             { field: 'razon_social', headerName: 'Proveedor', width: 230 },
+            { field: 'nombre_comercial', headerName: 'Nombre comercial', width: 180, emptyText: '-' },
             { field: 'contacto', headerName: 'Contacto', width: 160, emptyText: '-' },
             { field: 'telefono', headerName: 'Teléfono', width: 140, emptyText: '-' },
             { field: 'correo', headerName: 'Correo', width: 210, emptyText: '-' },
-            { field: 'es_activo', headerName: 'Activo', width: 110, type: 'boolean' },
+            {
+              field: 'productos_asociados',
+              headerName: 'Costos definidos',
+              width: 140,
+              renderCell: (row) => (
+                <Chip size="small" label={`${row.productos_asociados || 0} productos`} variant="outlined" color="info" />
+              ),
+            },
+            { field: 'es_activo', headerName: 'Estado', width: 110, type: 'boolean' },
           ]}
           actions={[
-            { type: 'edit', label: 'Editar', onClick: (row) => { setForm({ ...initialForm, ...row }); setFormError(''); setFormOpen(true); } },
-            { type: 'deactivate', label: 'Desactivar', visible: (row) => row.es_activo, onClick: async (row) => { await patch(row.id, { es_activo: false }); setNotice('Proveedor desactivado.'); } },
+            { type: 'edit', label: 'Editar proveedor', onClick: (row) => handleOpenForm(row) },
+            {
+              type: 'products',
+              label: 'Productos y costos',
+              icon: <Inventory2OutlinedIcon sx={{ fontSize: 17 }} />,
+              onClick: (row) => {
+                setSelectedSupplier(row);
+                setFormError('');
+                setProductsOpen(true);
+              },
+            },
+            {
+              type: 'deactivate',
+              label: 'Desactivar',
+              visible: (row) => row.es_activo,
+              onClick: handleDeactivate,
+            },
           ]}
           loading={loading || fetching || saving}
           pagination={pagination}
           searchValue={search}
           searchLabel="Buscar proveedor"
-          filters={[{ name: 'es_activo', label: 'Estado', type: 'select', width: 160, options: [{ value: 'true', label: 'Activos' }, { value: 'false', label: 'Inactivos' }] }]}
+          filters={[{ name: 'es_activo', label: 'Estado', type: 'select', width: 160, options: ACTIVE_OPTIONS }]}
           filterValues={filters}
-          onSearchChange={(value) => { setSearch(value); setPageNumber(1); }}
-          onFilterChange={(name, value) => { setFilters((current) => ({ ...current, [name]: value })); setPageNumber(1); }}
-          onResetFilters={() => { setSearch(''); setFilters({ es_activo: '' }); setPageNumber(1); }}
+          onSearchChange={(value) => {
+            setSearch(value);
+            setPageNumber(1);
+          }}
+          onFilterChange={(name, value) => {
+            setFilters((current) => ({ ...current, [name]: value }));
+            setPageNumber(1);
+          }}
+          onResetFilters={() => {
+            setSearch('');
+            setFilters({ es_activo: '' });
+            setPageNumber(1);
+          }}
           onPageChange={setPageNumber}
-          onPageSizeChange={(value) => { setPageSize(value); setPageNumber(1); }}
+          onPageSizeChange={(value) => {
+            setPageSize(value);
+            setPageNumber(1);
+          }}
           primaryActionLabel="Agregar proveedor"
-          onPrimaryAction={() => { setForm(initialForm); setFormError(''); setFormOpen(true); }}
+          onPrimaryAction={() => handleOpenForm(null)}
           emptyTitle="Sin proveedores"
-          emptyDescription="Agrega proveedores para controlar abastecimiento."
+          emptyDescription="Agrega proveedores para abastecimiento, compras y productos bajo pedido."
+          maxHeight={560}
         />
       </Stack>
-      <Dialog open={formOpen} onClose={() => setFormOpen(false)} fullWidth maxWidth="sm">
-        <Box component="form" onSubmit={handleSubmit}>
-          <DialogTitle sx={{ pr: 6 }}>{form.id ? 'Editar proveedor' : 'Nuevo proveedor'}<IconButton onClick={() => setFormOpen(false)} size="small" sx={{ position: 'absolute', right: 8, top: 8 }}><CloseRoundedIcon fontSize="small" /></IconButton></DialogTitle>
-          <DialogContent dividers>
-            <Stack spacing={2}>
-              <ErrorMessage message={formError} />
-              <TextField label="RUC" value={form.ruc} onChange={(e) => setForm((c) => ({ ...c, ruc: e.target.value }))} />
-              <TextField required label="Razón social / Nombre" value={form.razon_social} onChange={(e) => setForm((c) => ({ ...c, razon_social: e.target.value }))} />
-              <TextField label="Contacto" value={form.contacto} onChange={(e) => setForm((c) => ({ ...c, contacto: e.target.value }))} />
-              <TextField label="Teléfono" value={form.telefono} onChange={(e) => setForm((c) => ({ ...c, telefono: e.target.value }))} />
-              <TextField label="Correo" type="email" value={form.correo} onChange={(e) => setForm((c) => ({ ...c, correo: e.target.value }))} />
-              <TextField label="Dirección" value={form.direccion} onChange={(e) => setForm((c) => ({ ...c, direccion: e.target.value }))} />
-              <TextField select label="Estado" value={String(form.es_activo)} onChange={(e) => setForm((c) => ({ ...c, es_activo: e.target.value === 'true' }))}><MenuItem value="true">Activo</MenuItem><MenuItem value="false">Inactivo</MenuItem></TextField>
-              <TextField multiline minRows={3} label="Notas" value={form.notas} onChange={(e) => setForm((c) => ({ ...c, notas: e.target.value }))} />
-            </Stack>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2 }}><Button variant="outlined" onClick={() => setFormOpen(false)}>Cancelar</Button><Button type="submit" variant="contained" disabled={saving || !form.razon_social.trim()}>Guardar</Button></DialogActions>
-        </Box>
-      </Dialog>
+
+      {formOpen && (
+        <SupplierDialog
+        key={selectedSupplier?.id || 'nuevo-proveedor'}
+        open={formOpen}
+        supplier={selectedSupplier}
+        saving={saving}
+        error={formError}
+        onClose={() => {
+          setFormOpen(false);
+          setFormError('');
+        }}
+        onSubmit={handleSaveSupplier}
+      />
+      )}
+
+      {productsOpen && (
+        <SupplierProductsDialog
+        key={selectedSupplier?.id || 'productos-proveedor'}
+        open={productsOpen}
+        supplier={selectedSupplier}
+        variants={variantes}
+        saving={saving}
+        saveError={formError}
+        onClose={() => {
+          setProductsOpen(false);
+          setFormError('');
+        }}
+        onSubmit={handleSaveSupplierProducts}
+      />
+      )}
     </PlaceholderPage>
   );
 };

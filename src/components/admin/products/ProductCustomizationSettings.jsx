@@ -113,7 +113,7 @@ export const ProductCustomizationSettings = ({
             sx={{
               border: '1px solid',
               borderColor: isSelected ? 'primary.main' : 'divider',
-              borderRadius: 2,
+              borderRadius: 1,
               p: 2,
               bgcolor: isSelected ? 'action.hover' : 'background.paper',
             }}

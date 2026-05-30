@@ -69,7 +69,12 @@ export const PromotionsPage = () => {
         { field: 'codigo', headerName: 'Código de Cupón', width: 150, emptyText: 'Sin código' },
         { field: 'aplica_a', headerName: 'Aplicable en', width: 150 },
         { field: 'estado_calculado', headerName: 'Estado Promoción', width: 150},
-        { field: 'es_activa', headerName: 'Activo', width: 100, renderCell: (value) => value ? 'Sí' : 'No' },
+        {
+            field: 'es_activa',
+            headerName: 'Estado operativo',
+            width: 150,
+            renderCell: (row) => (row.es_activa ? 'Activa' : 'Inactiva'),
+        },
         { field: 'total_aplicaciones', headerName: 'Total Aplicaciones', width: 150 },
         { field: 'updated_at', headerName: 'Última Actualización', width: 200 },
     ];
