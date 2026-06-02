@@ -9,7 +9,10 @@ const normalizePaginated = (data, pageNumber, pageSize) => {
   const totalCount = value?.totalCount ?? value?.total_count ?? value?.total ?? items.length;
   const currentPage = value?.pageNumber ?? value?.page_number ?? pageNumber;
   const currentPageSize = value?.pageSize ?? value?.page_size ?? pageSize;
-  const totalPages = value?.totalPages ?? value?.total_pages ?? Math.max(Math.ceil(totalCount / Math.max(currentPageSize, 1)), 1);
+  const totalPages =
+    value?.totalPages ??
+    value?.total_pages ??
+    Math.max(Math.ceil(totalCount / Math.max(currentPageSize, 1)), 1);
 
   return {
     items,
@@ -27,37 +30,24 @@ export const getShipments = async ({
   pageSize = 10,
   search = '',
   estadoEnvio = null,
+  fechaInicio = null,
+  fechaFin = null,
 } = {}) => {
-  const params = {
-    select: 'id,numero_pedido,nombre_cliente,telefono_cliente,correo_cliente,estado_pedido,estado_pago,estado_envio,total,empresa_envio,numero_seguimiento,url_seguimiento,entregado_repartidora_en,entregado_cliente_en,created_at,updated_at',
-    estado_pedido: 'in.(listo_para_envio,enviado,entregado)',
-    order: 'updated_at.desc',
-    limit: pageSize,
-    offset: (pageNumber - 1) * pageSize,
-  };
-
-  if (estadoEnvio) params.estado_envio = `eq.${estadoEnvio}`;
-  if (search?.trim()) {
-    params.or = `(numero_pedido.ilike.*${search.trim()}*,nombre_cliente.ilike.*${search.trim()}*,telefono_cliente.ilike.*${search.trim()}*,empresa_envio.ilike.*${search.trim()}*,numero_seguimiento.ilike.*${search.trim()}*)`;
-  }
-
-  const response = await restApi.get('/pedidos', {
-    params,
-    headers: { Prefer: 'count=exact' },
+  const response = await restApi.post('/rpc/listar_envios_admin_paginado', {
+    p_page_number: pageNumber,
+    p_page_size: pageSize,
+    p_search: search || null,
+    p_estado_envio: estadoEnvio || null,
+    p_fecha_inicio: fechaInicio || null,
+    p_fecha_fin: fechaFin || null,
   });
 
-  const totalCount = Number(response.headers?.['content-range']?.split('/')?.[1] || response.data?.length || 0);
-
-  return normalizeOrdersPaginatedResponse({
-    items: response.data ?? [],
-    totalCount,
-    pageNumber,
-    pageSize,
-  }, pageNumber, pageSize);
+  return normalizeOrdersPaginatedResponse(response.data, pageNumber, pageSize);
 };
 
 export const registerShipmentTracking = async ({
   pedidoId,
+  transportistaId,
   empresaEnvio,
   numeroSeguimiento,
   urlSeguimiento,
@@ -66,6 +56,7 @@ export const registerShipmentTracking = async ({
 }) => {
   const response = await restApi.post('/rpc/registrar_seguimiento_pedido_admin', {
     p_pedido_id: pedidoId,
+    p_transportista_id: transportistaId || null,
     p_empresa_envio: empresaEnvio || null,
     p_numero_seguimiento: numeroSeguimiento || null,
     p_url_seguimiento: urlSeguimiento || null,
@@ -78,14 +69,17 @@ export const registerShipmentTracking = async ({
 
 export const getCarriers = async ({ pageNumber = 1, pageSize = 10, search = '', esActivo = null } = {}) => {
   const params = {
-    select: '*',
+    select: 'id,nombre,telefono,correo,url_rastreo_base,notas,es_activo,created_at,updated_at',
     order: 'nombre.asc',
     limit: pageSize,
     offset: (pageNumber - 1) * pageSize,
   };
 
   if (esActivo !== null && esActivo !== '') params.es_activo = `eq.${esActivo}`;
-  if (search?.trim()) params.or = `(nombre.ilike.*${search.trim()}*,codigo.ilike.*${search.trim()}*,telefono.ilike.*${search.trim()}*)`;
+  if (search?.trim()) {
+    const value = search.trim();
+    params.or = `(nombre.ilike.*${value}*,telefono.ilike.*${value}*,correo.ilike.*${value}*)`;
+  }
 
   const response = await restApi.get('/transportistas', {
     params,
@@ -96,11 +90,23 @@ export const getCarriers = async ({ pageNumber = 1, pageSize = 10, search = '', 
   return normalizePaginated({ items: response.data ?? [], totalCount, pageNumber, pageSize }, pageNumber, pageSize);
 };
 
+export const getCarrierOptions = async () => {
+  const response = await restApi.get('/transportistas', {
+    params: {
+      select: 'id,nombre,telefono,correo,url_rastreo_base,es_activo',
+      es_activo: 'eq.true',
+      order: 'nombre.asc',
+    },
+  });
+
+  return response.data || [];
+};
+
 export const saveCarrier = async (carrier) => {
   const payload = {
-    codigo: carrier.codigo?.trim() || null,
     nombre: carrier.nombre?.trim(),
     telefono: carrier.telefono?.trim() || null,
+    correo: carrier.correo?.trim() || null,
     url_rastreo_base: carrier.url_rastreo_base?.trim() || null,
     notas: carrier.notas?.trim() || null,
     es_activo: Boolean(carrier.es_activo),
@@ -122,10 +128,11 @@ export const saveCarrier = async (carrier) => {
   return response.data?.[0] || null;
 };
 
-export const deactivateCarrier = async (carrier) => {
-  const response = await restApi.patch('/transportistas', { es_activo: false }, {
-    params: { id: `eq.${carrier.id}`, select: '*' },
+export const updateCarrierStatus = async ({ id, esActivo }) => {
+  const response = await restApi.patch('/transportistas', { es_activo: Boolean(esActivo) }, {
+    params: { id: `eq.${id}`, select: '*' },
     headers: { Prefer: 'return=representation' },
   });
+
   return response.data?.[0] || null;
 };

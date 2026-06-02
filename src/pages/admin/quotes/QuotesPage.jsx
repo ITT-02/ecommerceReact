@@ -19,6 +19,11 @@ import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { useAdminQuotes } from '../../../hooks/sales/useAdminQuotes';
 import { formatCurrency } from '../../../utils/formatters';
+import {
+  emptyPagination,
+  getDefaultAdminDateFilters,
+  isDateRangeInvalid,
+} from '../../../utils/defaultDateRange';
 import { QuoteDetailDialog } from './components/QuoteDetailDialog';
 import { QuoteResponseDialog } from './components/QuoteResponseDialog';
 import { QuoteStatusDialog } from './components/QuoteStatusDialog';
@@ -68,18 +73,30 @@ const paymentStatusLabel = {
   reembolsado: 'Reembolsado',
 };
 
+const getInitialQuoteFilters = () =>
+  getDefaultAdminDateFilters({
+    extraFilters: {
+      estado: '',
+    },
+  });
 
 export const QuotesPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ estado: '', fechaInicio: '', fechaFin: '' });
+  const [filters, setFilters] = useState(getInitialQuoteFilters);
 
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [responseOpen, setResponseOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
-  const [notice, setNotice] = useState('');
+
+  const [notice, setNotice] = useState({
+    message: '',
+    severity: 'success',
+  });
+
+  const rangoFechasInvalido = isDateRangeInvalid({ values: filters });
 
   const {
     quotes,
@@ -122,14 +139,52 @@ export const QuotesPage = () => {
     await respondQuote(payload);
     setResponseOpen(false);
     setSelectedQuote(null);
-    setNotice('Cotización respondida correctamente.');
+    setNotice({
+      message: 'Cotización respondida correctamente.',
+      severity: 'success',
+    });
   };
 
   const handleChangeStatus = async (payload) => {
     await changeQuoteStatus(payload);
     setStatusOpen(false);
     setSelectedQuote(null);
-    setNotice('Estado de cotización actualizado.');
+    setNotice({
+      message: 'Estado de cotización actualizado.',
+      severity: 'success',
+    });
+  };
+
+  const canRespondQuote = (row) => {
+    return ['solicitada', 'en_revision', 'respondida'].includes(row.estado);
+  };
+
+  const canChangeQuoteStatus = (row) => {
+    return !['convertida', 'aceptada'].includes(row.estado);
+  };
+
+  const getRespondDisabledReason = (row) => {
+    if (row.estado === 'aceptada') return 'La cotización ya fue aceptada. No se puede responder nuevamente.';
+    if (row.estado === 'convertida') return 'La cotización ya generó un pedido. No se puede responder nuevamente.';
+    if (row.estado === 'rechazada') return 'La cotización fue rechazada. Ya no se puede responder.';
+    if (row.estado === 'cancelada') return 'La cotización fue cancelada. Ya no se puede responder.';
+    if (row.estado === 'vencida') return 'La cotización está vencida. Ya no se puede responder.';
+
+    return 'Esta cotización ya no puede ser respondida.';
+  };
+
+  const getChangeStatusDisabledReason = (row) => {
+    if (row.estado === 'convertida') return 'La cotización ya fue convertida en pedido. Ya no se puede cambiar su estado.';
+    if (row.estado === 'aceptada') return 'La cotización ya fue aceptada. Ya no se puede cambiar su estado.';
+
+    return 'El estado de esta cotización ya no puede modificarse.';
+  };
+
+  const showDisabledActionMessage = (message) => {
+    setNotice({
+      message,
+      severity: 'warning',
+    });
   };
 
   const tableFilters = [
@@ -145,12 +200,14 @@ export const QuotesPage = () => {
       label: 'Desde',
       type: 'date',
       width: 155,
+      maxDate: filters.fechaFin || undefined,
     },
     {
       name: 'fechaFin',
       label: 'Hasta',
       type: 'date',
       width: 155,
+      minDate: filters.fechaInicio || undefined,
     },
   ];
 
@@ -162,25 +219,30 @@ export const QuotesPage = () => {
         width: 170,
         renderCell: (row) => (
           <Stack spacing={0.25}>
-            <Typography variant="body2" fontWeight={900}>{row.numero_cotizacion}</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary' }}>
+              {row.numero_cotizacion}
+            </Typography>
+
             <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap' }}>
               <Chip
                 size="small"
                 label={quoteTypeLabel[row.tipo_solicitud] || 'Cotización'}
-                color={row.tipo_solicitud === 'personalizacion' ? 'secondary' : 'default'}
-                variant="outlined"
+                color={row.tipo_solicitud === 'personalizacion' ? 'primary' : 'default'}
+                variant="containedSecondary"
                 sx={{ alignSelf: 'flex-start' }}
               />
+
               {row.canal_venta === 'manual' && (
                 <Chip
                   size="small"
                   label="Venta manual"
                   color="info"
-                  variant="outlined"
+                  variant="containedSecondary"
                   sx={{ alignSelf: 'flex-start' }}
                 />
               )}
             </Stack>
+
             <Typography variant="caption" color="text.secondary">
               {row.created_at ? new Date(row.created_at).toLocaleDateString() : '-'}
             </Typography>
@@ -190,11 +252,17 @@ export const QuotesPage = () => {
       {
         field: 'cliente',
         headerName: 'Cliente',
-        width: 230,
+        width: 180,
         renderCell: (row) => (
           <Stack spacing={0.25}>
-            <Typography variant="body2" fontWeight={800}>{row.nombre_cliente || '-'}</Typography>
-            <Typography variant="caption" color="text.secondary">{row.telefono_cliente || row.correo_cliente || '-'}</Typography>
+            <Typography variant="body2" fontWeight={800}>
+              {row.nombre_cliente || '-'}
+            </Typography>
+
+            <Typography variant="caption" color="text.secondary">
+              {row.telefono_cliente || row.correo_cliente || '-'}
+            </Typography>
+
             {row.canal_venta === 'manual' && (
               <Typography variant="caption" color="text.secondary">
                 Atención: {row.canal_atencion || 'manual'}
@@ -212,9 +280,11 @@ export const QuotesPage = () => {
             <Typography variant="body2" sx={{ whiteSpace: 'normal', lineHeight: 1.4 }}>
               {row.productos_resumen || '-'}
             </Typography>
+
             <Typography variant="caption" color="text.secondary">
               {row.total_items || 0} item(s)
             </Typography>
+
             {row.mensaje_cliente && (
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                 Solicitud: {row.mensaje_cliente}
@@ -242,9 +312,11 @@ export const QuotesPage = () => {
                 <Typography variant="caption" color="text.secondary">
                   {row.numero_pedido ? `Pedido: ${row.numero_pedido}` : 'Pedido generado'}
                 </Typography>
+
                 <Typography variant="caption" color="text.secondary">
                   {orderStatusLabel[row.estado_pedido] || row.estado_pedido || 'Pedido pendiente'}
                 </Typography>
+
                 <Typography variant="caption" color="text.secondary">
                   {paymentStatusLabel[row.estado_pago] || row.estado_pago || 'Pago pendiente'}
                 </Typography>
@@ -277,19 +349,49 @@ export const QuotesPage = () => {
       label: 'Ver detalle',
       onClick: openDetail,
     },
+
     {
       type: 'edit',
       label: 'Responder cotización',
       icon: <ReplyOutlinedIcon sx={{ fontSize: 17 }} />,
-      visible: (row) => ['solicitada', 'en_revision', 'respondida'].includes(row.estado),
+      visible: canRespondQuote,
       onClick: openResponse,
     },
+    {
+      type: 'edit',
+      label: 'Responder no disponible',
+      icon: (
+        <ReplyOutlinedIcon
+          sx={{
+            fontSize: 17,
+            color: 'action.disabled',
+          }}
+        />
+      ),
+      visible: (row) => !canRespondQuote(row),
+      onClick: (row) => showDisabledActionMessage(getRespondDisabledReason(row)),
+    },
+
     {
       type: 'history',
       label: 'Cambiar estado',
       icon: <SwapHorizOutlinedIcon sx={{ fontSize: 17 }} />,
-      visible: (row) => !['convertida', 'aceptada'].includes(row.estado),
+      visible: canChangeQuoteStatus,
       onClick: openStatus,
+    },
+    {
+      type: 'history',
+      label: 'Cambio no disponible',
+      icon: (
+        <SwapHorizOutlinedIcon
+          sx={{
+            fontSize: 17,
+            color: 'action.disabled',
+          }}
+        />
+      ),
+      visible: (row) => !canChangeQuoteStatus(row),
+      onClick: (row) => showDisabledActionMessage(getChangeStatusDisabledReason(row)),
     },
   ];
 
@@ -303,18 +405,25 @@ export const QuotesPage = () => {
 
       <ErrorMessage message={error} />
 
-      {notice && (
-        <Alert severity="success" onClose={() => setNotice('')}>
-          {notice}
+      {rangoFechasInvalido && (
+        <ErrorMessage message="La fecha inicial no puede ser mayor que la fecha final." />
+      )}
+
+      {notice.message && (
+        <Alert
+          severity={notice.severity}
+          onClose={() => setNotice({ message: '', severity: 'success' })}
+        >
+          {notice.message}
         </Alert>
       )}
 
       <AdminResourceTable
-        rows={quotes}
+        rows={rangoFechasInvalido ? [] : quotes}
         columns={columns}
         actions={actions}
         loading={loading || fetching}
-        pagination={pagination}
+        pagination={rangoFechasInvalido ? emptyPagination({ pageNumber, pageSize }) : pagination}
         searchValue={search}
         searchLabel="Buscar cotización"
         filterValues={filters}
@@ -329,7 +438,7 @@ export const QuotesPage = () => {
         }}
         onResetFilters={() => {
           setSearch('');
-          setFilters({ estado: '', fechaInicio: '', fechaFin: '' });
+          setFilters(getInitialQuoteFilters());
           setPageNumber(1);
         }}
         onPageChange={setPageNumber}

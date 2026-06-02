@@ -349,11 +349,13 @@ export const SellerFollowUpPage = () => {
       width: 165,
       renderCell: (row) => (
         <Stack spacing={0.25}>
-          <Typography fontWeight={900}>{row.numero_cotizacion}</Typography>
+           <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary' }}>{row.numero_cotizacion}</Typography>
           <Chip size="small" label={quoteStatusLabel[row.estado] || row.estado} variant="outlined" sx={{ alignSelf: 'flex-start' }} />
         </Stack>
       ),
     },
+
+    
     {
       field: 'cliente',
       headerName: 'Cliente',
@@ -401,7 +403,7 @@ export const SellerFollowUpPage = () => {
       width: 170,
       renderCell: (row) => (
         <Stack spacing={0.25}>
-          <Typography fontWeight={900}>{row.numero_pedido}</Typography>
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary' }}>{row.numero_pedido}</Typography>
           <Chip size="small" label="Venta manual" color="info" variant="outlined" sx={{ alignSelf: 'flex-start' }} />
         </Stack>
       ),
@@ -523,7 +525,6 @@ export const SellerFollowUpPage = () => {
             type: 'select',
             width: 190,
             options: [
-              { value: '', label: 'Todas' },
               { value: 'respondida', label: 'Respondidas' },
               { value: 'aceptada', label: 'Aceptadas' },
               { value: 'convertida', label: 'Con pedido generado' },
@@ -571,7 +572,6 @@ export const SellerFollowUpPage = () => {
             type: 'select',
             width: 190,
             options: [
-              { value: '', label: 'Todos' },
               { value: 'pendiente', label: 'Pendiente' },
               { value: 'validando', label: 'En validación' },
               { value: 'pagado', label: 'Confirmado' },

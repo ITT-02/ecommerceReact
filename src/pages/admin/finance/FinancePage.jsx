@@ -1,22 +1,27 @@
 // Módulo administrativo: Finanzas / Ganancias.
 // Permite revisar ventas, costos, utilidad y margen.
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined';
 import ShowChartOutlinedIcon from '@mui/icons-material/ShowChartOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
-import { Alert, Box, Card, CardContent, Grid, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Card, CardContent, Grid, Stack, Typography } from '@mui/material';
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
 import { useAdminFinance } from '../../../hooks/finance/useAdminFinance';
-import { formatCurrency, formatDate, getTodayDateInputValue } from '../../../utils/formatters';
+import { formatCurrency, formatDate } from '../../../utils/formatters';
+import {
+  emptyPagination,
+  getDefaultAdminDateFilters,
+  isDateRangeInvalid,
+} from '../../../utils/defaultDateRange';
 
-const initialFilters = {
-  fechaInicio: '',
-  fechaFin: getTodayDateInputValue(),
-};
+const getInitialFilters = () =>
+  getDefaultAdminDateFilters({
+    extraFilters: {},
+  });
 
 const KpiCard = ({ title, value, description, icon, color = 'primary.main' }) => (
   <Card sx={{ height: '100%' }}>
@@ -39,7 +44,9 @@ export const FinancePage = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState(initialFilters);
+  const [filters, setFilters] = useState(getInitialFilters);
+
+  const rangoFechasInvalido = isDateRangeInvalid({ values: filters });
 
   const { summary, orders, pagination, loading, fetching, error } = useAdminFinance({
     pageNumber,
@@ -61,31 +68,54 @@ export const FinancePage = () => {
 
   const handleResetFilters = () => {
     setSearch('');
-    setFilters(initialFilters);
+    setFilters(getInitialFilters());
     setPageNumber(1);
   };
 
   const columns = [
-    { field: 'numero_pedido', headerName: 'Pedido', width: 150 },
+    { field: 'numero_pedido', headerName: 'Pedido', width: 150, renderCell: (row) => (
+          <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary' }}>
+            {row.numero_pedido || 'Sin número'}
+          </Typography>
+      ), },
     { field: 'created_at', headerName: 'Fecha', width: 120, renderCell: (row) => formatDate(row.created_at) },
     { field: 'canal_venta', headerName: 'Canal', width: 120, type: 'chip' },
-    { field: 'nombre_cliente', headerName: 'Cliente', width: 220, emptyText: 'Cliente general' },
-    { field: 'total', headerName: 'Venta', type: 'currency', width: 120 },
-    { field: 'costo_total', headerName: 'Costo', type: 'currency', width: 120 },
-    { field: 'utilidad_total', headerName: 'Utilidad', type: 'currency', width: 130 },
+    { field: 'nombre_cliente', headerName: 'Cliente', width: 200, emptyText: 'Cliente general' },
+    { field: 'total', headerName: 'Venta', type: 'currency', width: 100 },
+    { field: 'costo_total', headerName: 'Costo', type: 'currency', width: 100 },
+    { field: 'utilidad_total', headerName: 'Utilidad', type: 'currency', width: 100 },
     { field: 'margen_porcentaje', headerName: 'Margen', width: 110, renderCell: (row) => `${Number(row.margen_porcentaje || 0).toFixed(2)}%` },
     { field: 'estado_pago', headerName: 'Pago', type: 'chip', width: 120 },
   ];
 
-  const tableFilters = [
-    { name: 'fechaInicio', label: 'Desde', type: 'date', width: 160 },
-    { name: 'fechaFin', label: 'Hasta', type: 'date', width: 160 },
-  ];
+  const tableFilters = useMemo(
+    () => [
+      {
+        name: 'fechaInicio',
+        label: 'Desde',
+        type: 'date',
+        width: 160,
+        maxDate: filters.fechaFin || undefined,
+      },
+      {
+        name: 'fechaFin',
+        label: 'Hasta',
+        type: 'date',
+        width: 160,
+        minDate: filters.fechaInicio || undefined,
+      },
+    ],
+    [filters.fechaInicio, filters.fechaFin]
+  );
 
   return (
     <PlaceholderPage title="Finanzas" description="Controla ventas pagadas, costos, utilidad, margen y ventas manuales.">
       <Stack spacing={2.5}>
         <ErrorMessage message={error} />
+
+        {rangoFechasInvalido && (
+          <ErrorMessage message="La fecha inicial no puede ser mayor que la fecha final." />
+        )}
 
         {fetching && <Alert severity="info">Actualizando indicadores financieros...</Alert>}
 
@@ -105,11 +135,11 @@ export const FinancePage = () => {
         </Grid>
 
         <AdminResourceTable
-          rows={orders}
+          rows={rangoFechasInvalido ? [] : orders}
           columns={columns}
           actions={[]}
           loading={loading || fetching}
-          pagination={pagination}
+          pagination={rangoFechasInvalido ? emptyPagination({ pageNumber, pageSize }) : pagination}
           searchValue={search}
           searchLabel="Buscar pedido o cliente"
           filters={tableFilters}

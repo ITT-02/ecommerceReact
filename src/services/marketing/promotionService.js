@@ -1,6 +1,13 @@
 // Servicio para promociones.
 import { restApi } from '../../api/restApi';
 
+const normalizePromotionPayload = (promotionData) => {
+  return {
+    p_promocion: promotionData?.p_promocion ?? promotionData ?? {},
+    p_aplicaciones: promotionData?.p_aplicaciones ?? [],
+  };
+};
+
 export const getPromotions = async ({
   pageNumber = 1,
   pageSize = 10,
@@ -10,6 +17,7 @@ export const getPromotions = async ({
   tipo_descuento = null,
   fecha_inicio = null,
   fecha_fin = null,
+  estado_calculado = null,
 }) => {
   const response = await restApi.post('/rpc/listar_promociones_admin_paginado', {
     p_page_number: pageNumber,
@@ -19,42 +27,54 @@ export const getPromotions = async ({
     p_tipo_descuento: tipo_descuento,
     p_es_activa: esActivo,
     p_fecha_inicio: fecha_inicio,
-    p_fecha_fin: fecha_fin
+    p_fecha_fin: fecha_fin,
+    p_estado_calculado: estado_calculado,
   });
-  
+
   return response.data;
 };
 
 export const getPromotionById = async (id) => {
   const response = await restApi.post('/rpc/obtener_promocion_admin_detalle', {
-    p_promocion_id: id
+    p_promocion_id: id,
   });
 
-  return response.data || null;
+  return response.data ?? null;
 };
 
 export const createPromotion = async (promotionData) => {
-  const response = await restApi.post('/rpc/crear_promocion_admin', promotionData, {
-    params: { select: '*' },
-    headers: { Prefer: 'return=representation' },
-  });
-  return response.data[0] || null;
+  const response = await restApi.post(
+    '/rpc/crear_promocion_admin',
+    normalizePromotionPayload(promotionData)
+  );
+
+  return response.data ?? null;
 };
 
 export const updatePromotion = async (id, promotionData) => {
-  const payload = {
-    p_promocion_id: id,
-    ...promotionData,
-  };
+  const payload = normalizePromotionPayload(promotionData);
 
-  const response = await restApi.post('/rpc/actualizar_promocion_admin', payload);
-  return response.data?.[0] ?? response.data ?? null;
+  const response = await restApi.post('/rpc/actualizar_promocion_admin', {
+    p_promocion_id: id,
+    ...payload,
+  });
+
+  return response.data ?? null;
 };
 
 export const deletePromotion = async (id) => {
   const response = await restApi.post('/rpc/eliminar_promocion_admin', {
-    p_promocion_id: id
+    p_promocion_id: id,
   });
-  
-  return response.data[0] || null;
+
+  return response.data ?? null;
+};
+
+export const changePromotionStatus = async (id, esActiva) => {
+  const response = await restApi.post('/rpc/cambiar_estado_promocion_admin', {
+    p_promocion_id: id,
+    p_es_activa: Boolean(esActiva),
+  });
+
+  return response.data ?? null;
 };

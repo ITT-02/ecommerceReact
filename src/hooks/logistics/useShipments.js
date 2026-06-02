@@ -2,11 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  deactivateCarrier,
+  getCarrierOptions,
   getCarriers,
   getShipments,
   registerShipmentTracking,
   saveCarrier,
+  updateCarrierStatus,
 } from '../../services/logistics/shipmentService';
 
 const getErrorMessage = (error) =>
@@ -15,12 +16,34 @@ const getErrorMessage = (error) =>
   error?.message ||
   null;
 
-export const useShipments = ({ pageNumber = 1, pageSize = 10, search = '', estadoEnvio = null } = {}) => {
+export const useShipments = ({
+  pageNumber = 1,
+  pageSize = 10,
+  search = '',
+  estadoEnvio = null,
+  fechaInicio = null,
+  fechaFin = null,
+} = {}) => {
   const queryClient = useQueryClient();
 
   const shipmentsQuery = useQuery({
-    queryKey: ['shipments-admin', pageNumber, pageSize, search, estadoEnvio],
-    queryFn: () => getShipments({ pageNumber, pageSize, search, estadoEnvio }),
+    queryKey: [
+      'shipments-admin',
+      pageNumber,
+      pageSize,
+      search,
+      estadoEnvio,
+      fechaInicio,
+      fechaFin,
+    ],
+    queryFn: () => getShipments({
+      pageNumber,
+      pageSize,
+      search,
+      estadoEnvio,
+      fechaInicio,
+      fechaFin,
+    }),
   });
 
   const trackingMutation = useMutation({
@@ -59,12 +82,18 @@ export const useCarriers = ({ pageNumber = 1, pageSize = 10, search = '', esActi
 
   const saveMutation = useMutation({
     mutationFn: saveCarrier,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['carriers-admin'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['carriers-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['carrier-options'] });
+    },
   });
 
-  const deactivateMutation = useMutation({
-    mutationFn: deactivateCarrier,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['carriers-admin'] }),
+  const statusMutation = useMutation({
+    mutationFn: updateCarrierStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['carriers-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['carrier-options'] });
+    },
   });
 
   return {
@@ -79,10 +108,18 @@ export const useCarriers = ({ pageNumber = 1, pageSize = 10, search = '', esActi
     },
     loading: carriersQuery.isLoading,
     fetching: carriersQuery.isFetching,
-    error: getErrorMessage(carriersQuery.error) || getErrorMessage(saveMutation.error) || getErrorMessage(deactivateMutation.error),
+    error: getErrorMessage(carriersQuery.error) || getErrorMessage(saveMutation.error) || getErrorMessage(statusMutation.error),
     saving: saveMutation.isPending,
-    deactivating: deactivateMutation.isPending,
+    changingStatus: statusMutation.isPending,
     saveCarrier: (payload) => saveMutation.mutateAsync(payload),
-    deactivateCarrier: (carrier) => deactivateMutation.mutateAsync(carrier),
+    toggleCarrierActive: (carrier, esActivo) => statusMutation.mutateAsync({ id: carrier.id, esActivo }),
   };
+};
+
+export const useCarrierOptions = () => {
+  return useQuery({
+    queryKey: ['carrier-options'],
+    queryFn: getCarrierOptions,
+    staleTime: 5 * 60 * 1000,
+  });
 };

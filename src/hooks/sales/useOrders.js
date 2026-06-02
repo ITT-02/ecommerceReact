@@ -81,7 +81,12 @@ export const useOrders = ({
 
   const refundMutation = useMutation({
     mutationFn: (form) => registerOrderRefundAdmin(mapRefundFormToPayload(form)),
-    onSuccess: invalidateOrders,
+    onSuccess: () => {
+      invalidateOrders();
+      queryClient.invalidateQueries({ queryKey: ['refunds-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['finance-summary'] });
+    },
   });
 
   const trackingMutation = useMutation({

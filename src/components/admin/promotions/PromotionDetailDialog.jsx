@@ -1,200 +1,281 @@
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    Grid,
-    Typography,
-    IconButton,
-    Box,
-    Chip,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 
-export const PromotionDetailDialog = ({ open, onClose, promotion }) => {
-    // Si no hay promoción seleccionada todavía (evita renderizar undefined mientras abre/cierra)
-    if (!promotion) return null;
+import { formatCurrency, formatDate } from '../../../utils/formatters';
 
-    // Estilos comunes para los contenedores de datos de solo lectura
-    const infoBoxStyle = {
-        borderRadius: '16px',
-        p: 2.5,
-        height: '100%',
-        border: '2px solid borderDefault'
-    };
+const promotionStatusConfig = {
+  vigente: { label: 'Vigente', color: 'success' },
+  programada: { label: 'Programada', color: 'info' },
+  vencida: { label: 'Vencida', color: 'warning' },
+  inactiva: { label: 'Inactiva', color: 'error' },
+};
 
-    const labelStyle = {
-        fontWeight: 'bold',
-        fontSize: '0.8rem',
+const promotionTypeLabel = {
+  descuento_directo: 'Descuento directo',
+  cupon: 'Cupón',
+  envio_gratis: 'Envío gratis',
+};
+
+const discountTypeLabel = {
+  porcentaje: 'Porcentaje (%)',
+  monto_fijo: 'Monto fijo',
+  envio_gratis: 'Envío gratis',
+};
+
+const appliesToLabel = {
+  todos: 'Todo el catálogo',
+  categoria: 'Categoría',
+  producto: 'Producto',
+  variante: 'Variante',
+};
+
+const targetTypeLabel = {
+  categoria: 'Categoría',
+  producto: 'Producto',
+  variante: 'Variante',
+};
+
+const getPromotionStatusConfig = (status) => {
+  return promotionStatusConfig[status] || {
+    label: status || 'Sin estado',
+    color: 'default',
+  };
+};
+
+const formatDiscountValue = (promotion) => {
+  if (promotion.tipo_descuento === 'envio_gratis') return 'Envío gratis';
+  if (promotion.tipo_descuento === 'porcentaje') return `${Number(promotion.valor_descuento || 0)}%`;
+  return formatCurrency(promotion.valor_descuento);
+};
+
+const InfoItem = ({ label, value }) => (
+  <Box>
+    <Typography
+      variant="caption"
+      sx={{
+        color: 'text.secondary',
+        fontWeight: 800,
         textTransform: 'uppercase',
-        letterSpacing: '0.5px',
-        mb: 0.5
-    };
+        letterSpacing: 0.5,
+      }}
+    >
+      {label}
+    </Typography>
+    <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 700 }}>
+      {value || '-'}
+    </Typography>
+  </Box>
+);
 
-    return (
-        <Dialog
-            open={open}
-            onClose={onClose}
-            fullWidth
-            maxWidth="md" // 'md' nos da los 900px perfectos para meter la tabla de aplicaciones abajo
-            slotProps={{
-            paper: {
-                sx: {
-                borderRadius: 4,
+export const PromotionDetailDialog = ({ open, onClose, promotion }) => {
+  if (!promotion) return null;
+
+  const statusConfig = getPromotionStatusConfig(promotion.estado_calculado);
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      slotProps={{
+        paper: {
+          sx: (theme) => ({
+            borderRadius: `${theme.palette.custom.radius.xxl}px`,
+            bgcolor: theme.palette.background.paper,
+            p: 1,
+          }),
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          m: 0,
+          p: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', minWidth: 0 }}>
+          <Typography variant="h5" sx={{ fontWeight: 900 }}>
+            Detalle de promoción
+          </Typography>
+
+          <Chip
+            size="small"
+            label={promotion.es_activa ? 'Activa' : 'Inactiva'}
+            color={promotion.es_activa ? 'success' : 'error'}
+            variant="outlined"
+          />
+
+          <Chip size="small" label={statusConfig.label} color={statusConfig.color} variant="outlined" />
+        </Stack>
+
+        <IconButton onClick={onClose} sx={{ color: 'text.secondary' }} aria-label="Cerrar">
+          <CloseIcon sx={{ fontSize: 24 }} />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers sx={{ borderColor: 'divider' }}>
+        <Grid container spacing={3} sx={{ mt: 0.5 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2.5,
+                height: '100%',
+                borderRadius: 3,
                 bgcolor: 'background.paper',
-                p: 1,
-                },
-            },
-            }}
-        >
-            {/* CABECERA */}
-            <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Typography variant="h4" >
-                        Detalles de Promoción
-                    </Typography>
-                    <Chip 
-                        label={promotion.es_activa ? "Activa" : "Inactiva"} 
-                        color={promotion.es_activa ? "success" : "error"}
-                        sx={{ fontWeight: 'bold', borderRadius: '10px' }}
-                    />
-                </Box>
-                <IconButton onClick={onClose} variant="button" >
-                    <CloseIcon sx={{ fontSize: 28 }} />
-                </IconButton>
-            </DialogTitle>
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 800, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                <LocalOfferIcon fontSize="small" /> Información general
+              </Typography>
 
-            {/* CONTENIDO */}
-            <DialogContent dividers sx={{ borderColor: 'divider' }}>
-                <Grid container spacing={3} sx={{ mt: 0.5 }}>
-                    
-                    {/* SECCIÓN 1: DATOS PRINCIPALES */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                        <Box sx={infoBoxStyle}>
-                            <Typography  variant = "h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <LocalOfferIcon fontSize="small" /> Información General
-                            </Typography>
-                            <Grid container spacing={2}>
-                                <Grid size={12}>
-                                    <Typography variant = "subtitle1" sx={labelStyle}>Nombre de la Promoción</Typography>
-                                    <Typography variant="body1" >
-                                        {promotion.nombre}
-                                    </Typography>
-                                </Grid>
-                                <Grid size={12}>
-                                    <Typography variant = "subtitle1" sx={labelStyle}>Descripción</Typography>
-                                    <Typography variant="body1" sx={{ color: 'textPrimary', lineHeight: 1.5 }}>
-                                        {promotion.descripcion || 'Sin descripción disponible.'}
-                                    </Typography>
-                                </Grid>
-                            </Grid>
-                        </Box>
-                    </Grid>
+              <Stack spacing={2}>
+                <InfoItem label="Nombre" value={promotion.nombre} />
+                <InfoItem label="Descripción" value={promotion.descripcion || 'Sin descripción'} />
+                <InfoItem
+                  label="Tipo de promoción"
+                  value={promotionTypeLabel[promotion.tipo_promocion] || promotion.tipo_promocion}
+                />
+                <InfoItem
+                  label="Aplica a"
+                  value={appliesToLabel[promotion.aplica_a] || promotion.aplica_a}
+                />
+                <InfoItem label="Código cupón" value={promotion.codigo || 'Sin código'} />
+              </Stack>
+            </Paper>
+          </Grid>
 
-                    {/* SECCIÓN 2: REGLAS DE NEGOCIO */}
-                    <Grid size={{ xs: 12, md: 6 }}>
-                        <Box sx={infoBoxStyle}>
-                            <Typography variant = "h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1}}>
-                                <CalendarTodayIcon fontSize="small" /> Reglas y Vigencia
-                            </Typography>
-                            <Grid container spacing={2}>
-                                <Grid size={6}>
-                                    <Typography variant="subtitle1" sx={labelStyle}>Tipo Descuento</Typography>
-                                    <Chip 
-                                        label={promotion.tipo_descuento === 'porcentaje' ? 'Porcentaje (%)' : 'Monto Fijo ($)'}
-                                        sx={{ bgcolor: '#E3F2FD', color: '#0D47A1', fontWeight: 'bold', borderRadius: '8px' }}
-                                    />
-                                </Grid>
-                                <Grid size={6}>
-                                    <Typography variant="subtitle1" sx={labelStyle}>Valor Descuento</Typography>
-                                    <Typography variant="body1" sx={{ ml: 0.5 }}>
-                                        {promotion.tipo_descuento === 'porcentaje' ? `${promotion.valor_descuento}%` : `$${promotion.valor_descuento}`}
-                                    </Typography>
-                                </Grid>
-                                <Grid size={6}>
-                                    <Typography variant="subtitle1" sx={labelStyle}>Fecha Inicio</Typography>
-                                    <Typography variant="body1" sx={{ ml: 0.5 }}>
-                                        {promotion.fecha_inicio ? new Date(promotion.fecha_inicio).toLocaleDateString() : 'No definida'}
-                                    </Typography>
-                                </Grid>
-                                <Grid size={6}>
-                                    <Typography variant="subtitle1" sx={labelStyle}>Fecha Fin</Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                        {promotion.fecha_fin ? new Date(promotion.fecha_fin).toLocaleDateString() : 'No definida'}
-                                    </Typography>
-                                </Grid>
-                                <Grid size={6}>
-                                    <Typography variant="subtitle1" sx={labelStyle}>Monto Mínimo</Typography>
-                                    <Typography variant="body1" sx={{ ml: 0.5 }}>
-                                        {promotion.monto_minimo_pedido ? `$${promotion.monto_minimo_pedido}` : '0.00'}
-                                    </Typography>
-                                </Grid>
-                            </Grid>
-                        </Box>
-                    </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2.5,
+                height: '100%',
+                borderRadius: 3,
+                bgcolor: 'background.paper',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 800, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                <CalendarTodayIcon fontSize="small" /> Reglas y vigencia
+              </Typography>
 
-                    {/* SECCIÓN 3: TABLA DE APLICACIONES (HISTORIAL O COBERTURA) */}
-                    <Grid size={12}>
-                        <Typography variant="h6" sx={{ mb: 1.5, pl: 0.5 }}>
-                            Tabla de Aplicaciones / Segmentos Afectados
-                        </Typography>
-                        <TableContainer component={Paper} sx={{ borderRadius: '16px', boxShadow: 'none', border: '1px solid #E0E0E0', overflow: 'hidden' }}>
-                            <Table size="small">
-                                <TableHead >
-                                    <TableRow>
-                                        <TableCell sx={{ fontWeight: 'bold', py: 1.5 }}>Tipo de Objetivo</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>Objetivo Afectado</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {promotion.aplicaciones && promotion.aplicaciones.length > 0 ? (
-                                        promotion.aplicaciones.map((app, index) => (
-                                            <TableRow key={index} sx={{ '&:last-child cell, &:last-child th': { border: 0 } }}>
-                                                <TableCell sx={{ py: 1.5 }}>{app.target_tipo || 'General'}</TableCell>
-                                                <TableCell>{app.target_nombre || 'Todo el catálogo'}</TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={3} align="center" sx={{ py: 3, color: 'text.secondary' }}>
-                                                Esta promoción se aplica de forma global a todas las compras sin restricciones adicionales.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </Grid>
-
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <InfoItem
+                    label="Tipo descuento"
+                    value={discountTypeLabel[promotion.tipo_descuento] || promotion.tipo_descuento}
+                  />
                 </Grid>
-            </DialogContent>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <InfoItem label="Valor" value={formatDiscountValue(promotion)} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <InfoItem label="Fecha inicio" value={formatDate(promotion.fecha_inicio)} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <InfoItem label="Fecha fin" value={formatDate(promotion.fecha_fin)} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <InfoItem label="Monto mínimo" value={formatCurrency(promotion.monto_minimo_pedido)} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <InfoItem label="Prioridad" value={String(promotion.prioridad ?? 0)} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <InfoItem label="Uso máximo total" value={promotion.uso_maximo ?? 'Ilimitado'} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <InfoItem label="Uso por cliente" value={promotion.uso_por_cliente ?? 'Ilimitado'} />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
 
-            {/* ACCIONES */}
-            <DialogActions sx={{ p: 2.5 }}>
-                <Button
-                    onClick={onClose}
-                    variant="contained"
-                    sx={{
-                        borderRadius: '15px',
-                        fontWeight: 'bold',
-                        textTransform: 'none',
-                        px: 4,
-                        py: 1.2,
-                    }}
-                >
-                    Cerrar Detalle
-                </Button>
-            </DialogActions>
-        </Dialog>
-    );
+          <Grid size={{ xs: 12 }}>
+            <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 800 }}>
+              Aplicaciones de la promoción
+            </Typography>
+
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{ borderRadius: 3, overflow: 'hidden' }}
+            >
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 800 }}>Tipo de objetivo</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Objetivo afectado</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {promotion.aplicaciones?.length > 0 ? (
+                    promotion.aplicaciones.map((app) => (
+                      <TableRow key={app.id || `${app.target_tipo}-${app.target_id}`}>
+                        <TableCell>{targetTypeLabel[app.target_tipo] || app.target_tipo || 'General'}</TableCell>
+                        <TableCell>{app.target_nombre || 'Todo el catálogo'}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={2} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                        Esta promoción se aplica de forma global a todo el catálogo.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+        </Grid>
+      </DialogContent>
+
+      <DialogActions sx={{ p: 2.5 }}>
+        <Button
+          onClick={onClose}
+          variant="contained"
+          sx={(theme) => ({
+            borderRadius: `${theme.palette.custom.radius.md}px`,
+            fontWeight: 800,
+            px: 4,
+            py: 1.2,
+          })}
+        >
+          Cerrar detalle
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
 };

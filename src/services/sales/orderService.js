@@ -96,6 +96,7 @@ export const registerOrderRefundAdmin = async ({
 
 export const registerShipmentTrackingAdmin = async ({
   pedidoId,
+  transportistaId,
   empresaEnvio,
   numeroSeguimiento,
   urlSeguimiento,
@@ -104,6 +105,7 @@ export const registerShipmentTrackingAdmin = async ({
 }) => {
   const response = await restApi.post('/rpc/registrar_seguimiento_pedido_admin', {
     p_pedido_id: pedidoId,
+    p_transportista_id: transportistaId || null,
     p_empresa_envio: empresaEnvio || null,
     p_numero_seguimiento: numeroSeguimiento || null,
     p_url_seguimiento: urlSeguimiento || null,

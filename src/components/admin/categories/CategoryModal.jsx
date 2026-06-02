@@ -389,20 +389,12 @@ export const CategoryModal = ({
                             <Grid container spacing={2}>
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <TextField
-                                        id="categoria-icono"
-                                        name="icono"
-                                        select
-                                        label="Ícono"
-                                        value={getSafeIconValue(formData.icono)}
-                                        onChange={(e) => handleChange('icono', e.target.value)}
-                                        slotProps={{
-                                            select: {
-                                                inputProps: {
-                                                    name: 'icono',
-                                                    'aria-label': 'Ícono',
-                                                },
-                                            },
-                                        }}
+                                    id="categoria-icono"
+                                    name="icono"
+                                    select
+                                    label="Ícono"
+                                    value={getSafeIconValue(formData.icono)}
+                                    onChange={(e) => handleChange('icono', e.target.value)}
                                     >
                                         {groupedIconOptions.flatMap(({ group, options }) => [
                                             <ListSubheader key={`${group}-header`} disableSticky>

@@ -9,6 +9,7 @@ import {
   alpha,
 } from '@mui/material';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
@@ -29,11 +30,80 @@ const parseBooleanFilter = (value) => {
   return null;
 };
 
+const getVariantId = (variant) => {
+  return variant?.variante_id || variant?.id || null;
+};
+
 const getPriceRangeLabel = (min, max) => {
   if (min === null || min === undefined) return 'Sin precio';
   if (Number(min) === Number(max)) return formatCurrency(min);
 
   return `${formatCurrency(min)} - ${formatCurrency(max)}`;
+};
+
+const getDefaultProductFromRow = (productRow) => {
+  if (!productRow?.producto_id) return null;
+
+  return {
+    id: productRow.producto_id,
+    nombre: productRow.producto_nombre,
+    label: productRow.producto_nombre,
+  };
+};
+
+const getDefaultProductFromVariant = (fullVariant, variantRow) => {
+  const productId =
+    fullVariant?.producto_id ||
+    fullVariant?.productoId ||
+    variantRow?.producto_id ||
+    variantRow?.productoId ||
+    null;
+
+  const productName =
+    fullVariant?.producto_nombre ||
+    fullVariant?.productoNombre ||
+    fullVariant?.productos?.nombre ||
+    variantRow?.producto_nombre ||
+    variantRow?.productoNombre ||
+    '';
+
+  if (!productId) return null;
+
+  return {
+    id: productId,
+    nombre: productName || 'Producto seleccionado',
+    label: productName || 'Producto seleccionado',
+  };
+};
+
+const buildSimilarVariantDraft = (fullVariant, variantRow) => {
+  return {
+    ...fullVariant,
+    id: null,
+    variante_id: null,
+    codigoproducto: '',
+    codigoProducto: '',
+    sku: '',
+    created_at: null,
+    updated_at: null,
+    producto_id:
+      fullVariant?.producto_id ||
+      fullVariant?.productoId ||
+      variantRow?.producto_id ||
+      variantRow?.productoId ||
+      null,
+    producto_nombre:
+      fullVariant?.producto_nombre ||
+      fullVariant?.productoNombre ||
+      fullVariant?.productos?.nombre ||
+      variantRow?.producto_nombre ||
+      variantRow?.productoNombre ||
+      '',
+    es_predeterminada: false,
+    es_activa: true,
+    __isSimilarDraft: true,
+    __sourceVariantId: getVariantId(fullVariant) || getVariantId(variantRow),
+  };
 };
 
 const renderAttributeChips = (summary) => {
@@ -98,7 +168,9 @@ export const ProductVariantsPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
+  const [variantDraft, setVariantDraft] = useState(null);
   const [defaultProduct, setDefaultProduct] = useState(null);
+  const [modalMode, setModalMode] = useState('create');
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [variantToDelete, setVariantToDelete] = useState(null);
@@ -195,9 +267,15 @@ export const ProductVariantsPage = () => {
   const handleOpenModal = async (variantRow = null, productRow = null) => {
     document.activeElement?.blur();
 
+    setVariantDraft(null);
+
     if (variantRow?.rowType === 'variant') {
       try {
-        const fullVariant = await getVariantById(variantRow.variante_id || variantRow.id);
+        const fullVariant = await getVariantById(
+          variantRow.variante_id || variantRow.id
+        );
+
+        setModalMode('edit');
         setSelectedVariant(fullVariant);
         setDefaultProduct(null);
       } catch (err) {
@@ -205,30 +283,50 @@ export const ProductVariantsPage = () => {
         return;
       }
     } else {
+      setModalMode('create');
       setSelectedVariant(null);
-      setDefaultProduct(
-        productRow
-          ? {
-              id: productRow.producto_id,
-              nombre: productRow.producto_nombre,
-              label: productRow.producto_nombre,
-            }
-          : null
-      );
+      setDefaultProduct(getDefaultProductFromRow(productRow));
     }
 
     setIsModalOpen(true);
   };
 
+  const handleDuplicateVariant = async (variantRow) => {
+    document.activeElement?.blur();
+
+    try {
+      const fullVariant = await getVariantById(
+        variantRow.variante_id || variantRow.id
+      );
+      const draft = buildSimilarVariantDraft(fullVariant, variantRow);
+
+      setModalMode('duplicate');
+      setSelectedVariant(null);
+      setVariantDraft(draft);
+      setDefaultProduct(getDefaultProductFromVariant(fullVariant, variantRow));
+      setIsModalOpen(true);
+    } catch (err) {
+      console.error('Error al preparar la variante similar:', err);
+      alert('No se pudo preparar la variante similar.');
+    }
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedVariant(null);
+    setVariantDraft(null);
     setDefaultProduct(null);
+    setModalMode('create');
   };
 
   const handleSaveVariant = async (payload) => {
     try {
-      await saveVariant(payload, selectedVariant?.id || selectedVariant?.variante_id);
+      const variantIdToUpdate =
+        modalMode === 'edit'
+          ? selectedVariant?.id || selectedVariant?.variante_id
+          : null;
+
+      await saveVariant(payload, variantIdToUpdate);
       handleCloseModal();
     } catch (err) {
       console.error('Error guardando variante:', err);
@@ -341,11 +439,11 @@ export const ProductVariantsPage = () => {
               variant="body2"
               sx={{ fontWeight: 800, lineHeight: 1.35 }}
             >
-              └─ {row.nombre_variante || row.codigo_referencia || 'Variante sin nombre'}
+              └─ {row.nombre_variante || row.codigo_referencia || 'Variante estándar'}
             </Typography>
 
             <Typography variant="caption" color="text.secondary">
-              {row.codigoproducto || row.codigoProducto || row.codigo_referencia || 'Sin código'}
+              Código interno: {row.codigoproducto || row.codigoProducto || 'Automático'}
             </Typography>
           </Box>
         );
@@ -471,6 +569,13 @@ export const ProductVariantsPage = () => {
       onClick: (row) => handleOpenModal(row),
     },
     {
+      type: 'duplicate',
+      label: 'Duplicar como similar',
+      icon: <ContentCopyRoundedIcon sx={{ fontSize: 17 }} />,
+      visible: (row) => row.rowType === 'variant',
+      onClick: handleDuplicateVariant,
+    },
+    {
       type: 'delete',
       label: 'Eliminar variante',
       visible: (row) => row.rowType === 'variant',
@@ -520,7 +625,7 @@ export const ProductVariantsPage = () => {
           setPage(1);
         }}
         searchValue={search}
-        searchLabel="Buscar por producto, categoría, SKU, variante o atributo..."
+        searchLabel="Buscar por producto, categoría, código, variante o atributo..."
         filters={tableFilters}
         filterValues={filters}
         onSearchChange={setSearch}
@@ -543,8 +648,9 @@ export const ProductVariantsPage = () => {
 
       <VariantFormModal
         open={isModalOpen}
-        variant={selectedVariant}
+        variant={selectedVariant || variantDraft}
         defaultProduct={defaultProduct}
+        mode={modalMode}
         onClose={handleCloseModal}
         onSave={handleSaveVariant}
       />

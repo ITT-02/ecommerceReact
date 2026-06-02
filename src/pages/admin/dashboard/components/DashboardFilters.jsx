@@ -64,7 +64,7 @@ export const DashboardFilters = ({
             </Typography>
 
             <Typography variant="body2" color="text.secondary">
-              Filtra el resumen por rango de fechas.
+              Filtra el resumen por el rango de fechas centralizado del sistema.
             </Typography>
           </Box>
 
@@ -112,7 +112,7 @@ export const DashboardFilters = ({
                   }}
                 >
                   <Button variant="outlined" onClick={onMesActual} disabled={isLoading}>
-                    Mes actual
+                    Rango inicial
                   </Button>
 
                   <Button

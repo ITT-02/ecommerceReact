@@ -1,5 +1,5 @@
 // Panel lateral de atención para pedidos.
-// Muestra indicadores operativos y permite filtrar la tabla sin perder el conteo general.
+// Muestra indicadores operativos y permite filtrar la tabla.
 
 import {
   Box,
@@ -74,7 +74,7 @@ export const OrdersAttentionSidebar = ({
         <CardContent>
           <Stack spacing={1.5}>
             <Box>
-              <Typography variant="subtitle1" fontWeight={900}>
+              <Typography variant="subtitle2" fontWeight={900}>
                 Atención rápida
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -101,12 +101,15 @@ export const OrdersAttentionSidebar = ({
                     }}
                   >
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="body2" fontWeight={900}>
+                      <Typography variant="subtitle3" sx={{
+                        fontWeight: 800,
+                        color: 'secondary.main',
+                      }}>
                         {group.label}
                       </Typography>
                       <Typography
                         variant="caption"
-                        color={isActive ? 'inherit' : 'text.secondary'}
+                        color={isActive ? 'info' : 'text.secondary'}
                         sx={{ display: 'block' }}
                       >
                         {group.helper}
@@ -119,7 +122,7 @@ export const OrdersAttentionSidebar = ({
                       <Chip
                         size="small"
                         label={total}
-                        color={isActive ? 'default' : 'primary'}
+                        color={isActive ? 'info' : 'primary'}
                         variant={isActive ? 'filled' : 'outlined'}
                       />
                     )}

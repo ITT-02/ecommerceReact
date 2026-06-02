@@ -1,4 +1,4 @@
-// Hook para métodos de pago (CRUD)
+// Hook para métodos de pago
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {

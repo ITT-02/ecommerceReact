@@ -2,23 +2,17 @@
 
 import { Container } from '@mui/material';
 import { useMemo, useState } from 'react';
-import dayjs from 'dayjs';
 
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { LoadingScreen } from '../../components/common/LoadingScreen';
 import { PageHeader } from '../../components/common/PageHeader';
 import { useDashboardAdmin } from '../../hooks/admin/useDashboardAdmin';
+import {
+  getDefaultAdminDateRange,
+  isDateRangeInvalid,
+} from '../../utils/defaultDateRange';
 
 import { DashboardPageLayout } from './dashboard/DashboardPageLayout';
-
-const getCurrentMonthBounds = () => {
-  const now = dayjs();
-
-  return {
-    startIso: now.startOf('month').format('YYYY-MM-DD'),
-    endIso: now.endOf('month').format('YYYY-MM-DD'),
-  };
-};
 
 const dashboardContainerSx = {
   width: '100%',
@@ -34,33 +28,23 @@ const dashboardContainerSx = {
 };
 
 export const DashboardPage = () => {
-  const initialRange = useMemo(() => getCurrentMonthBounds(), []);
+  const initialRange = useMemo(() => getDefaultAdminDateRange(), []);
 
   /**
    * Fechas que el usuario escribe en los inputs.
    * Estas NO consultan automáticamente al backend.
    */
-  const [fechaInicio, setFechaInicio] = useState(initialRange.startIso);
-  const [fechaFin, setFechaFin] = useState(initialRange.endIso);
+  const [fechaInicio, setFechaInicio] = useState(initialRange.fechaInicio);
+  const [fechaFin, setFechaFin] = useState(initialRange.fechaFin);
 
   /**
-   * Fechas  aplicadas a la consulta.
-   * Solo cambian al presionar "Actualizar" o "Mes actual".
+   * Fechas aplicadas a la consulta.
+   * Solo cambian al presionar "Actualizar" o "Rango inicial".
    */
-  const [appliedRange, setAppliedRange] = useState({
-    fechaInicio: initialRange.startIso,
-    fechaFin: initialRange.endIso,
-  });
+  const [appliedRange, setAppliedRange] = useState(initialRange);
 
   const rangoInvalido = useMemo(() => {
-    if (!fechaInicio || !fechaFin) return false;
-
-    const start = dayjs(fechaInicio, 'YYYY-MM-DD', true);
-    const end = dayjs(fechaFin, 'YYYY-MM-DD', true);
-
-    if (!start.isValid() || !end.isValid()) return false;
-
-    return start.isAfter(end, 'day');
+    return isDateRangeInvalid({ fechaInicio, fechaFin });
   }, [fechaInicio, fechaFin]);
 
   const {
@@ -86,28 +70,15 @@ export const DashboardPage = () => {
     movimientos_recientes = [],
   } = data;
 
-  /**
-   * Pantalla completa solo para la primera carga.
-   * Luego, cuando se actualicen fechas, el dashboard queda visible.
-   */
   const isInitialLoading = isLoading && !dashboardData;
-
-  /**
-   * Carga suave para comunicar que se están refrescando datos,
-   * sin desmontar la pantalla completa.
-   */
   const isUpdating = isFetching && !isInitialLoading;
 
-  const calcularMesActual = () => {
-    const { startIso, endIso } = getCurrentMonthBounds();
+  const aplicarRangoInicial = () => {
+    const nextRange = getDefaultAdminDateRange();
 
-    setFechaInicio(startIso);
-    setFechaFin(endIso);
-
-    setAppliedRange({
-      fechaInicio: startIso,
-      fechaFin: endIso,
-    });
+    setFechaInicio(nextRange.fechaInicio);
+    setFechaFin(nextRange.fechaFin);
+    setAppliedRange(nextRange);
   };
 
   const handleActualizar = () => {
@@ -122,11 +93,6 @@ export const DashboardPage = () => {
       appliedRange.fechaInicio === nextRange.fechaInicio &&
       appliedRange.fechaFin === nextRange.fechaFin;
 
-    /**
-     * Si el rango es igual, hacemos refetch manual.
-     * Si cambió, actualizamos appliedRange y React Query consulta
-     * con el nuevo queryKey.
-     */
     if (isSameRange) {
       refetch();
       return;
@@ -156,7 +122,7 @@ export const DashboardPage = () => {
         setFechaInicio={setFechaInicio}
         setFechaFin={setFechaFin}
         rangoInvalido={rangoInvalido}
-        onMesActual={calcularMesActual}
+        onMesActual={aplicarRangoInicial}
         onActualizar={handleActualizar}
         isLoading={isUpdating}
         resumen={resumen}

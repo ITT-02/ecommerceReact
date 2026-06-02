@@ -1,199 +1,186 @@
 // Diálogo administrativo para registrar o actualizar el seguimiento de envío.
-// Este módulo solo gestiona logística: transportista, guía, rastreo e incidencias.
+// El Stepper funciona como selector principal del siguiente estado.
 
 import {
   Alert,
   Box,
   Button,
-  Card,
-  CardActionArea,
-  CardContent,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
   IconButton,
+  Paper,
   Stack,
   Step,
-  StepLabel,
+  StepButton,
   Stepper,
   TextField,
   Typography,
   alpha,
   useTheme,
 } from '@mui/material';
+
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import DoneRoundedIcon from '@mui/icons-material/DoneRounded';
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 
 import {
   SHIPPING_REQUIRED_ADVANCE_VALUES,
+  SHIPPING_STATUS_COLOR,
   getShippingStatusLabel,
 } from '../../../adapters/orderAdapter';
 import { ErrorMessage } from '../../common/ErrorMessage';
+import { CarrierTrackingFields } from './CarrierTrackingFields';
 
-const SHIPPING_FLOW = [
-  { value: 'pendiente', label: 'Pendiente' },
-  { value: 'entregado_repartidora', label: 'Entregado a transportista' },
-  { value: 'en_transito', label: 'En tránsito' },
-  { value: 'en_destino', label: 'En destino' },
-  { value: 'entregado', label: 'Entregado al cliente' },
+const TRACKING_NUMBER_REQUIRED_STATUSES = [
+  'en_transito',
+  'en_destino',
+  'entregado',
 ];
 
-const getActiveStep = (status = 'pendiente') => {
-  if (status === 'incidencia') return 1;
+const SHIPPING_FLOW = [
+  {
+    value: 'pendiente',
+    label: 'Pendiente',
+    actionLabel: 'Pendiente',
+    description: 'El envío aún no fue entregado al transportista.',
+  },
+  {
+    value: 'entregado_repartidora',
+    label: 'Transportista',
+    actionLabel: 'Entregado a transportista',
+    description: 'Registra que el paquete fue entregado a la empresa transportista.',
+  },
+  {
+    value: 'en_transito',
+    label: 'En tránsito',
+    actionLabel: 'Marcar en tránsito',
+    description: 'El paquete ya se encuentra en ruta.',
+  },
+  {
+    value: 'en_destino',
+    label: 'En destino',
+    actionLabel: 'Marcar en destino',
+    description: 'El paquete llegó a la ciudad, agencia o zona de destino.',
+  },
+  {
+    value: 'entregado',
+    label: 'Entregado',
+    actionLabel: 'Entregado al cliente',
+    description: 'El cliente recibió el paquete. Esta acción cierra el seguimiento.',
+  },
+];
+
+const getStepIndex = (status = 'pendiente') => {
   const index = SHIPPING_FLOW.findIndex((step) => step.value === status);
-  return Math.max(index, 0);
+  return index >= 0 ? index : 0;
 };
 
-const buildAction = ({ value, title, description, icon, severity = 'primary' }) => ({
-  value,
-  title,
-  description,
-  icon,
-  severity,
-});
-
-const getAvailableShippingActions = (currentStatus = 'pendiente') => {
+const getSelectableStepValues = (currentStatus = 'pendiente') => {
   if (currentStatus === 'entregado') return [];
 
   if (currentStatus === 'incidencia') {
-    return [
-      buildAction({
-        value: 'en_transito',
-        title: 'Reanudar en tránsito',
-        description: 'La incidencia fue atendida y el paquete continúa en ruta.',
-        icon: <LocalShippingOutlinedIcon />,
-      }),
-      buildAction({
-        value: 'en_destino',
-        title: 'Marcar en destino',
-        description: 'El paquete llegó a la zona o agencia de destino.',
-        icon: <LocalShippingOutlinedIcon />,
-      }),
-      buildAction({
-        value: 'entregado',
-        title: 'Entregado al cliente',
-        description: 'Cierra el seguimiento logístico.',
-        icon: <DoneRoundedIcon />,
-        severity: 'success',
-      }),
-    ];
+    return ['en_transito', 'en_destino', 'entregado'];
   }
 
   if (!currentStatus || currentStatus === 'pendiente' || currentStatus === 'preparando') {
-    return [
-      buildAction({
-        value: 'entregado_repartidora',
-        title: 'Entregado a transportista',
-        description: 'Registra empresa, guía y datos de rastreo.',
-        icon: <LocalShippingOutlinedIcon />,
-      }),
-      buildAction({
-        value: 'incidencia',
-        title: 'Registrar incidencia',
-        description: 'Usa esta opción si el despacho tuvo un problema.',
-        icon: <WarningAmberRoundedIcon />,
-        severity: 'warning',
-      }),
-    ];
+    return ['entregado_repartidora'];
   }
 
   if (currentStatus === 'entregado_repartidora') {
-    return [
-      buildAction({
-        value: 'en_transito',
-        title: 'Marcar en tránsito',
-        description: 'El paquete ya se encuentra en ruta.',
-        icon: <LocalShippingOutlinedIcon />,
-      }),
-      buildAction({
-        value: 'incidencia',
-        title: 'Registrar incidencia',
-        description: 'Registra un problema de transporte o entrega.',
-        icon: <WarningAmberRoundedIcon />,
-        severity: 'warning',
-      }),
-    ];
+    return ['en_transito'];
   }
 
   if (currentStatus === 'en_transito') {
-    return [
-      buildAction({
-        value: 'en_destino',
-        title: 'Marcar en destino',
-        description: 'El paquete llegó a la ciudad, agencia o zona final.',
-        icon: <LocalShippingOutlinedIcon />,
-      }),
-      buildAction({
-        value: 'entregado',
-        title: 'Entregado al cliente',
-        description: 'El cliente recibió el paquete.',
-        icon: <DoneRoundedIcon />,
-        severity: 'success',
-      }),
-      buildAction({
-        value: 'incidencia',
-        title: 'Registrar incidencia',
-        description: 'Registra un problema de transporte o entrega.',
-        icon: <WarningAmberRoundedIcon />,
-        severity: 'warning',
-      }),
-    ];
+    return ['en_destino', 'entregado'];
   }
 
   if (currentStatus === 'en_destino') {
-    return [
-      buildAction({
-        value: 'entregado',
-        title: 'Entregado al cliente',
-        description: 'Cierra el seguimiento logístico.',
-        icon: <DoneRoundedIcon />,
-        severity: 'success',
-      }),
-      buildAction({
-        value: 'incidencia',
-        title: 'Registrar incidencia',
-        description: 'Registra un problema de entrega.',
-        icon: <WarningAmberRoundedIcon />,
-        severity: 'warning',
-      }),
-    ];
+    return ['entregado'];
   }
 
   return [];
 };
 
-const ActionCard = ({ action, selected, disabled, onSelect }) => {
-  const theme = useTheme();
-  const color = action.severity === 'success'
-    ? theme.palette.success.main
-    : action.severity === 'warning'
-      ? theme.palette.warning.main
-      : theme.palette.primary.main;
+const canRegisterIncident = (currentStatus = 'pendiente') => {
+  return !['entregado', 'incidencia'].includes(currentStatus);
+};
 
+const getSelectedAction = (selectedStatus = '') => {
+  if (selectedStatus === 'incidencia') {
+    return {
+      value: 'incidencia',
+      label: 'Registrar incidencia',
+      actionLabel: 'Registrar incidencia',
+      description: 'Registra un problema de transporte o entrega.',
+    };
+  }
+
+  return SHIPPING_FLOW.find((step) => step.value === selectedStatus) || null;
+};
+
+const getSaveButtonLabel = (selectedAction, loading) => {
+  if (loading) return 'Guardando...';
+  if (!selectedAction) return 'Guardar envío';
+
+  return selectedAction.actionLabel || selectedAction.label || 'Guardar envío';
+};
+
+const StepStatusChip = ({ label, color = 'default', variant = 'outlined' }) => (
+  <Chip
+    size="small"
+    label={label}
+    color={color}
+    variant={variant}
+    sx={{
+      height: 22,
+      fontSize: '0.68rem',
+      fontWeight: 800,
+    }}
+  />
+);
+
+const StepOptionalState = ({
+  isCurrent,
+  isSelected,
+  isSelectable,
+}) => {
   return (
-    <Card
-      variant="outlined"
+    <Box
       sx={{
-        height: '100%',
-        borderColor: selected ? color : 'divider',
-        bgcolor: selected ? alpha(color, 0.08) : 'background.paper',
-        boxShadow: selected ? 2 : 0,
+        mt: 0.75,
+        display: 'grid',
+        justifyItems: 'center',
+        gap: 0.5,
+        minHeight: 26,
       }}
     >
-      <CardActionArea disabled={disabled} onClick={onSelect} sx={{ height: '100%' }}>
-        <CardContent>
-          <Stack spacing={1}>
-            <Box sx={{ color, display: 'flex' }}>{action.icon}</Box>
-            <Typography variant="subtitle2" fontWeight={900}>{action.title}</Typography>
-            <Typography variant="body2" color="text.secondary">{action.description}</Typography>
-          </Stack>
-        </CardContent>
-      </CardActionArea>
-    </Card>
+      {isCurrent && (
+        <StepStatusChip
+          label="Actual"
+          color="primary"
+          variant="outlined"
+        />
+      )}
+
+      {isSelected && (
+        <StepStatusChip
+          label="Seleccionado"
+          color="success"
+          variant="filled"
+        />
+      )}
+
+      {!isCurrent && !isSelected && isSelectable && (
+        <StepStatusChip
+          label="Elegir"
+          color="default"
+          variant="outlined"
+        />
+      )}
+    </Box>
   );
 };
 
@@ -207,28 +194,85 @@ export const ShipmentTrackingDialog = ({
   onClose,
   onSubmit,
 }) => {
+  const theme = useTheme();
+
   const currentStatus = order?.estado_envio || form?.estadoEnvioActual || 'pendiente';
   const selectedStatus = form?.estadoEnvio || '';
-  const actions = getAvailableShippingActions(currentStatus);
-  const selectedAction = actions.find((action) => action.value === selectedStatus) || null;
+
+  const currentStepIndex = getStepIndex(currentStatus);
+  const selectableStepValues = getSelectableStepValues(currentStatus);
+  const selectedAction = getSelectedAction(selectedStatus);
+
   const mustCompleteTransport = SHIPPING_REQUIRED_ADVANCE_VALUES.includes(selectedStatus);
+  const mustCompleteTrackingNumber =
+    TRACKING_NUMBER_REQUIRED_STATUSES.includes(selectedStatus);
+  const mustCompleteComment = selectedStatus === 'incidencia';
+
+  const isSaveDisabled =
+    loading ||
+    !selectedAction ||
+    (mustCompleteTransport && !form?.transportistaId) ||
+    (mustCompleteTrackingNumber && !form?.numeroSeguimiento?.trim()) ||
+    (mustCompleteComment && !form?.comentario?.trim());
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     onChange?.(name, value);
   };
 
+  const handleSelectStep = (status) => {
+    if (loading) return;
+    onChange?.('estadoEnvio', status);
+  };
+
+  const handleSelectIncident = () => {
+    if (loading) return;
+    onChange?.('estadoEnvio', 'incidencia');
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <Dialog
+      open={open}
+      onClose={loading ? undefined : onClose}
+      fullWidth
+      maxWidth="lg"
+      disableRestoreFocus
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 3,
+            width: {
+              xs: 'calc(100% - 24px)',
+              md: 980,
+              lg: 1080,
+            },
+            maxWidth: 'none',
+          },
+        },
+      }}
+    >
       <Box component="form" onSubmit={onSubmit}>
         <DialogTitle sx={{ pr: 6 }}>
-          Actualizar envío
+          <Stack spacing={0.35}>
+            <Typography variant="h6" sx={{ fontWeight: 900 }}>
+              Actualizar envío
+            </Typography>
+
+            <Typography variant="body2" color="text.secondary">
+              Selecciona en el flujo el siguiente estado real del paquete.
+            </Typography>
+          </Stack>
+
           <IconButton
             onClick={onClose}
             disabled={loading}
             size="small"
             aria-label="Cerrar"
-            sx={{ position: 'absolute', top: 8, right: 8 }}
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+            }}
           >
             <CloseRoundedIcon fontSize="small" />
           </IconButton>
@@ -238,124 +282,291 @@ export const ShipmentTrackingDialog = ({
           <Stack spacing={2.5}>
             <ErrorMessage message={error} />
 
-            <Grid container spacing={1.5}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={800}>Pedido</Typography>
-                <Typography variant="body2" fontWeight={800}>{order?.numero_pedido || form?.numeroPedido || '-'}</Typography>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={800}>Estado actual</Typography>
-                <Typography variant="body2">{getShippingStatusLabel(currentStatus)}</Typography>
-              </Grid>
-            </Grid>
-
-            <Card variant="outlined">
-              <CardContent>
-                <Stack spacing={2}>
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight={900}>Flujo logístico</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Actualiza solo la etapa real del paquete.
-                    </Typography>
-                  </Box>
-                  <Stepper
-                    activeStep={getActiveStep(currentStatus)}
-                    alternativeLabel
-                    sx={{
-                      overflowX: 'auto',
-                      pb: 1,
-                      '& .MuiStepLabel-label': {
-                        typography: 'caption',
-                        fontWeight: 700,
-                      },
-                    }}
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2,
+                borderRadius: 2.5,
+                bgcolor: 'background.default',
+              }}
+            >
+              <Grid container spacing={1.5}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontWeight: 800 }}
                   >
-                    {SHIPPING_FLOW.map((step) => (
-                      <Step key={step.value}>
-                        <StepLabel>{step.label}</StepLabel>
-                      </Step>
-                    ))}
-                  </Stepper>
-                </Stack>
-              </CardContent>
-            </Card>
+                    Pedido
+                  </Typography>
+
+                  <Typography variant="body2" sx={{ fontWeight: 900 }}>
+                    {order?.numero_pedido || form?.numeroPedido || '-'}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontWeight: 800 }}
+                  >
+                    Estado actual
+                  </Typography>
+
+                  <Box sx={{ mt: 0.35 }}>
+                    <Chip
+                      size="small"
+                      label={getShippingStatusLabel(currentStatus)}
+                      color={SHIPPING_STATUS_COLOR[currentStatus] || 'default'}
+                      variant="outlined"
+                      sx={{ fontWeight: 800 }}
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
 
             {currentStatus === 'incidencia' && (
-              <Alert severity="warning">
-                Este envío tiene una incidencia. Selecciona la acción que corresponda cuando el caso esté atendido.
+              <Alert severity="warning" variant="outlined">
+                Este envío tiene una incidencia. Selecciona en el flujo el estado
+                al que debe continuar cuando el caso ya fue atendido.
               </Alert>
             )}
 
-            {actions.length === 0 ? (
-              <Alert severity="info">No hay acciones logísticas disponibles para el estado actual.</Alert>
-            ) : (
-              <Grid container spacing={1.5}>
-                {actions.map((action) => (
-                  <Grid key={action.value} size={{ xs: 12, md: actions.length > 2 ? 4 : 6 }}>
-                    <ActionCard
-                      action={action}
-                      selected={selectedStatus === action.value}
-                      disabled={loading}
-                      onSelect={() => onChange?.('estadoEnvio', action.value)}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            )}
+            <Paper
+              variant="outlined"
+              sx={{
+                p: { xs: 1.5, sm: 2 },
+                borderRadius: 2.5,
+                overflow: 'visible',
+              }}
+            >
+              <Stack spacing={2}>
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
+                    Selecciona el siguiente estado
+                  </Typography>
 
-            {selectedStatus && (
-              <Grid container spacing={1.5}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    name="empresaEnvio"
-                    label="Empresa transportista"
-                    value={form?.empresaEnvio || ''}
-                    onChange={handleChange}
+                  <Typography variant="body2" color="text.secondary">
+                    Solo los pasos permitidos están habilitados. Si el envío tiene
+                    un problema, registra una incidencia.
+                  </Typography>
+                </Box>
+
+                {selectableStepValues.length === 0 ? (
+                  <Alert severity="info" variant="outlined">
+                    No hay estados disponibles para actualizar este envío.
+                  </Alert>
+                ) : (
+                  <Box
+                    sx={{
+                      width: '100%',
+                      minHeight: 150,
+                      overflowX: 'auto',
+                      overflowY: 'visible',
+                      pt: 3,
+                      pb: 2.5,
+                    }}
+                  >
+                    <Stepper
+                      nonLinear
+                      alternativeLabel
+                      activeStep={currentStepIndex}
+                      sx={{
+                        minWidth: {
+                          xs: 760,
+                          md: 900,
+                        },
+                        px: 1.5,
+                        py: 1,
+                        '& .MuiStepLabel-label': {
+                          typography: 'caption',
+                          fontWeight: 800,
+                          mt: 0.75,
+                          whiteSpace: 'nowrap',
+                        },
+                        '& .MuiStepIcon-root.Mui-active': {
+                          color: 'primary.main',
+                        },
+                        '& .MuiStepIcon-root.Mui-completed': {
+                          color: 'success.main',
+                        },
+                        '& .MuiStepConnector-line': {
+                          borderColor: 'divider',
+                        },
+                      }}
+                    >
+                      {SHIPPING_FLOW.map((step, index) => {
+                        const isCurrent = step.value === currentStatus;
+                        const isSelected = step.value === selectedStatus;
+                        const isCompleted = index < currentStepIndex;
+                        const isSelectable = selectableStepValues.includes(step.value);
+                        const isDisabled = !isSelectable || loading;
+
+                        return (
+                          <Step key={step.value} completed={isCompleted}>
+                            <StepButton
+                              disabled={isDisabled}
+                              onClick={() => handleSelectStep(step.value)}
+                              optional={
+                                <StepOptionalState
+                                  isCurrent={isCurrent}
+                                  isSelected={isSelected}
+                                  isSelectable={isSelectable}
+                                />
+                              }
+                              sx={{
+                                minHeight: 105,
+                                borderRadius: 2,
+                                px: 0.75,
+                                py: 1,
+                                border: '1px solid',
+                                borderColor: isSelected
+                                  ? 'success.main'
+                                  : isCurrent
+                                    ? 'primary.main'
+                                    : 'transparent',
+                                bgcolor: isSelected
+                                  ? alpha(theme.palette.success.main, 0.08)
+                                  : isCurrent
+                                    ? alpha(theme.palette.primary.main, 0.06)
+                                    : 'transparent',
+                                '&:hover': {
+                                  bgcolor: isSelectable
+                                    ? alpha(theme.palette.primary.main, 0.08)
+                                    : 'transparent',
+                                },
+                                '&.Mui-disabled': {
+                                  opacity: isCompleted || isCurrent ? 1 : 0.42,
+                                },
+                              }}
+                            >
+                              {step.label}
+                            </StepButton>
+                          </Step>
+                        );
+                      })}
+                    </Stepper>
+                  </Box>
+                )}
+
+                {selectedAction && selectedStatus !== 'incidencia' && (
+                  <Alert severity="success" variant="outlined">
+                    Seleccionaste:{' '}
+                    <strong>{selectedAction.actionLabel || selectedAction.label}</strong>.
+                    {' '}
+                    {selectedAction.description}
+                  </Alert>
+                )}
+
+                {canRegisterIncident(currentStatus) && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-start',
+                      pt: 0.5,
+                    }}
+                  >
+                    <Button
+                      variant={selectedStatus === 'incidencia' ? 'contained' : 'outlined'}
+                      color="warning"
+                      startIcon={<WarningAmberRoundedIcon />}
+                      onClick={handleSelectIncident}
+                      disabled={loading}
+                    >
+                      Registrar incidencia
+                    </Button>
+                  </Box>
+                )}
+
+                {selectedStatus === 'incidencia' && (
+                  <Alert severity="warning" variant="outlined">
+                    Seleccionaste registrar una incidencia. Describe el problema en
+                    el comentario antes de guardar.
+                  </Alert>
+                )}
+              </Stack>
+            </Paper>
+
+            {selectedStatus && selectedStatus !== 'incidencia' && (
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  borderRadius: 2.5,
+                }}
+              >
+                <Stack spacing={1.75}>
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
+                      Datos de transporte
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary">
+                      Completa los datos disponibles para que el cliente pueda hacer
+                      seguimiento del paquete.
+                    </Typography>
+                  </Box>
+
+                  <CarrierTrackingFields
+                    form={form}
+                    loading={loading}
                     required={mustCompleteTransport}
-                    fullWidth
+                    requiredTrackingNumber={mustCompleteTrackingNumber}
+                    showRequiredError={mustCompleteTransport && !form?.transportistaId}
+                    showTrackingNumberError={
+                      mustCompleteTrackingNumber && !form?.numeroSeguimiento?.trim()
+                    }
+                    onChange={onChange}
                   />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    name="numeroSeguimiento"
-                    label="Número de guía"
-                    value={form?.numeroSeguimiento || ''}
-                    onChange={handleChange}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <TextField
-                    name="urlSeguimiento"
-                    label="Enlace de rastreo"
-                    value={form?.urlSeguimiento || ''}
-                    onChange={handleChange}
-                    type="url"
-                    fullWidth
-                  />
-                </Grid>
-              </Grid>
+                </Stack>
+              </Paper>
             )}
 
             <TextField
               name="comentario"
-              label="Comentario de envío"
+              label={
+                mustCompleteComment
+                  ? 'Comentario de incidencia'
+                  : 'Comentario de envío opcional'
+              }
+              placeholder={
+                mustCompleteComment
+                  ? 'Describe brevemente qué ocurrió con el envío.'
+                  : 'Ingrese un comentario opcional sobre el envío.'
+              }
               value={form?.comentario || ''}
               onChange={handleChange}
+              required={mustCompleteComment}
+              disabled={loading}
               multiline
               minRows={3}
+              error={mustCompleteComment && !form?.comentario?.trim()}
+              helperText={
+                mustCompleteComment && !form?.comentario?.trim()
+                  ? 'El comentario es obligatorio cuando registras una incidencia.'
+                  : undefined
+              }
             />
           </Stack>
         </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button variant="outlined" onClick={onClose} disabled={loading}>Cancelar</Button>
+          <Button
+            variant="outlined"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancelar
+          </Button>
+
           <Button
             type="submit"
             variant="contained"
-            disabled={loading || !selectedAction || (mustCompleteTransport && !form?.empresaEnvio?.trim())}
+            disabled={isSaveDisabled}
           >
-            {loading ? 'Guardando...' : selectedAction?.title || 'Guardar envío'}
+            {getSaveButtonLabel(selectedAction, loading)}
           </Button>
         </DialogActions>
       </Box>
