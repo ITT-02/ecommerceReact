@@ -14,6 +14,7 @@ import {
 
 import { TextFieldController } from '../../../../components/forms/TextFieldController';
 import { useStoreProfile } from '../../../../hooks/store/useStoreProfile';
+import { RegionPicker } from './RegionPicker';
 
 const buildInitialAddressForm = ({ address, isFirstAddress }) => {
   if (address) {
@@ -256,33 +257,21 @@ export const AddressDialog = ({ open, onClose, address, isFirstAddress }) => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextFieldController
-                name="departamento"
-                label="Departamento"
-                value={formData.departamento}
-                onChange={handleChange}
-                onBlur={handleBlur}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextFieldController
-                name="provincia"
-                label="Provincia"
-                value={formData.provincia}
-                onChange={handleChange}
-                onBlur={handleBlur}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextFieldController
-                name="distrito"
-                label="Distrito"
-                value={formData.distrito}
-                onChange={handleChange}
-                onBlur={handleBlur}
+            <Grid size={{ xs: 12 }}>
+              <RegionPicker
+                value={{
+                  departamento: formData.departamento,
+                  provincia: formData.provincia,
+                  distrito: formData.distrito,
+                }}
+                onChange={(region) => {
+                  setFormData((currentData) => ({
+                    ...currentData,
+                    departamento: region.departamento,
+                    provincia: region.provincia,
+                    distrito: region.distrito,
+                  }));
+                }}
               />
             </Grid>
 
