@@ -61,6 +61,7 @@ import { StoryPage } from '../pages/store/StoryPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
 import { RoleRoute } from './RoleRoute';
+import { ScrollToTop } from './ScrollToTop';
 
 import {
   ADMIN_ROLES,
@@ -74,7 +75,9 @@ import {
 
 export const AppRouter = () => {
   return (
-    <Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
       {/* Rutas públicas de autenticación */}
       <Route element={<PublicRoute />}>
         <Route path="/login" element={<LoginPage />} />
@@ -158,5 +161,6 @@ export const AppRouter = () => {
       {/* Ruta 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </>
   );
 };

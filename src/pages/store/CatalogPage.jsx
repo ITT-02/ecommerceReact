@@ -133,40 +133,69 @@ export const CatalogPage = () => {
               const canDirectAdd = product.total_variantes === 1 && product.variante_predeterminada_id && !product.requiere_cotizacion && (product.stock_total > 0 || product.vender_sin_stock);
               return (
                 <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <Card
+                    sx={(theme) => {
+                      const sem = theme.palette.custom.semantic;
+                      const sh = theme.palette.custom.shadows;
+                      return {
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                        border: `1px solid ${sem.borderStrong}`,
+                        boxShadow: sh.sm,
+                        '&:hover': {
+                          borderColor: theme.palette.primary.main,
+                          boxShadow: sh.md,
+                          transform: 'translateY(-3px)',
+                        },
+                      };
+                    }}
+                  >
                     <CardMedia
                       component="img"
-                      height="190"
+                      height="200"
                       image={product.imagen_principal_url || PLACEHOLDER_IMAGE}
                       alt={product.nombre}
-                      sx={{ objectFit: 'cover', bgcolor: 'action.selected' }}
+                      sx={(theme) => ({
+                        objectFit: 'cover',
+                        bgcolor: theme.palette.custom.semantic.paperDeep,
+                        borderBottom: `1px solid ${theme.palette.custom.semantic.border}`,
+                      })}
                     />
-                    <CardContent sx={{ flex: 1 }}>
-                      <Stack spacing={1.25} sx={{ height: '100%' }}>
+                    <CardContent sx={{ flex: 1, p: '20px !important', '&:last-child': { pb: '20px !important' } }}>
+                      <Stack spacing={1.5} sx={{ height: '100%' }}>
                         <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap' }}>
                           <Chip size="small" label={getAvailabilityLabel(product)} color={getAvailabilityColor(product)} variant="outlined" />
                           {product.destacado && <Chip size="small" label="Destacado" color="primary" variant="outlined" />}
                         </Stack>
 
                         <Box sx={{ flex: 1 }}>
-                          <Typography variant="h6" sx={{ lineHeight: 1.25 }}>{product.nombre}</Typography>
+                          <Typography variant="h6" sx={{ lineHeight: 1.3, fontSize: '0.95rem' }}>{product.nombre}</Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{product.categoria_nombre || 'Sin categoría'}</Typography>
                         </Box>
 
-                        <Typography variant="subtitle1" color="secondary.main" sx={{ fontWeight: 800 }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={(theme) => ({
+                            fontWeight: 800,
+                            color: theme.palette.primary.main,
+                            fontSize: '1rem',
+                          })}
+                        >
                           {getPriceLabel(product)}
                         </Typography>
 
                         <Stack direction="row" spacing={1}>
-                          <Button component={RouterLink} to={`/productos/${product.slug}`} variant="outlined" fullWidth startIcon={<VisibilityOutlinedIcon />}>
+                          <Button component={RouterLink} to={`/productos/${product.slug}`} variant="outlined" fullWidth startIcon={<VisibilityOutlinedIcon />} size="small">
                             Ver
                           </Button>
                           {canDirectAdd ? (
-                            <Button variant="contained" disabled={adding} onClick={() => handleDirectAdd(product)} sx={{ minWidth: 48 }} aria-label="Agregar al carrito">
+                            <Button variant="contained" size="small" disabled={adding} onClick={() => handleDirectAdd(product)} sx={{ minWidth: 40, px: 1.5 }} aria-label="Agregar al carrito">
                               <ShoppingCartOutlinedIcon fontSize="small" />
                             </Button>
                           ) : (
-                            <Button component={RouterLink} to={`/productos/${product.slug}`} variant="contained" fullWidth startIcon={<TuneOutlinedIcon />}>
+                            <Button component={RouterLink} to={`/productos/${product.slug}`} variant="contained" size="small" fullWidth startIcon={<TuneOutlinedIcon />}>
                               Opciones
                             </Button>
                           )}

@@ -21,7 +21,6 @@ export const StoreFooter = () => {
         const nav = theme.palette.custom.semantic.storeNavigation;
 
         return {
-          mt: 6,
           py: 5,
           bgcolor: nav.bg,
           color: nav.text,

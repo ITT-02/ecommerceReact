@@ -2,7 +2,7 @@
  * Navbar público de la tienda.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import {
   AppBar,
@@ -11,8 +11,9 @@ import {
   Chip,
   Container,
   IconButton,
-  Menu as MuiMenu,
   MenuItem,
+  MenuList,
+  Paper,
   Stack,
   Toolbar,
   Typography,
@@ -67,16 +68,24 @@ export const StoreNavbar = () => {
   const { user, roles, isAuthenticated } = useAuth();
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [catalogAnchorEl, setCatalogAnchorEl] = useState(null);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const closeTimerRef = useRef(null);
 
   const isLoggedIn = isAuthenticated ?? Boolean(user);
-  const isCatalogOpen = Boolean(catalogAnchorEl);
   const isCatalogActive = location.pathname === '/catalogo';
   const currentUrl = `${location.pathname}${location.search}`;
 
   const handleDrawerToggle = () => setMobileOpen((prev) => !prev);
-  const handleOpenCatalogMenu = (event) => setCatalogAnchorEl(event.currentTarget);
-  const handleCloseCatalogMenu = () => setCatalogAnchorEl(null);
+  const handleCloseCatalogMenu = () => setIsCatalogOpen(false);
+
+  const scheduleCatalogClose = () => {
+    closeTimerRef.current = setTimeout(() => setIsCatalogOpen(false), 250);
+  };
+  const cancelCatalogClose = () => clearTimeout(closeTimerRef.current);
+  const handleCatalogEnter = () => {
+    cancelCatalogClose();
+    setIsCatalogOpen(true);
+  };
 
   const renderMainNavButton = (item) => (
     <Button key={item.to} component={NavLink} to={item.to} color="inherit" sx={getNavButtonSx()}>
@@ -172,29 +181,56 @@ export const StoreNavbar = () => {
             <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
               {storeMainMenuItems.map(renderMainNavButton)}
 
-              <Button
-                onClick={handleOpenCatalogMenu}
-                endIcon={<KeyboardArrowDown />}
-                sx={getNavButtonSx(isCatalogActive)}
+              <Box
+                sx={{ position: 'relative' }}
+                onMouseEnter={handleCatalogEnter}
+                onMouseLeave={scheduleCatalogClose}
               >
-                Catálogo
-              </Button>
+                <Button
+                  endIcon={
+                    <KeyboardArrowDown
+                      sx={{
+                        transition: 'transform 200ms',
+                        transform: isCatalogOpen ? 'rotate(180deg)' : 'none',
+                      }}
+                    />
+                  }
+                  sx={getNavButtonSx(isCatalogActive || isCatalogOpen)}
+                >
+                  Catálogo
+                </Button>
+
+                {isCatalogOpen && (
+                  <Paper
+                    elevation={0}
+                    sx={(theme) => ({
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      mt: '4px',
+                      minWidth: 200,
+                      zIndex: theme.zIndex.modal,
+                      boxShadow: theme.palette.custom.shadows.lg,
+                    })}
+                  >
+                    <MenuList disablePadding sx={{ py: 0.75 }}>
+                      {storeCatalogMenuItems.map((item) => (
+                        <MenuItem
+                          key={item.to}
+                          component={RouterLink}
+                          to={item.to}
+                          onClick={handleCloseCatalogMenu}
+                          selected={currentUrl === item.to}
+                        >
+                          {item.label}
+                        </MenuItem>
+                      ))}
+                    </MenuList>
+                  </Paper>
+                )}
+              </Box>
 
               {storeAfterCatalogMenuItems.map(renderMainNavButton)}
-
-              <MuiMenu anchorEl={catalogAnchorEl} open={isCatalogOpen} onClose={handleCloseCatalogMenu}>
-                {storeCatalogMenuItems.map((item) => (
-                  <MenuItem
-                    key={item.to}
-                    component={RouterLink}
-                    to={item.to}
-                    onClick={handleCloseCatalogMenu}
-                    selected={currentUrl === item.to}
-                  >
-                    {item.label}
-                  </MenuItem>
-                ))}
-              </MuiMenu>
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexShrink: 0 }}>
