@@ -27,7 +27,7 @@ import { useSearchParams } from 'react-router-dom';
 import { StoreSectionHeader } from '../../components/store/marketing/StoreSectionHeader';
 import { getStoreMarketingIcon } from '../../components/store/marketing/storeMarketingIcons';
 import { contactPageContent } from '../../data/storePageContent';
-
+import FaqAcordion from './FaqAcordion';
 const normalizeReasonFromQuery = (value, reasons) => {
   if (!value) return reasons[0];
   const cleanValue = value.toLowerCase();
@@ -164,35 +164,7 @@ export const ContactPage = () => {
                 <Typography variant="h5" sx={(theme) => ({ mb: 1.5, color: theme.palette.custom.semantic.storeMarketing.lightText })}>
                   Preguntas frecuentes
                 </Typography>
-
-                {faqs.map((faq) => (
-                  <Accordion
-                    key={faq.question}
-                    disableGutters
-                    sx={(theme) => {
-                      const m = theme.palette.custom.semantic.storeMarketing;
-                      return {
-                        borderRadius: `${theme.palette.custom.radius.xs}px !important`,
-                        border: `1px solid ${m.lightCardBorder}`,
-                        backgroundImage: 'none',
-                        bgcolor: m.lightCardBg,
-                        '&::before': { display: 'none' },
-                        '& + &': { mt: 1 },
-                      };
-                    }}
-                  >
-                    <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
-                      <Typography variant="subtitle2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightText, fontWeight: 800 })}>
-                        {faq.question}
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightMuted })}>
-                        {faq.answer}
-                      </Typography>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
+                <FaqAcordion items={faqs}/>
               </Box>
             </Stack>
           </Grid>
