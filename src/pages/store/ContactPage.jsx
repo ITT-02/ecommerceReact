@@ -1,5 +1,6 @@
 /**
  * Página pública Contacto.
+ * Ahora toma canales desde configuración de tienda y guarda mensajes en backend.
  */
 
 import { useMemo, useState } from 'react';
@@ -24,9 +25,13 @@ import {
 } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 
+import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { StoreSectionHeader } from '../../components/store/marketing/StoreSectionHeader';
 import { getStoreMarketingIcon } from '../../components/store/marketing/storeMarketingIcons';
 import { contactPageContent } from '../../data/storePageContent';
+import { useCreateContactMessage } from '../../hooks/store/useContactMessages';
+import { useStoreSettings } from '../../hooks/store/useStoreSettings';
+import { buildWhatsAppUrl } from '../../services/store/storeSettingsService';
 
 const normalizeReasonFromQuery = (value, reasons) => {
   if (!value) return reasons[0];
@@ -35,6 +40,45 @@ const normalizeReasonFromQuery = (value, reasons) => {
   if (cleanValue.includes('cotizacion') || cleanValue.includes('cotización')) return 'Cotización personalizada';
   if (cleanValue.includes('pedido')) return 'Seguimiento de pedido';
   return reasons[0];
+};
+
+const buildContactChannels = (settings, fallbackChannels) => {
+  const whatsappUrl = buildWhatsAppUrl({
+    phone: settings.whatsapp,
+    message: settings.metadata?.mensaje_whatsapp_default,
+  });
+
+  const dynamicChannels = [
+    settings.whatsapp && {
+      iconKey: 'whatsapp',
+      label: 'WhatsApp ventas',
+      value: settings.whatsapp,
+      helper: 'Respuesta prioritaria para consultas comerciales y pedidos.',
+      href: whatsappUrl,
+    },
+    settings.correo_atencion && {
+      iconKey: 'email',
+      label: 'Correo de atención',
+      value: settings.correo_atencion,
+      helper: 'Para cotizaciones, propuestas, comprobantes y mensajes formales.',
+      href: `mailto:${settings.correo_atencion}`,
+    },
+    settings.telefono_atencion && {
+      iconKey: 'phone',
+      label: 'Teléfono',
+      value: settings.telefono_atencion,
+      helper: settings.metadata?.horario_atencion || 'Atención comercial en horario de oficina.',
+      href: `tel:${settings.telefono_atencion}`,
+    },
+    settings.direccion && {
+      iconKey: 'location',
+      label: 'Oficina / despacho',
+      value: settings.direccion,
+      helper: 'Coordinación de entregas, recojos y atención con cita previa.',
+    },
+  ].filter(Boolean);
+
+  return dynamicChannels.length ? dynamicChannels : fallbackChannels;
 };
 
 const ContactChannelCard = ({ channel }) => {
@@ -107,11 +151,18 @@ const ContactChannelCard = ({ channel }) => {
 
 export const ContactPage = () => {
   const [searchParams] = useSearchParams();
-  const { hero, channels, reasons, faqs } = contactPageContent;
+  const { hero, channels: fallbackChannels, reasons, faqs } = contactPageContent;
+  const { settings } = useStoreSettings();
+  const { createMessage, sending, error } = useCreateContactMessage();
 
   const defaultReason = useMemo(
     () => normalizeReasonFromQuery(searchParams.get('motivo'), reasons),
     [reasons, searchParams],
+  );
+
+  const channels = useMemo(
+    () => buildContactChannels(settings, fallbackChannels),
+    [fallbackChannels, settings],
   );
 
   const [formData, setFormData] = useState({
@@ -122,15 +173,37 @@ export const ContactPage = () => {
     mensaje: '',
   });
   const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormError('');
+    setSent(false);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    setSent(true);
+
+    if (!formData.nombre.trim() || !formData.email.trim() || !formData.mensaje.trim()) {
+      setFormError('Completa nombre, email y mensaje para enviar tu consulta.');
+      return;
+    }
+
+    try {
+      await createMessage(formData);
+      setSent(true);
+      setFormData({
+        nombre: '',
+        email: '',
+        whatsapp: '',
+        motivo: defaultReason,
+        mensaje: '',
+      });
+    } catch (err) {
+      const message = err?.response?.data?.message || err.message || 'No se pudo enviar la consulta.';
+      setFormError(message);
+    }
   };
 
   return (
@@ -219,13 +292,15 @@ export const ContactPage = () => {
                     Envíanos tu consulta
                   </Typography>
                   <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightMuted })}>
-                    Completa tus datos y el equipo comercial podrá responderte con mayor precisión.
+                    La consulta quedará registrada en el panel administrativo para seguimiento comercial.
                   </Typography>
                 </Stack>
 
+                <ErrorMessage message={formError || error} />
+
                 {sent && (
                   <Alert severity="success" sx={{ mb: 3 }}>
-                    Solicitud registrada en pantalla. Cuando conectes este formulario al backend, aquí se enviará la consulta comercial.
+                    Tu consulta fue enviada correctamente. El equipo comercial podrá atenderla desde el panel administrativo.
                   </Alert>
                 )}
 
@@ -267,8 +342,8 @@ export const ContactPage = () => {
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                      <Button type="submit" variant="contained" size="large" endIcon={<SendRoundedIcon />}>
-                        Enviar consulta
+                      <Button type="submit" variant="contained" size="large" disabled={sending} endIcon={<SendRoundedIcon />}>
+                        {sending ? 'Enviando...' : 'Enviar consulta'}
                       </Button>
                     </Grid>
                   </Grid>

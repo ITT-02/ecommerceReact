@@ -1,195 +1,326 @@
 // Catálogo de tienda.
-// Lista productos una sola vez; las variantes se muestran en el detalle.
+// Producción: carga paginada incremental con scroll infinito, filtros superiores y categorías visuales compactas.
 
-import { useMemo, useState } from 'react';
-import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
-import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import { Box, Button, Card, CardContent, CardMedia, Chip, Container, Grid, MenuItem, Pagination, Stack, TextField, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
+import { Box, Card, CardContent, Chip, Container, Grid, LinearProgress, Stack, Typography } from '@mui/material';
+import { useSearchParams } from 'react-router-dom';
+
+import { CatalogFilterPanel } from '../../components/catalog/CatalogFilterPanel';
+import { StoreProductCard } from '../../components/catalog/StoreProductCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { LoadingScreen } from '../../components/common/LoadingScreen';
+import { useDebouncedValue } from '../../hooks/common/useDebouncedValue';
 import { useStoreCatalog } from '../../hooks/store/useStoreCatalog';
-import { formatCurrency } from '../../utils/formatters';
-import { PLACEHOLDER_IMAGE } from '../../utils/constants';
+
+const PAGE_SIZE = 12;
+
+const DEFAULT_FILTERS = {
+  searchInput: '',
+  categoriaId: '',
+  destacado: '',
+  tipoCompra: '',
+  disponibilidad: '',
+  personalizable: '',
+  precioMin: '',
+  precioMax: '',
+  orderBy: 'recientes',
+};
 
 const toBooleanFilter = (value) => {
-  if (value === '') return null;
-  return value === 'true';
+  if (value === '' || value === null || value === undefined) return null;
+  return value === true || value === 'true';
 };
 
-const getAvailabilityLabel = (product) => {
-  if (product.stock_total > 0) return 'Disponible';
-  if (product.vender_sin_stock) return 'Bajo pedido';
-  return 'Sin stock';
+const readInitialFilters = (searchParams) => ({
+  ...DEFAULT_FILTERS,
+  searchInput: searchParams.get('q') || '',
+  categoriaId: searchParams.get('categoria') || '',
+  destacado: searchParams.get('destacado') || '',
+  tipoCompra: searchParams.get('tipo') || '',
+  disponibilidad: searchParams.get('disponibilidad') || '',
+  personalizable: searchParams.get('personalizable') || '',
+  precioMin: searchParams.get('precio_min') || '',
+  precioMax: searchParams.get('precio_max') || '',
+  orderBy: searchParams.get('orden') || 'recientes',
+});
+
+const buildParamsFromFilters = (filters) => {
+  const params = new URLSearchParams();
+
+  if (filters.searchInput?.trim()) params.set('q', filters.searchInput.trim());
+  if (filters.categoriaId) params.set('categoria', filters.categoriaId);
+  if (filters.destacado) params.set('destacado', filters.destacado);
+  if (filters.tipoCompra) params.set('tipo', filters.tipoCompra);
+  if (filters.disponibilidad) params.set('disponibilidad', filters.disponibilidad);
+  if (filters.personalizable) params.set('personalizable', filters.personalizable);
+  if (filters.precioMin) params.set('precio_min', filters.precioMin);
+  if (filters.precioMax) params.set('precio_max', filters.precioMax);
+  if (filters.orderBy && filters.orderBy !== 'recientes') params.set('orden', filters.orderBy);
+
+  return params;
 };
 
-const getAvailabilityColor = (product) => {
-  if (product.stock_total > 0) return 'success';
-  if (product.vender_sin_stock) return 'warning';
-  return 'default';
+const areFiltersEqual = (left, right) =>
+  Object.keys(DEFAULT_FILTERS).every((key) => String(left?.[key] ?? '') === String(right?.[key] ?? ''));
+
+const mergeProducts = (current, next) => {
+  const map = new Map();
+  [...current, ...next].forEach((product) => {
+    if (product?.id) map.set(product.id, product);
+  });
+  return Array.from(map.values());
 };
 
-const getPriceLabel = (product) => {
-  if (!product.mostrar_precio) return 'Precio a consultar';
-  if (product.precio_min === null || product.precio_min === undefined) return 'Sin precio';
-  if (Number(product.precio_min) === Number(product.precio_max)) return formatCurrency(product.precio_min);
-  return `Desde ${formatCurrency(product.precio_min)}`;
+const areSameProductList = (left = [], right = []) => {
+  if (left.length !== right.length) return false;
+  return left.every((product, index) => String(product?.id || '') === String(right[index]?.id || ''));
+};
+
+const PromotionStrip = ({ promotions = [] }) => {
+  if (!promotions.length) return null;
+
+  return (
+    <Card
+      elevation={0}
+      sx={(theme) => {
+        const m = theme.palette.custom.semantic.storeMarketing;
+        return {
+          borderRadius: theme.palette.custom.radius.md,
+          border: `1px solid ${m.lightCardBorder}`,
+          bgcolor: m.accentSofter,
+          backgroundImage: 'none',
+        };
+      }}
+    >
+      <CardContent sx={{ py: 1.25, '&:last-child': { pb: 1.25 } }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ alignItems: { md: 'center' }, justifyContent: 'space-between' }}>
+          <Stack direction="row" spacing={0.8} sx={{ alignItems: 'center' }}>
+            <LocalOfferOutlinedIcon color="primary" sx={{ fontSize: 20 }} />
+            <Typography variant="body2" sx={{ fontWeight: 900 }}>
+              Promociones activas
+            </Typography>
+          </Stack>
+
+          <Stack direction="row" spacing={0.8} useFlexGap sx={{ flexWrap: 'wrap' }}>
+            {promotions.slice(0, 4).map((promotion) => (
+              <Chip
+                key={promotion.id}
+                size="small"
+                label={promotion.codigo ? `${promotion.nombre} · ${promotion.codigo}` : promotion.nombre}
+                color="primary"
+                variant="outlined"
+              />
+            ))}
+          </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
 };
 
 export const CatalogPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const paramsString = searchParams.toString();
+  const lastUrlWriteRef = useRef('');
+  const sentinelRef = useRef(null);
   const [pageNumber, setPageNumber] = useState(1);
-  const [search, setSearch] = useState('');
-  const [categoriaId, setCategoriaId] = useState('');
-  const [destacado, setDestacado] = useState('');
-  const [tipoCompra, setTipoCompra] = useState('');
-  const [orderBy, setOrderBy] = useState('recientes');
+  const [filters, setFilters] = useState(() => readInitialFilters(searchParams));
+  const [visibleProducts, setVisibleProducts] = useState([]);
+  const [actionError, setActionError] = useState('');
 
-  const { products, categories, pagination, loading, fetching, error, addToCart, adding } = useStoreCatalog({
+  const debouncedSearch = useDebouncedValue(filters.searchInput, 500);
+  const selectedCategoryIds = useMemo(
+    () => (filters.categoriaId ? [filters.categoriaId] : []),
+    [filters.categoriaId],
+  );
+
+  const filterSignature = useMemo(
+    () =>
+      JSON.stringify({
+        q: debouncedSearch,
+        categoriaId: filters.categoriaId,
+        destacado: filters.destacado,
+        tipoCompra: filters.tipoCompra,
+        disponibilidad: filters.disponibilidad,
+        personalizable: filters.personalizable,
+        precioMin: filters.precioMin,
+        precioMax: filters.precioMax,
+        orderBy: filters.orderBy,
+      }),
+    [
+      debouncedSearch,
+      filters.categoriaId,
+      filters.destacado,
+      filters.disponibilidad,
+      filters.orderBy,
+      filters.personalizable,
+      filters.precioMax,
+      filters.precioMin,
+      filters.tipoCompra,
+    ],
+  );
+
+  useEffect(() => {
+    if (paramsString === lastUrlWriteRef.current) {
+      lastUrlWriteRef.current = '';
+      return;
+    }
+
+    const nextFilters = readInitialFilters(new URLSearchParams(paramsString));
+    setFilters((current) => (areFiltersEqual(current, nextFilters) ? current : nextFilters));
+  }, [paramsString]);
+
+  useEffect(() => {
+    if ((filters.searchInput || '') !== (debouncedSearch || '')) return;
+
+    const nextParams = buildParamsFromFilters({
+      ...filters,
+      searchInput: debouncedSearch,
+    });
+    const nextParamsString = nextParams.toString();
+
+    if (nextParamsString !== paramsString) {
+      lastUrlWriteRef.current = nextParamsString;
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [debouncedSearch, filterSignature, filters, paramsString, setSearchParams]);
+
+  const {
+    products,
+    categories,
+    promotions,
+    pagination,
+    loading,
+    fetching,
+    error,
+    addToCart,
+    adding,
+  } = useStoreCatalog({
     pageNumber,
-    pageSize: 12,
-    search,
-    categoriaId: categoriaId || null,
-    destacado: toBooleanFilter(destacado),
-    tipoCompra: tipoCompra || null,
-    orderBy,
+    pageSize: PAGE_SIZE,
+    search: debouncedSearch,
+    categoriaId: filters.categoriaId || null,
+    categoriaIds: selectedCategoryIds,
+    destacado: toBooleanFilter(filters.destacado),
+    tipoCompra: filters.tipoCompra || null,
+    disponibilidad: filters.disponibilidad || null,
+    personalizable: toBooleanFilter(filters.personalizable),
+    precioMin: filters.precioMin || null,
+    precioMax: filters.precioMax || null,
+    orderBy: filters.orderBy || 'recientes',
   });
 
-  const hasProducts = products.length > 0;
-  const categoryOptions = useMemo(() => categories || [], [categories]);
-
-  const handleFilterChange = (setter) => (event) => {
-    setter(event.target.value);
+  useEffect(() => {
     setPageNumber(1);
+    setVisibleProducts([]);
+  }, [filterSignature]);
+
+  useEffect(() => {
+    setVisibleProducts((current) => {
+      const nextProducts = pageNumber === 1 ? products : mergeProducts(current, products);
+      return areSameProductList(current, nextProducts) ? current : nextProducts;
+    });
+  }, [pageNumber, products]);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !pagination.hasNextPage) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry.isIntersecting || fetching) return;
+
+        setPageNumber((current) => {
+          if (pagination.totalPages && current >= pagination.totalPages) return current;
+          return current + 1;
+        });
+      },
+      { root: null, rootMargin: '520px 0px', threshold: 0.01 },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fetching, pagination.hasNextPage, pagination.totalPages]);
+
+  const handleFilterChange = (name, value) => {
+    setFilters((current) => {
+      if (String(current[name] ?? '') === String(value ?? '')) return current;
+      return { ...current, [name]: value };
+    });
+  };
+
+  const handleClearFilters = () => {
+    setFilters((current) => (areFiltersEqual(current, DEFAULT_FILTERS) ? current : DEFAULT_FILTERS));
+    lastUrlWriteRef.current = '';
+    setSearchParams({}, { replace: true });
   };
 
   const handleDirectAdd = async (product) => {
     if (!product.variante_predeterminada_id) return;
-    await addToCart({ varianteId: product.variante_predeterminada_id, cantidad: 1 });
+
+    setActionError('');
+
+    try {
+      await addToCart({ varianteId: product.variante_predeterminada_id, cantidad: 1 });
+    } catch (err) {
+      setActionError(err?.response?.data?.message || err.message || 'No se pudo agregar el producto al carrito.');
+    }
   };
 
-  if (loading) return <LoadingScreen message="Cargando catálogo..." />;
+  if (loading && !visibleProducts.length) return <LoadingScreen message="Cargando catálogo..." />;
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
-      <Stack spacing={3}>
-        <Box>
-          <Typography variant="overline" color="primary.main">Tienda Aliqora</Typography>
-          <Typography variant="h2">Catálogo</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Productos visibles en tienda. Si un producto tiene varias variantes, el cliente elige la variante desde el detalle.
-          </Typography>
-        </Box>
-
-        <ErrorMessage message={error} />
-
-        <Card>
-          <CardContent>
-            <Grid container spacing={1.5} sx={{ alignItems: 'center' }}>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField size="small" label="Buscar producto" value={search} onChange={handleFilterChange(setSearch)} />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <TextField select size="small" label="Categoría" value={categoriaId} onChange={handleFilterChange(setCategoriaId)}>
-                  <MenuItem value="">Todas</MenuItem>
-                  {categoryOptions.map((category) => (
-                    <MenuItem key={category.id} value={category.id}>{category.nombre}</MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <TextField select size="small" label="Destacado" value={destacado} onChange={handleFilterChange(setDestacado)}>
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="true">Destacados</MenuItem>
-                  <MenuItem value="false">No destacados</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <TextField select size="small" label="Tipo compra" value={tipoCompra} onChange={handleFilterChange(setTipoCompra)}>
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="compra_directa">Compra directa</MenuItem>
-                  <MenuItem value="cotizacion">Cotización</MenuItem>
-                  <MenuItem value="bajo_pedido">Bajo pedido</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <TextField select size="small" label="Ordenar" value={orderBy} onChange={handleFilterChange(setOrderBy)}>
-                  <MenuItem value="recientes">Recientes</MenuItem>
-                  <MenuItem value="nombre_asc">Nombre A-Z</MenuItem>
-                  <MenuItem value="precio_asc">Menor precio</MenuItem>
-                  <MenuItem value="precio_desc">Mayor precio</MenuItem>
-                </TextField>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-
-        {!hasProducts ? (
-          <EmptyState title="Sin productos" description="No encontramos productos con los filtros seleccionados." />
-        ) : (
-          <Grid container spacing={2.5}>
-            {products.map((product) => {
-              const canDirectAdd = product.total_variantes === 1 && product.variante_predeterminada_id && !product.requiere_cotizacion && (product.stock_total > 0 || product.vender_sin_stock);
-              return (
-                <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    <CardMedia
-                      component="img"
-                      height="190"
-                      image={product.imagen_principal_url || PLACEHOLDER_IMAGE}
-                      alt={product.nombre}
-                      sx={{ objectFit: 'cover', bgcolor: 'action.selected' }}
-                    />
-                    <CardContent sx={{ flex: 1 }}>
-                      <Stack spacing={1.25} sx={{ height: '100%' }}>
-                        <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap' }}>
-                          <Chip size="small" label={getAvailabilityLabel(product)} color={getAvailabilityColor(product)} variant="outlined" />
-                          {product.destacado && <Chip size="small" label="Destacado" color="primary" variant="outlined" />}
-                        </Stack>
-
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="h6" sx={{ lineHeight: 1.25 }}>{product.nombre}</Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{product.categoria_nombre || 'Sin categoría'}</Typography>
-                        </Box>
-
-                        <Typography variant="subtitle1" color="secondary.main" sx={{ fontWeight: 800 }}>
-                          {getPriceLabel(product)}
-                        </Typography>
-
-                        <Stack direction="row" spacing={1}>
-                          <Button component={RouterLink} to={`/productos/${product.slug}`} variant="outlined" fullWidth startIcon={<VisibilityOutlinedIcon />}>
-                            Ver
-                          </Button>
-                          {canDirectAdd ? (
-                            <Button variant="contained" disabled={adding} onClick={() => handleDirectAdd(product)} sx={{ minWidth: 48 }} aria-label="Agregar al carrito">
-                              <ShoppingCartOutlinedIcon fontSize="small" />
-                            </Button>
-                          ) : (
-                            <Button component={RouterLink} to={`/productos/${product.slug}`} variant="contained" fullWidth startIcon={<TuneOutlinedIcon />}>
-                              Opciones
-                            </Button>
-                          )}
-                        </Stack>
-                      </Stack>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
-        )}
-
-        {pagination.totalPages > 1 && (
-          <Stack sx={{ alignItems: 'center' }}>
-            <Pagination count={pagination.totalPages} page={pageNumber} onChange={(_, page) => setPageNumber(page)} color="primary" />
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-              Página {pagination.pageNumber} de {pagination.totalPages} · Total: {pagination.totalCount}
-              {fetching ? ' · Actualizando...' : ''}
+    <Box sx={(theme) => ({ bgcolor: theme.palette.custom.semantic.storeMarketing.lightBg, minHeight: '100%' })}>
+      <Container maxWidth="xl" sx={{ py: { xs: 2, md: 3 } }}>
+        <Stack spacing={3}>
+          <Box>
+            <Typography variant="overline" color="primary.main">Tienda Aliqora</Typography>
+            <Typography variant="h2">Catálogo</Typography>
+            <Typography variant="body2" color="text.secondary">
+               Productos disponibles en la tienda. Si un artículo tiene varias opciones, podrás elegir la que prefieras en el detalle.
             </Typography>
-          </Stack>
-        )}
-      </Stack>
-    </Container>
+          </Box>
+          <ErrorMessage message={actionError || error} />
+
+          <CatalogFilterPanel
+            categories={categories}
+            values={filters}
+            onChange={handleFilterChange}
+            onClear={handleClearFilters}
+            searching={fetching && pageNumber === 1}
+          />
+
+          <PromotionStrip promotions={promotions} />
+
+          {fetching && pageNumber === 1 && <LinearProgress />}
+
+          {!visibleProducts.length && !fetching ? (
+            <EmptyState title="Sin productos" description="No encontramos productos con los filtros seleccionados." />
+          ) : (
+            <Grid container spacing={2.5}>
+              {visibleProducts.map((product) => (
+                <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                  <StoreProductCard product={product} adding={adding} onAdd={handleDirectAdd} />
+                </Grid>
+              ))}
+            </Grid>
+          )}
+
+          <Box ref={sentinelRef} sx={{ minHeight: 44, display: 'grid', placeItems: 'center' }}>
+            {pagination.hasNextPage && fetching && (
+              <Stack spacing={1} sx={{ width: '100%', alignItems: 'center' }}>
+                <LinearProgress sx={{ width: { xs: '100%', sm: 360 } }} />
+                <Typography variant="caption" color="text.secondary">
+                  Cargando más productos...
+                </Typography>
+              </Stack>
+            )}
+          </Box>
+        </Stack>
+      </Container>
+    </Box>
   );
 };

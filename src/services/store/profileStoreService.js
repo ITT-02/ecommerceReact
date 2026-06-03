@@ -1,9 +1,9 @@
 import { restApi } from '../../api/restApi';
+
 export const profileStoreService = {
   // --- PERFIL ---
-  
   getMiPerfil: async () => {
-    const { data } = await restApi.post('/rpc/obtener_mi_perfil');
+    const { data } = await restApi.post('/rpc/obtener_mi_perfil', {});
     return data;
   },
 
@@ -13,10 +13,9 @@ export const profileStoreService = {
   },
 
   // --- DIRECCIONES ---
-
   getMisDirecciones: async () => {
-    const { data } = await restApi.post('/rpc/listar_mis_direcciones');
-    return data;
+    const { data } = await restApi.post('/rpc/listar_mis_direcciones', {});
+    return Array.isArray(data) ? data : [];
   },
 
   createMiDireccion: async (addressData) => {
@@ -31,15 +30,15 @@ export const profileStoreService = {
 
   marcarDireccionPrincipal: async (direccionId) => {
     const { data } = await restApi.post('/rpc/marcar_mi_direccion_principal', {
-      p_direccion_id: direccionId
+      p_direccion_id: direccionId,
     });
     return data;
   },
 
   eliminarMiDireccion: async (direccionId) => {
     const { data } = await restApi.post('/rpc/eliminar_mi_direccion', {
-      p_direccion_id: direccionId
+      p_direccion_id: direccionId,
     });
     return data;
-  }
+  },
 };

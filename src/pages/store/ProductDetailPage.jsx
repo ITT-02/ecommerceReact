@@ -362,7 +362,12 @@ export const ProductDetailPage = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <Card>
+            <Card
+              sx={(theme) => ({
+                border: `1px solid ${theme.palette.custom.semantic.borderStrong}`,
+                boxShadow: theme.palette.custom.shadows.sm,
+              })}
+            >
               <CardContent>
                 <Stack spacing={2.5}>
                   <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
@@ -398,7 +403,13 @@ export const ProductDetailPage = () => {
                   />
 
                   {selectedVariant ? (
-                    <Card variant="outlined" sx={{ boxShadow: 'none' }}>
+                    <Card
+                      sx={(theme) => ({
+                        border: `1px solid ${theme.palette.custom.semantic.borderStrong}`,
+                        bgcolor: theme.palette.custom.semantic.paperWarm,
+                        boxShadow: 'none',
+                      })}
+                    >
                       <CardContent>
                         <Stack spacing={1.25}>
                           <Typography variant="subtitle1" fontWeight={800}>

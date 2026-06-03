@@ -1,14 +1,17 @@
-import React from 'react';
 import { Box } from '@mui/material';
 
 import aliqoraLogo from '../../../assets/brand/aliqora-logo.png';
+import { useStoreSettings } from '../../../hooks/store/useStoreSettings';
 
 export const StoreBrandLogo = () => {
+  const { settings } = useStoreSettings();
+  const logoSrc = settings.logo_url || aliqoraLogo;
+
   return (
     <Box
       component="img"
-      src={aliqoraLogo}
-      alt="Aliqora Empaques"
+      src={logoSrc}
+      alt={settings.nombre_tienda || 'Aliqora Empaques'}
       sx={{
         display: 'block',
         width: 'auto',

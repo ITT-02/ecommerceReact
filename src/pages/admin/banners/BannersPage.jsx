@@ -22,6 +22,7 @@ import {
   mapFormDataToBanner,
 } from '../../../adapters/bannersMapper';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
+import { SystemMessageGrid } from '../../../components/common/SystemMessageCard';
 
 export const BannersPage = () => {
   const [formData, setFormData] = useState(initialBannerFormData);

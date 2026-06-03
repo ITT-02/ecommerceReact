@@ -1,17 +1,28 @@
 // Página de inicio pública.
-// Landing comercial con acceso a catálogo, carrito, pedidos y perfil.
-
+// Los banners vigentes se administran desde Marketing > Banners de tienda.
+// El primer banner activo se usa como fondo horizontal del hero;
+// si no hay uno vigente o no tiene imagen, se muestra contenido por defecto con fondo de marca.
 
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
-import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
-import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
-import { Box, Button, Card, CardContent, Container, Grid, Stack, Typography } from '@mui/material';
+import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
+
+import {
+  Box,
+  Button,
+  Chip,
+  Container,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+} from '@mui/material';
+
+import { alpha } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { StoreFeatureCard } from '../../components/store/marketing/StoreFeatureCard';
 import { StoreSectionHeader } from '../../components/store/marketing/StoreSectionHeader';
+import { useStoreMarketing } from '../../hooks/store/useStoreMarketing';
 
 const highlights = [
   {
@@ -34,169 +45,398 @@ const highlights = [
   },
 ];
 
-const experienceItems = [
-  { label: 'Mayoristas', value: 'precios por volumen' },
-  { label: 'Cotizaciones', value: 'personalización ordenada' },
-  { label: 'Envíos', value: 'seguimiento con transportista' },
-];
+const getBannerUrlConfig = (banner) => {
+  const url = banner?.url_destino || '/catalogo';
 
-export const HomePage = () => {
+  return {
+    url,
+    isExternal: url.startsWith('http'),
+  };
+};
+
+const HomeSecondaryBanners = ({ banners = [] }) => {
+  if (!banners.length) return null;
+
   return (
-    <Box sx={(theme) => ({ bgcolor: theme.palette.custom.semantic.storeMarketing.lightBg })}>
-      {/* =========================================================
-          HERO DE INICIO
-      ========================================================= */}
-      <Box
-        component="section"
-        sx={(theme) => {
-          const m = theme.palette.custom.semantic.storeMarketing;
+    <Box
+      component="section"
+      sx={(theme) => ({
+        py: { xs: 3.5, md: 5 },
+        bgcolor: theme.palette.custom.semantic.storeMarketing.lightBg,
+      })}
+    >
+      <Container maxWidth="xl">
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: 1240,
+            mx: 'auto',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={2.5}
+            useFlexGap
+            sx={{
+              width: '100%',
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
+            {banners.map((banner) => {
+              const { url, isExternal } = getBannerUrlConfig(banner);
+              const hasImage = Boolean(banner?.imagen_url);
 
-          return {
-            py: { xs: 7, md: 10 },
-            bgcolor: m.lightBg,
-            borderBottom: `1px solid ${m.lightBorder}`,
-          };
-        }}
-      >
-        <Container maxWidth="xl">
-          <Grid container spacing={{ xs: 4, md: 7 }} sx={{ alignItems: 'center' }}>
-            <Grid size={{ xs: 12, md: 7 }}>
-              <Stack spacing={2.25} sx={{ maxWidth: 760 }}>
-                <Typography
-                  variant="overline"
-                  component="p"
-                  sx={(theme) => ({
-                    color: theme.palette.custom.semantic.storeMarketing.mauveAccent,
-                    fontWeight: 800,
-                    letterSpacing: '0.22em',
-                  })}
+              return (
+                <Paper
+                  key={banner.id}
+                  elevation={0}
+                  sx={(theme) => {
+                    const m = theme.palette.custom.semantic.storeMarketing;
+
+                    return {
+                      position: 'relative',
+                      width: {
+                        xs: '100%',
+                        sm: 620,
+                        md: banners.length === 1 ? 640 : 520,
+                      },
+                      maxWidth: '100%',
+                      minHeight: { xs: 220, md: 240 },
+                      borderRadius: 4,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      border: `1px solid ${m.lightCardBorder}`,
+                      bgcolor: m.lightCardBg,
+                      background: hasImage
+                        ? undefined
+                        : `linear-gradient(135deg, ${m.lightBgAlt} 0%, ${m.lightBg} 58%, ${m.mauveBg} 100%)`,
+                      backgroundImage: hasImage ? `url("${banner.imagen_url}")` : undefined,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                      boxShadow: theme.palette.custom.shadows.sm,
+                      transition: 'transform 180ms ease, box-shadow 180ms ease',
+                      '&:hover': {
+                        transform: 'translateY(-3px)',
+                        boxShadow: theme.palette.custom.shadows.md,
+                      },
+                      '&::before': hasImage
+                        ? {
+                            content: '""',
+                            position: 'absolute',
+                            inset: 0,
+                            background: `linear-gradient(
+                              180deg,
+                              ${alpha(theme.palette.common.black, 0.12)} 0%,
+                              ${alpha(theme.palette.common.black, 0.28)} 48%,
+                              ${alpha(theme.palette.common.black, 0.58)} 100%
+                            )`,
+                          }
+                        : {
+                            content: '""',
+                            position: 'absolute',
+                            inset: 0,
+                            background: `radial-gradient(circle at top right, ${alpha(
+                              m.lightAccent,
+                              0.12
+                            )} 0%, transparent 36%)`,
+                          },
+                    };
+                  }}
                 >
-                  Empaques premium
-                </Typography>
-
-                <Typography
-                  variant="h1"
-                  sx={(theme) => ({
-                    color: theme.palette.custom.semantic.storeMarketing.lightText,
-                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3.25rem' },
-                    lineHeight: 1.08,
-                    maxWidth: 780,
-                  })}
-                >
-                  Soluciones de empaque para marcas que cuidan cada entrega
-                </Typography>
-
-                <Typography
-                  variant="body1"
-                  sx={(theme) => ({
-                    color: theme.palette.custom.semantic.storeMarketing.lightMuted,
-                    maxWidth: 680,
-                    lineHeight: 1.75,
-                  })}
-                >
-                  Compra cajas, bolsas y empaques con catálogo ordenado, opciones bajo pedido,
-                  cotizaciones personalizadas y seguimiento claro hasta la entrega.
-                </Typography>
-
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 1 }}>
-                  <Button component={RouterLink} to="/catalogo" variant="contained" size="large" endIcon={<ArrowForwardRoundedIcon />}>
-                    Ver catálogo
-                  </Button>
-                  <Button
-                    component={RouterLink}
-                    to="/mayoristas"
-                    variant="outlined"
-                    size="large"
-                    sx={(theme) => {
-                      const m = theme.palette.custom.semantic.storeMarketing;
-
-                      return {
-                        color: m.wineAccent,
-                        borderColor: m.mauveBorder,
-                        '&:hover': {
-                          borderColor: m.mauveAccent,
-                          bgcolor: m.mauveBg,
-                        },
-                      };
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      zIndex: 1,
+                      width: '100%',
+                      maxWidth: 430,
+                      mx: 'auto',
+                      p: { xs: 2.5, md: 3 },
                     }}
                   >
-                    Programa mayorista
-                  </Button>
-                </Stack>
-              </Stack>
-            </Grid>
+                    <Stack spacing={1.2} sx={{ alignItems: 'center' }}>
+                      <Typography
+                        variant="h5"
+                        sx={(theme) => ({
+                          color: hasImage
+                            ? theme.palette.common.white
+                            : theme.palette.custom.semantic.storeMarketing.lightText,
+                          fontWeight: 900,
+                          lineHeight: 1.15,
+                        })}
+                      >
+                        {banner?.titulo || 'Campaña especial'}
+                      </Typography>
 
-            <Grid size={{ xs: 12, md: 5 }}>
-              <Card
+                      {banner?.subtitulo && (
+                        <Typography
+                          variant="body2"
+                          sx={(theme) => ({
+                            color: hasImage
+                              ? alpha(theme.palette.common.white, 0.86)
+                              : theme.palette.custom.semantic.storeMarketing.lightMuted,
+                            lineHeight: 1.6,
+                            maxWidth: 390,
+                          })}
+                        >
+                          {banner.subtitulo}
+                        </Typography>
+                      )}
+
+                      <Box sx={{ pt: 0.5 }}>
+                        <Button
+                          component={isExternal ? 'a' : RouterLink}
+                          to={isExternal ? undefined : url}
+                          href={isExternal ? url : undefined}
+                          target={isExternal ? '_blank' : undefined}
+                          rel={isExternal ? 'noreferrer' : undefined}
+                          variant={hasImage ? 'contained' : 'outlined'}
+                          size="small"
+                        >
+                          {banner?.boton_texto || 'Ver más'}
+                        </Button>
+                      </Box>
+                    </Stack>
+                  </Box>
+                </Paper>
+              );
+            })}
+          </Stack>
+        </Box>
+      </Container>
+    </Box>
+  );
+};
+
+const HomeHero = ({ banner, promotions = [] }) => {
+  const { url: heroCtaUrl, isExternal: heroCtaIsExternal } = getBannerUrlConfig(banner);
+  const hasBannerImage = Boolean(banner?.imagen_url);
+
+  return (
+    <Box
+      component="section"
+      sx={(theme) => {
+        const m = theme.palette.custom.semantic.storeMarketing;
+
+        return {
+          position: 'relative',
+          overflow: 'hidden',
+          minHeight: { xs: 430, md: 470 },
+          display: 'flex',
+          alignItems: 'center',
+          py: { xs: 4, md: 5 },
+          borderBottom: `1px solid ${m.lightBorder}`,
+          background: hasBannerImage
+            ? undefined
+            : `linear-gradient(135deg, ${m.lightBg} 0%, ${m.lightBgAlt} 55%, ${m.mauveBg} 100%)`,
+          backgroundImage: hasBannerImage ? `url("${banner.imagen_url}")` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: { xs: 'center center', md: 'center right' },
+          backgroundRepeat: 'no-repeat',
+
+          '&::before': hasBannerImage
+            ? {
+                content: '""',
+                position: 'absolute',
+                inset: 0,
+                zIndex: 0,
+                pointerEvents: 'none',
+                background: {
+                  xs: `linear-gradient(
+                    180deg,
+                    ${alpha(theme.palette.common.black, 0.52)} 0%,
+                    ${alpha(theme.palette.common.black, 0.34)} 42%,
+                    ${alpha(theme.palette.common.black, 0.14)} 70%,
+                    transparent 100%
+                  )`,
+                  md: `linear-gradient(
+                    90deg,
+                    ${alpha(theme.palette.common.black, 0.74)} 0%,
+                    ${alpha(theme.palette.common.black, 0.52)} 22%,
+                    ${alpha(theme.palette.common.black, 0.24)} 42%,
+                    ${alpha(theme.palette.common.black, 0.06)} 58%,
+                    transparent 72%
+                  )`,
+                },
+              }
+            : {
+                content: '""',
+                position: 'absolute',
+                inset: 0,
+                zIndex: 0,
+                pointerEvents: 'none',
+                background: `radial-gradient(circle at top right, ${alpha(
+                  m.lightAccent,
+                  0.12
+                )} 0%, transparent 30%)`,
+              },
+        };
+      }}
+    >
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
+        <Stack spacing={1.6} sx={{ maxWidth: { xs: '100%', md: 700 } }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            useFlexGap
+            sx={{ flexWrap: 'wrap', alignItems: 'center' }}
+          >
+            <Chip
+              icon={<CampaignOutlinedIcon />}
+              label={banner?.titulo ? 'Campaña vigente' : 'Explora nuestros productos'}
+              variant="outlined"
+              sx={(theme) => {
+                const m = theme.palette.custom.semantic.storeMarketing;
+
+                return {
+                  color: hasBannerImage ? theme.palette.common.white : m.lightAccent,
+                  borderColor: hasBannerImage
+                    ? alpha(theme.palette.common.white, 0.28)
+                    : alpha(m.lightAccent, 0.38),
+                  bgcolor: hasBannerImage
+                    ? alpha(theme.palette.common.black, 0.18)
+                    : alpha(m.lightBg, 0.76),
+                  '& .MuiChip-icon': {
+                    color: hasBannerImage ? theme.palette.common.white : m.lightAccent,
+                  },
+                };
+              }}
+            />
+
+            {promotions.length > 0 && (
+              <Chip
+                label={`${promotions.length} promoción(es) activa(s)`}
+                variant="outlined"
                 sx={(theme) => {
                   const m = theme.palette.custom.semantic.storeMarketing;
 
                   return {
-                    borderRadius: theme.palette.custom.radius.xs,
-                    backgroundImage: 'none',
-                    bgcolor: m.heroCardBg,
-                    color: m.darkText,
-                    border: `1px solid ${m.darkBorder}`,
-                    boxShadow: theme.palette.custom.shadows.lg,
-                    overflow: 'hidden',
+                    color: hasBannerImage ? theme.palette.common.white : m.lightAccent,
+                    borderColor: hasBannerImage
+                      ? alpha(theme.palette.common.white, 0.28)
+                      : alpha(m.lightAccent, 0.38),
+                    bgcolor: hasBannerImage
+                      ? alpha(theme.palette.common.black, 0.16)
+                      : alpha(m.lightBg, 0.76),
                   };
                 }}
-              >
-                <CardContent sx={{ p: { xs: 3, md: 4 }, '&:last-child': { pb: { xs: 3, md: 4 } } }}>
-                  <Box
-                    sx={(theme) => ({
-                      width: 58,
-                      height: 58,
-                      borderRadius: theme.palette.custom.radius.xs,
-                      display: 'grid',
-                      placeItems: 'center',
-                      mb: 3,
-                      color: theme.palette.custom.semantic.storeMarketing.darkAccent,
-                      bgcolor: theme.palette.custom.semantic.storeMarketing.darkAccentSoft,
-                      border: `1px solid ${theme.palette.custom.semantic.storeMarketing.darkBorder}`,
-                    })}
-                  >
-                    <StorefrontOutlinedIcon sx={{ fontSize: 30 }} />
-                  </Box>
+              />
+            )}
+          </Stack>
 
-                  <Typography variant="h3" sx={(theme) => ({ mb: 1.5, color: theme.palette.custom.semantic.storeMarketing.darkText })}>
-                    Compra simple, presentación premium
-                  </Typography>
-                  <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.darkMuted, lineHeight: 1.75 })}>
-                    Una experiencia pensada para clientes finales, mayoristas y pedidos personalizados.
-                  </Typography>
+          <Typography
+            variant="h1"
+            sx={(theme) => ({
+              color: hasBannerImage
+                ? theme.palette.common.white
+                : theme.palette.custom.semantic.storeMarketing.lightText,
+              fontSize: { xs: '1.9rem', sm: '2.3rem', md: '3rem' },
+              lineHeight: 1.08,
+              maxWidth: 780,
+              textShadow: hasBannerImage
+                ? `0 3px 24px ${alpha(theme.palette.common.black, 0.42)}`
+                : 'none',
+            })}
+          >
+            {banner?.titulo || 'Empaques premium para cajas, bolsas y presentación de marca'}
+          </Typography>
 
-                  <Box sx={{ display: 'grid', gap: 1.25, mt: 3 }}>
-                    {experienceItems.map((item) => (
-                      <Box
-                        key={item.label}
-                        sx={(theme) => ({
-                          p: 1.5,
-                          borderRadius: theme.palette.custom.radius.xs,
-                          bgcolor: theme.palette.custom.semantic.storeMarketing.darkCardBg,
-                          border: `1px solid ${theme.palette.custom.semantic.storeMarketing.darkCardBorder}`,
-                        })}
-                      >
-                        <Typography variant="overline" component="p" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.darkAccent, lineHeight: 1.2 })}>
-                          {item.label}
-                        </Typography>
-                        <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.darkMuted })}>
-                          {item.value}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
+          <Typography
+            variant="body1"
+            sx={(theme) => ({
+              color: hasBannerImage
+                ? alpha(theme.palette.common.white, 0.84)
+                : theme.palette.custom.semantic.storeMarketing.lightMuted,
+              maxWidth: 620,
+              lineHeight: 1.72,
+              textShadow: hasBannerImage
+                ? `0 2px 14px ${alpha(theme.palette.common.black, 0.3)}`
+                : 'none',
+            })}
+          >
+            {banner?.subtitulo ||
+              'Compra cajas, bolsas y empaques con catálogo ordenado, cotizaciones personalizadas y atención clara para cada pedido.'}
+          </Typography>
 
-      {/* =========================================================
-          BENEFICIOS DE LA TIENDA
-      ========================================================= */}
-      <Box component="section" sx={(theme) => ({ bgcolor: theme.palette.custom.semantic.storeMarketing.freshBg, py: { xs: 7, md: 9 } })}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 0.5 }}>
+            <Button
+              component={heroCtaIsExternal ? 'a' : RouterLink}
+              to={heroCtaIsExternal ? undefined : heroCtaUrl}
+              href={heroCtaIsExternal ? heroCtaUrl : undefined}
+              target={heroCtaIsExternal ? '_blank' : undefined}
+              rel={heroCtaIsExternal ? 'noreferrer' : undefined}
+              variant="contained"
+              size="large"
+              endIcon={<ArrowForwardRoundedIcon />}
+            >
+              {banner?.boton_texto || 'Ver productos'}
+            </Button>
+
+            <Button
+              component={RouterLink}
+              to="/mayoristas"
+              variant={hasBannerImage ? 'outlined' : 'text'}
+              size="large"
+              sx={(theme) => {
+                const m = theme.palette.custom.semantic.storeMarketing;
+
+                return hasBannerImage
+                  ? {
+                      color: theme.palette.common.white,
+                      borderColor: alpha(theme.palette.common.white, 0.42),
+                      bgcolor: alpha(theme.palette.common.black, 0.12),
+                      '&:hover': {
+                        borderColor: theme.palette.common.white,
+                        bgcolor: alpha(theme.palette.common.black, 0.22),
+                      },
+                    }
+                  : {
+                      color: m.lightAccent,
+                      fontWeight: 700,
+                      '&:hover': {
+                        bgcolor: alpha(m.lightAccent, 0.08),
+                      },
+                    };
+              }}
+            >
+              Programa mayorista
+            </Button>
+          </Stack>
+        </Stack>
+      </Container>
+    </Box>
+  );
+};
+
+export const HomePage = () => {
+  const { banners = [], promotions = [] } = useStoreMarketing();
+
+  const safeBanners = Array.isArray(banners) ? banners : [];
+  const safePromotions = Array.isArray(promotions) ? promotions : [];
+
+  const heroBanner = safeBanners[0] || null;
+  const secondaryBanners = safeBanners.slice(1, 4);
+
+  return (
+    <Box sx={(theme) => ({ bgcolor: theme.palette.custom.semantic.storeMarketing.lightBg })}>
+      <HomeHero banner={heroBanner} promotions={safePromotions} />
+
+      <HomeSecondaryBanners banners={secondaryBanners} />
+
+      <Box
+        component="section"
+        sx={(theme) => ({
+          bgcolor: theme.palette.custom.semantic.storeMarketing.freshBg,
+          py: { xs: 7, md: 9 },
+        })}
+      >
         <Container maxWidth="xl">
           <StoreSectionHeader
             eyebrow="Experiencia de compra"
@@ -220,9 +460,6 @@ export const HomePage = () => {
         </Container>
       </Box>
 
-      {/* =========================================================
-          ACCESOS COMERCIALES
-      ========================================================= */}
       <Box
         component="section"
         sx={(theme) => {
@@ -239,22 +476,53 @@ export const HomePage = () => {
         <Container maxWidth="lg">
           <Grid container spacing={3} sx={{ alignItems: 'center' }}>
             <Grid size={{ xs: 12, md: 7 }}>
-              <Typography variant="overline" component="p" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.darkAccent, fontWeight: 800, letterSpacing: '0.2em' })}>
+              <Typography
+                variant="overline"
+                component="p"
+                sx={(theme) => ({
+                  color: theme.palette.custom.semantic.storeMarketing.darkAccent,
+                  fontWeight: 800,
+                  letterSpacing: '0.2em',
+                })}
+              >
                 Atención comercial
               </Typography>
-              <Typography variant="h2" sx={(theme) => ({ mt: 1, color: theme.palette.custom.semantic.storeMarketing.darkText })}>
+
+              <Typography
+                variant="h2"
+                sx={(theme) => ({
+                  mt: 1,
+                  color: theme.palette.custom.semantic.storeMarketing.darkText,
+                })}
+              >
                 ¿Necesitas precios por volumen o empaques personalizados?
               </Typography>
-              <Typography variant="body1" sx={(theme) => ({ mt: 1.5, color: theme.palette.custom.semantic.storeMarketing.darkMuted, lineHeight: 1.75 })}>
-                Te ayudamos a elegir medidas, cantidades, materiales y alternativas de abastecimiento según tu negocio.
+
+              <Typography
+                variant="body1"
+                sx={(theme) => ({
+                  mt: 1.5,
+                  color: theme.palette.custom.semantic.storeMarketing.darkMuted,
+                  lineHeight: 1.75,
+                })}
+              >
+                Te ayudamos a elegir medidas, cantidades, materiales y alternativas de
+                abastecimiento según tu negocio.
               </Typography>
             </Grid>
 
             <Grid size={{ xs: 12, md: 5 }}>
               <Stack direction={{ xs: 'column', sm: 'row', md: 'column' }} spacing={1.5}>
-                <Button component={RouterLink} to="/contacto?motivo=cotizacion" variant="contained" size="large" endIcon={<ArrowForwardRoundedIcon />}>
+                <Button
+                  component={RouterLink}
+                  to="/contacto?motivo=cotizacion"
+                  variant="contained"
+                  size="large"
+                  endIcon={<ArrowForwardRoundedIcon />}
+                >
                   Solicitar cotización
                 </Button>
+
                 <Button
                   component={RouterLink}
                   to="/nuestra-historia"

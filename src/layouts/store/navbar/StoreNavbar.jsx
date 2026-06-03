@@ -2,7 +2,7 @@
  * Navbar público de la tienda.
  */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   AppBar,
@@ -11,8 +11,9 @@ import {
   Chip,
   Container,
   IconButton,
-  Menu as MuiMenu,
   MenuItem,
+  MenuList,
+  Paper,
   Stack,
   Toolbar,
   Typography,
@@ -20,6 +21,7 @@ import {
 
 import {
   AccountCircle,
+  CloseRounded,
   DarkMode,
   KeyboardArrowDown,
   LightMode,
@@ -29,6 +31,7 @@ import {
 import { Link as RouterLink, NavLink, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../../hooks/auth/useAuth';
+import { useStoreSettings } from '../../../hooks/store/useStoreSettings';
 import { useThemeMode } from '../../../providers/AppThemeProvider';
 
 import { StoreCartButton } from './StoreCartButton';
@@ -65,18 +68,47 @@ export const StoreNavbar = () => {
 
   const { mode, toggleColorMode } = useThemeMode();
   const { user, roles, isAuthenticated } = useAuth();
+  const { settings } = useStoreSettings();
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [catalogAnchorEl, setCatalogAnchorEl] = useState(null);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [dismissedTopbarText, setDismissedTopbarText] = useState('');
+  const closeTimerRef = useRef(null);
 
+  const topbarText = settings.mensaje_topbar || settings.slogan || '';
+  const showTopbar = Boolean(topbarText) && dismissedTopbarText !== topbarText;
   const isLoggedIn = isAuthenticated ?? Boolean(user);
-  const isCatalogOpen = Boolean(catalogAnchorEl);
   const isCatalogActive = location.pathname === '/catalogo';
   const currentUrl = `${location.pathname}${location.search}`;
 
+  useEffect(() => {
+    try {
+      setDismissedTopbarText(sessionStorage.getItem('aliqora_topbar_dismissed_text') || '');
+    } catch {
+      setDismissedTopbarText('');
+    }
+  }, []);
+
+  const handleDismissTopbar = () => {
+    setDismissedTopbarText(topbarText);
+    try {
+      sessionStorage.setItem('aliqora_topbar_dismissed_text', topbarText);
+    } catch {
+      // sessionStorage puede no estar disponible en algunos entornos.
+    }
+  };
+
   const handleDrawerToggle = () => setMobileOpen((prev) => !prev);
-  const handleOpenCatalogMenu = (event) => setCatalogAnchorEl(event.currentTarget);
-  const handleCloseCatalogMenu = () => setCatalogAnchorEl(null);
+  const handleCloseCatalogMenu = () => setIsCatalogOpen(false);
+
+  const scheduleCatalogClose = () => {
+    closeTimerRef.current = setTimeout(() => setIsCatalogOpen(false), 250);
+  };
+  const cancelCatalogClose = () => clearTimeout(closeTimerRef.current);
+  const handleCatalogEnter = () => {
+    cancelCatalogClose();
+    setIsCatalogOpen(true);
+  };
 
   const renderMainNavButton = (item) => (
     <Button key={item.to} component={NavLink} to={item.to} color="inherit" sx={getNavButtonSx()}>
@@ -86,39 +118,60 @@ export const StoreNavbar = () => {
 
   return (
     <>
-      <Box
-        sx={(theme) => {
-          const nav = theme.palette.custom.semantic.storeNavigation;
+      {showTopbar && (
+        <Box
+          sx={(theme) => {
+            const nav = theme.palette.custom.semantic.storeNavigation;
 
-          return {
-            borderBottom: `1px solid ${nav.border}`,
-            bgcolor: nav.bg,
-            color: nav.text,
-          };
-        }}
-      >
-        <Container maxWidth="xl">
-          <Box
-            sx={{
-              py: 1,
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', md: 'center' },
-              gap: 1,
-            }}
-          >
-            <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.textMuted })}>
-              Empaques premium para cajas, bolsas y presentación de marca
-            </Typography>
+            return {
+              borderBottom: `1px solid ${nav.border}`,
+              bgcolor: nav.bg,
+              color: nav.text,
+            };
+          }}
+        >
+          <Container maxWidth="xl">
+            <Box
+              sx={{
+                py: 0.8,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 1.25,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={(theme) => ({
+                  color: theme.palette.custom.semantic.storeNavigation.textMuted,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: { xs: 'normal', md: 'nowrap' },
+                })}
+              >
+                {topbarText}
+              </Typography>
 
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Chip label="Envíos rápidos" color="primary" size="small" />
-              <Chip label="Atención personalizada" color="secondary" size="small" />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1, flexWrap: 'wrap' }}>
+                  {settings.telefono_atencion && <Chip label={settings.telefono_atencion} color="primary" size="small" />}
+                  {settings.whatsapp && <Chip label="WhatsApp disponible" color="secondary" size="small" />}
+                  {!settings.telefono_atencion && !settings.whatsapp && <Chip label="Atención personalizada" color="secondary" size="small" />}
+                </Box>
+
+                <IconButton
+                  size="small"
+                  onClick={handleDismissTopbar}
+                  aria-label="Cerrar aviso superior"
+                  sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.textMuted })}
+                >
+                  <CloseRounded fontSize="small" />
+                </IconButton>
+              </Box>
             </Box>
-          </Box>
-        </Container>
-      </Box>
+          </Container>
+        </Box>
+      )}
 
       <AppBar
         position="sticky"
@@ -172,29 +225,56 @@ export const StoreNavbar = () => {
             <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
               {storeMainMenuItems.map(renderMainNavButton)}
 
-              <Button
-                onClick={handleOpenCatalogMenu}
-                endIcon={<KeyboardArrowDown />}
-                sx={getNavButtonSx(isCatalogActive)}
+              <Box
+                sx={{ position: 'relative' }}
+                onMouseEnter={handleCatalogEnter}
+                onMouseLeave={scheduleCatalogClose}
               >
-                Catálogo
-              </Button>
+                <Button
+                  endIcon={
+                    <KeyboardArrowDown
+                      sx={{
+                        transition: 'transform 200ms',
+                        transform: isCatalogOpen ? 'rotate(180deg)' : 'none',
+                      }}
+                    />
+                  }
+                  sx={getNavButtonSx(isCatalogActive || isCatalogOpen)}
+                >
+                  Catálogo
+                </Button>
+
+                {isCatalogOpen && (
+                  <Paper
+                    elevation={0}
+                    sx={(theme) => ({
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      mt: '4px',
+                      minWidth: 200,
+                      zIndex: theme.zIndex.modal,
+                      boxShadow: theme.palette.custom.shadows.lg,
+                    })}
+                  >
+                    <MenuList disablePadding sx={{ py: 0.75 }}>
+                      {storeCatalogMenuItems.map((item) => (
+                        <MenuItem
+                          key={item.to}
+                          component={RouterLink}
+                          to={item.to}
+                          onClick={handleCloseCatalogMenu}
+                          selected={currentUrl === item.to}
+                        >
+                          {item.label}
+                        </MenuItem>
+                      ))}
+                    </MenuList>
+                  </Paper>
+                )}
+              </Box>
 
               {storeAfterCatalogMenuItems.map(renderMainNavButton)}
-
-              <MuiMenu anchorEl={catalogAnchorEl} open={isCatalogOpen} onClose={handleCloseCatalogMenu}>
-                {storeCatalogMenuItems.map((item) => (
-                  <MenuItem
-                    key={item.to}
-                    component={RouterLink}
-                    to={item.to}
-                    onClick={handleCloseCatalogMenu}
-                    selected={currentUrl === item.to}
-                  >
-                    {item.label}
-                  </MenuItem>
-                ))}
-              </MuiMenu>
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexShrink: 0 }}>

@@ -9,6 +9,7 @@ import { validateEnv } from '../config/env';
 import { AppThemeProvider } from './AppThemeProvider';
 import { AuthProvider } from './AuthProvider';
 import { QueryProvider } from './QueryProvider';
+import { FeedbackProvider } from './FeedbackProvider';
 
 validateEnv();
 
@@ -18,7 +19,9 @@ export const AppProviders = ({ children }) => {
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
         <BrowserRouter>
           <QueryProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <FeedbackProvider>{children}</FeedbackProvider>
+            </AuthProvider>
           </QueryProvider>
         </BrowserRouter>
       </LocalizationProvider>

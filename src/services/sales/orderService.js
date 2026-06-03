@@ -40,7 +40,25 @@ export const getOrderDetail = async (id) => {
   });
 
   const detail = Array.isArray(response.data) ? response.data[0] : response.data;
-  return normalizeOrderDetail(detail || {});
+
+  let deliveryData = detail?.datos_entrega || detail?.direccion_entrega || null;
+
+  if (!deliveryData) {
+    try {
+      const deliveryResponse = await restApi.post('/rpc/obtener_entrega_pedido_admin', {
+        p_pedido_id: id,
+      });
+
+      deliveryData = deliveryResponse.data || null;
+    } catch {
+      deliveryData = null;
+    }
+  }
+
+  return normalizeOrderDetail({
+    ...(detail || {}),
+    datos_entrega: deliveryData || detail?.datos_entrega || detail?.direccion_entrega || null,
+  });
 };
 
 export const changeOrderStatus = async ({ pedidoId, estadoNuevo, comentario }) => {
