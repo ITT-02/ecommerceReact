@@ -1,7 +1,7 @@
 // Detalle, pago y seguimiento de un pedido del cliente.
 // Oculta datos de pago cuando el pedido está cancelado, vencido o en reembolso.
 
-import { useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Alert,
@@ -23,6 +23,7 @@ import {
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { LoadingScreen } from '../../components/common/LoadingScreen';
 import { TrackingCard } from '../../components/orders/TrackingCard';
+import { OrderHistoryCard } from '../../components/orders/OrderHistoryCard';
 import {
   useActiveStorePaymentMethods,
   useMyOrderDetail,
@@ -99,7 +100,7 @@ export const OrderTrackingPage = () => {
     if (!order || !methods.length || metodoPago || !canRegisterPayment) return;
 
     const fromOrder = methods.find((method) => method.nombre === order.metodo_pago);
-    setMetodoPago((fromOrder || methods[0]).nombre);
+    startTransition(() => setMetodoPago((fromOrder || methods[0]).nombre));
   }, [methods, metodoPago, order, canRegisterPayment]);
 
   const handleFileChange = (event) => {
@@ -413,26 +414,7 @@ export const OrderTrackingPage = () => {
                 <Stack spacing={3}>
                   <TrackingCard order={order} title="Seguimiento del envío" />
 
-                  <Card>
-                    <CardContent>
-                      <Stack spacing={2}>
-                        <Typography variant="h5">Historial</Typography>
-                        {(order.historial || []).map((event) => (
-                          <Box key={event.id}>
-                            <Typography fontWeight={800}>{event.estado_nuevo}</Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {formatDate(event.created_at)}
-                            </Typography>
-                            {event.comentario && (
-                              <Typography variant="body2" color="text.secondary">
-                                {event.comentario}
-                              </Typography>
-                            )}
-                          </Box>
-                        ))}
-                      </Stack>
-                    </CardContent>
-                  </Card>
+                  <OrderHistoryCard order={order} />
                 </Stack>
               </Grid>
             </Grid>
