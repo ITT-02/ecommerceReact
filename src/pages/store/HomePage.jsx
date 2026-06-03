@@ -34,11 +34,7 @@ const highlights = [
   },
 ];
 
-const experienceItems = [
-  { label: 'Mayoristas', value: 'precios por volumen' },
-  { label: 'Cotizaciones', value: 'personalización ordenada' },
-  { label: 'Envíos', value: 'seguimiento con transportista' },
-];
+
 
 export const HomePage = () => {
   return (
@@ -159,33 +155,7 @@ export const HomePage = () => {
                     <StorefrontOutlinedIcon sx={{ fontSize: 30 }} />
                   </Box>
 
-                  <Typography variant="h3" sx={(theme) => ({ mb: 1.5, color: theme.palette.custom.semantic.storeMarketing.darkText })}>
-                    Compra simple, presentación premium
-                  </Typography>
-                  <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.darkMuted, lineHeight: 1.75 })}>
-                    Una experiencia pensada para clientes finales, mayoristas y pedidos personalizados.
-                  </Typography>
 
-                  <Box sx={{ display: 'grid', gap: 1.25, mt: 3 }}>
-                    {experienceItems.map((item) => (
-                      <Box
-                        key={item.label}
-                        sx={(theme) => ({
-                          p: 1.5,
-                          borderRadius: theme.palette.custom.radius.xs,
-                          bgcolor: theme.palette.custom.semantic.storeMarketing.darkCardBg,
-                          border: `1px solid ${theme.palette.custom.semantic.storeMarketing.darkCardBorder}`,
-                        })}
-                      >
-                        <Typography variant="overline" component="p" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.darkAccent, lineHeight: 1.2 })}>
-                          {item.label}
-                        </Typography>
-                        <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.darkMuted })}>
-                          {item.value}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
                 </CardContent>
               </Card>
             </Grid>
