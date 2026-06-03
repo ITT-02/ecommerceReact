@@ -1,167 +1,157 @@
 // src/pages/store/MyOrdersPage.jsx
-// Mis pedidos del cliente.
-// Muestra estado de pedido, pago y seguimiento, agrupados visualmente por meses.
-
 import { useState, useMemo } from 'react';
 import {
-  Box,
-  Button,
-  Chip,
-  Container,
-  Stack,
-  TextField,
-  Typography,
-  InputAdornment,
-  Divider,
+  Box, Button, Container, Stack, TextField, Typography,
+  InputAdornment, Select, MenuItem, FormControl, InputLabel,
+  Chip, IconButton,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
-import SearchIcon from '@mui/icons-material/Search';
-import FilterListIcon from '@mui/icons-material/FilterList';
-
-// Íconos adaptados al diseño de la imagen
+import SearchIcon                from '@mui/icons-material/Search';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
-import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
-import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import CheckCircleOutlinedIcon   from '@mui/icons-material/CheckCircleOutlined';
+import ScheduleOutlinedIcon      from '@mui/icons-material/ScheduleOutlined';
+import Inventory2OutlinedIcon    from '@mui/icons-material/Inventory2Outlined';
+import SettingsOutlinedIcon      from '@mui/icons-material/SettingsOutlined';
+import CancelOutlinedIcon        from '@mui/icons-material/CancelOutlined';
+import ArrowForwardIcon          from '@mui/icons-material/ArrowForward';
+import CloseIcon                 from '@mui/icons-material/Close';
 
-import { EmptyState } from '../../components/common/EmptyState';
-import { ErrorMessage } from '../../components/common/ErrorMessage';
+import { EmptyState }    from '../../components/common/EmptyState';
+import { ErrorMessage }  from '../../components/common/ErrorMessage';
 import { LoadingScreen } from '../../components/common/LoadingScreen';
-import { useMyOrders } from '../../hooks/store/useStoreOrders';
+import { useMyOrders }   from '../../hooks/store/useStoreOrders';
 import { formatCurrency } from '../../utils/formatters';
 
-// Mapeo exacto de estados con los colores, bordes y estilos de la imagen
-const getOrderStatusInfo = (estadoEnvio, estadoPago) => {
-  // 1. Pago Vencido
-  if (estadoPago === 'vencido') {
-    return {
-      label: 'Pago vencido',
-      key: 'pago_vencido',
-      icon: <ScheduleOutlinedIcon />,
-      borderColor: '#ec4899', // Rosa
-      bg: 'rgba(253, 242, 248, 0.1)',
-      color: '#f472b6',
-      borderChip: 'rgba(244, 114, 182, 0.3)'
-    };
-  }
-  // 2. Cancelado
-  if (estadoEnvio === 'cancelado') {
-    return {
-      label: 'Cancelado',
-      key: 'cancelado',
-      icon: <CancelOutlinedIcon />,
-      borderColor: '#ef4444', // Rojo
-      bg: 'rgba(254, 242, 242, 0.1)',
-      color: '#f87171',
-      borderChip: 'rgba(248, 113, 113, 0.3)'
-    };
-  }
-  // 3. Entregado
-  if (estadoEnvio === 'entregado') {
-    return {
-      label: 'Entregado',
-      key: 'entregado',
-      icon: <CheckCircleOutlineIcon />,
-      borderColor: '#22c55e', // Verde
-      bg: 'rgba(240, 253, 250, 0.1)',
-      color: '#4ade80',
-      borderChip: 'rgba(74, 222, 128, 0.3)'
-    };
-  }
-  // 4. En tránsito
-  if (estadoEnvio === 'en_transito') {
-    return {
-      label: 'En tránsito',
-      key: 'en_transito',
-      icon: <LocalShippingOutlinedIcon />,
-      borderColor: '#f59e0b', // Naranja/Dorado
-      bg: 'rgba(254, 243, 199, 0.1)',
-      color: '#fbbf24',
-      borderChip: 'rgba(251, 191, 36, 0.3)'
-    };
-  }
-  // 5. Bajo pedido
-  if (estadoEnvio === 'bajo_pedido') {
-    return {
-      label: 'Bajo pedido',
-      key: 'bajo_pedido',
-      icon: <ArchiveOutlinedIcon />,
-      borderColor: '#6366f1', // Morado/Índigo
-      bg: 'rgba(238, 242, 255, 0.1)',
-      color: '#818cf8',
-      borderChip: 'rgba(129, 140, 248, 0.3)'
-    };
-  }
-  // 6. Preparando
-  if (estadoEnvio === 'preparando') {
-    return {
-      label: 'Preparando',
-      key: 'preparando',
-      icon: <SettingsOutlinedIcon />,
-      borderColor: '#3b82f6', // Azul
-      bg: 'rgba(239, 246, 255, 0.1)',
-      color: '#60a5fa',
-      borderChip: 'rgba(96, 165, 250, 0.3)'
-    };
-  }
-  // 7. Pendiente (Por defecto)
-  return {
-    label: 'Pendiente',
-    key: 'pendiente',
-    icon: <ScheduleOutlinedIcon />,
-    borderColor: '#9ca3af', // Gris
-    bg: 'rgba(249, 250, 251, 0.1)',
-    color: '#d1d5db',
-    borderChip: 'rgba(209, 213, 219, 0.3)'
-  };
+// ─── Config de estados ────────────────────────────────────────────────────────
+const STATUS_MAP = {
+  entregado:             { label: 'Entregado',    borderColor: '#22c55e', bg: '#f0fdf4', color: '#15803d', Icon: CheckCircleOutlinedIcon   },
+  en_destino:            { label: 'Entregado',    borderColor: '#22c55e', bg: '#f0fdf4', color: '#15803d', Icon: CheckCircleOutlinedIcon   },
+  en_transito:           { label: 'En tránsito',  borderColor: '#f59e0b', bg: '#fffbeb', color: '#b45309', Icon: LocalShippingOutlinedIcon },
+  entregado_repartidora: { label: 'En tránsito',  borderColor: '#f59e0b', bg: '#fffbeb', color: '#b45309', Icon: LocalShippingOutlinedIcon },
+  preparando:            { label: 'Preparando',   borderColor: '#3b82f6', bg: '#eff6ff', color: '#1d4ed8', Icon: SettingsOutlinedIcon      },
+  bajo_pedido:           { label: 'Bajo pedido',  borderColor: '#6366f1', bg: '#eef2ff', color: '#4338ca', Icon: Inventory2OutlinedIcon    },
+  cancelado:             { label: 'Cancelado',    borderColor: '#ef4444', bg: '#fef2f2', color: '#b91c1c', Icon: CancelOutlinedIcon        },
+  incidencia:            { label: 'Incidencia',   borderColor: '#ef4444', bg: '#fef2f2', color: '#b91c1c', Icon: CancelOutlinedIcon        },
+  pago_vencido:          { label: 'Pago vencido', borderColor: '#ec4899', bg: '#fdf2f8', color: '#9d174d', Icon: ScheduleOutlinedIcon     },
+  pendiente:             { label: 'Pendiente',    borderColor: '#9ca3af', bg: '#f9fafb', color: '#4b5563', Icon: ScheduleOutlinedIcon     },
 };
 
-// Función para agrupar los pedidos por mes (ej. "Noviembre 2025")
+const getOrderStatus = (estadoPedido, estadoEnvio, estadoPago) => {
+  if (estadoPedido === 'cancelado' || estadoEnvio === 'cancelado') return STATUS_MAP.cancelado;
+  if (estadoPago === 'vencido')     return STATUS_MAP.pago_vencido;
+  if (estadoEnvio && STATUS_MAP[estadoEnvio]) return STATUS_MAP[estadoEnvio];
+  if (estadoPago === 'pagado')      return STATUS_MAP.preparando;
+  return STATUS_MAP.pendiente;
+};
+
+const getDisplayStatus = (order, filters) => {
+  // Si hay filtro activo, mostrar ese estado específico
+  if (filters.estado_envio  && order.estado_envio)  
+    return STATUS_MAP[order.estado_envio]  ?? STATUS_MAP.pendiente;
+  if (filters.estado_pago   && order.estado_pago === 'vencido')  
+    return STATUS_MAP.pago_vencido;
+  if (filters.estado_pedido && order.estado_pedido === 'cancelado') 
+    return STATUS_MAP.cancelado;
+  
+  // Sin filtro: prioridad normal
+  return getOrderStatus(order.estado_pedido, order.estado_envio, order.estado_pago);
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const groupOrdersByMonth = (orders) => {
   const groups = {};
-  orders.forEach(order => {
+  orders.forEach((order) => {
     if (!order.created_at) return;
-    const date = new Date(order.created_at);
+    const date  = new Date(order.created_at);
     const month = date.toLocaleString('es-ES', { month: 'long' });
-    const year = date.getFullYear();
-    const key = `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
+    const year  = date.getFullYear();
+    const key   = `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
     if (!groups[key]) groups[key] = [];
     groups[key].push(order);
   });
   return groups;
 };
 
-// Formateador de fecha simple (ej. "14 Nov 2025")
 const formatShortDate = (dateString) => {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
+  const date  = new Date(dateString);
+  const day   = String(date.getDate()).padStart(2, '0');
   const month = date.toLocaleString('es-ES', { month: 'short' }).replace('.', '');
-  const year = date.getFullYear();
+  const year  = date.getFullYear();
   return `${day} ${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
 };
 
-export const MyOrdersPage = () => {
-  const theme = useTheme(); 
-  const isDark = theme.palette.mode === 'dark';
-  const [searchTerm, setSearchTerm] = useState('');
+// ─── Opciones de los selectores ────────────────────────────────────────────────
+const FILTER_OPTIONS = {
+  estado_pedido: [
+    { value: '',          label: 'Todos los pedidos' },
+    { value: 'activo',    label: 'Activo'            },
+    { value: 'cancelado', label: 'Cancelado'         },
+  ],
+  estado_pago: [
+    { value: '',          label: 'Todos los pagos' },
+    { value: 'pagado',    label: 'Pagado'          },
+    { value: 'pendiente', label: 'Pendiente'       },
+    { value: 'vencido',   label: 'Vencido'         },
+  ],
+  estado_envio: [
+    { value: '',            label: 'Todos los envíos' },
+    { value: 'preparando',  label: 'Preparando'       },
+    { value: 'bajo_pedido', label: 'Bajo pedido'      },
+    { value: 'en_transito', label: 'En tránsito'      },
+    { value: 'entregado',   label: 'Entregado'        },
+    { value: 'cancelado',   label: 'Cancelado'        },
+    { value: 'incidencia',  label: 'Incidencia'       },
+  ],
+};
 
-  const { orders = [], loading, error } = useMyOrders({
-    pageNumber: 1,
-    pageSize: 100, 
+// Estilos compartidos para los Select
+const selectSx = (isDark) => ({
+  bgcolor: isDark ? '#1e1e1e' : '#ffffff',
+  color: isDark ? '#fff' : '#111827',
+  borderRadius: '10px',
+  fontSize: '0.875rem',
+  '& fieldset': { borderColor: isDark ? '#2e2e2e' : '#e5e7eb' },
+  '&:hover fieldset': { borderColor: isDark ? '#444' : '#d1d5db' },
+  '&.Mui-focused fieldset': { borderColor: isDark ? '#6366f1' : '#818cf8' },
+});
+
+// ─── Página principal ──────────────────────────────────────────────────────────
+export const MyOrdersPage = () => {
+  const theme  = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    estado_pedido: '',
+    estado_pago:   '',
+    estado_envio:  '',
   });
 
+  const { orders = [], loading, error } = useMyOrders({ pageNumber: 1, pageSize: 100 });
+
+  const handleFilter = (key, value) => setFilters((p) => ({ ...p, [key]: value }));
+  const handleClear  = () => setFilters({ estado_pedido: '', estado_pago: '', estado_envio: '' });
+
+  const activeCount = Object.values(filters).filter(Boolean).length;
+
   const filteredOrders = useMemo(() => {
-    if (!searchTerm) return orders;
-    return orders.filter(o => 
-      o.numero_pedido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.id?.toString().includes(searchTerm) ||
-      o.titulo_pedido?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [orders, searchTerm]);
+    return orders.filter((o) => {
+      if (searchTerm.trim()) {
+        const q = searchTerm.toLowerCase();
+        if (
+          !o.numero_pedido?.toLowerCase().includes(q) &&
+          !o.id?.toString().includes(q) &&
+          !o.titulo_pedido?.toLowerCase().includes(q)
+        ) return false;
+      }
+      if (filters.estado_pedido && o.estado_pedido !== filters.estado_pedido) return false;
+      if (filters.estado_pago   && o.estado_pago   !== filters.estado_pago)   return false;
+      if (filters.estado_envio  && o.estado_envio  !== filters.estado_envio)  return false;
+      return true;
+    });
+  }, [orders, searchTerm, filters]);
 
   const groupedOrders = useMemo(() => groupOrdersByMonth(filteredOrders), [filteredOrders]);
 
@@ -170,70 +160,216 @@ export const MyOrdersPage = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: isDark ? '#121212' : '#f9fafb', py: 6, transition: 'background-color 0.3s' }}>
       <Container maxWidth="lg">
-        
-        {/* ENCABEZADO */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' }, 
-          justifyContent: 'space-between', 
-          alignItems: { xs: 'flex-start', sm: 'center' }, 
-          mb: 4, gap: 3 
+
+        {/* ── Encabezado ────────────────────────────── */}
+        <Box sx={{ mb: 4 }}>
+          <Typography sx={{
+            fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em',
+            color: isDark ? '#a3a3a3' : '#9ca3af', textTransform: 'uppercase', mb: 0.5,
+          }}>
+            Cuenta
+          </Typography>
+          <Typography sx={{
+            fontWeight: 700, letterSpacing: '-0.5px',
+            color: isDark ? '#ffffff' : '#111827',
+            fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.5rem' },
+          }}>
+            Mis pedidos
+          </Typography>
+          <Typography sx={{
+            mt: 0.5, color: isDark ? '#a3a3a3' : '#6b7280',
+            fontSize: { xs: '0.9rem', sm: '1rem' },
+          }}>
+            Registro histórico y estado actual de tus adquisiciones.
+          </Typography>
+        </Box>
+
+        {/* ── Barra de búsqueda ─────────────────────── */}
+        <Box sx={{ mb: 2.5 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Buscar por número de pedido o nombre..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" sx={{ color: isDark ? '#a3a3a3' : '#9ca3af' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: searchTerm ? (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setSearchTerm('')}>
+                      <CloseIcon sx={{ fontSize: 16, color: isDark ? '#a3a3a3' : '#9ca3af' }} />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+              },
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                ...selectSx(isDark),
+                py: 0.25,
+              },
+            }}
+          />
+        </Box>
+
+        {/* ── FILTROS VISIBLES — 3 selectores a plena vista ── */}
+        <Box sx={{
+          bgcolor: isDark ? '#1a1a1a' : '#ffffff',
+          border: '1px solid', borderColor: isDark ? '#2e2e2e' : '#e5e7eb',
+          borderRadius: '12px', p: { xs: 2, sm: 2.5 }, mb: 4,
         }}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: '600', color: isDark ? '#ffffff' : '#111827', mb: 0.5, letterSpacing: '-0.5px' }}>
-              Mis pedidos
+          {/* Fila superior: título + botón limpiar */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography sx={{
+              fontSize: '0.78rem', fontWeight: 700,
+              color: isDark ? '#737373' : '#9ca3af',
+              textTransform: 'uppercase', letterSpacing: '0.07em',
+            }}>
+              Filtrar pedidos
             </Typography>
-            <Typography variant="body2" sx={{ color: isDark ? '#a3a3a3' : '#6b7280' }}>
-              Registro histórico y estado actual de tus adquisiciones.
-            </Typography>
+            {activeCount > 0 && (
+              <Button
+                onClick={handleClear}
+                startIcon={<CloseIcon sx={{ fontSize: '14px !important' }} />}
+                sx={{
+                  fontSize: '0.75rem', fontWeight: 600, color: '#ef4444',
+                  p: 0, minWidth: 'auto', textTransform: 'none',
+                  '&:hover': { bgcolor: 'transparent', color: '#dc2626' },
+                }}
+                disableRipple
+              >
+                Limpiar filtros
+              </Button>
+            )}
           </Box>
-          
-          {/* BARRA DE BÚSQUEDA Y FILTRADO */}
-          <Box sx={{ display: 'flex', gap: 1.5, width: { xs: '100%', sm: 'auto' }, alignItems: 'center' }}>
-            <TextField
-              size="small"
-              placeholder="Buscar pedido..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" sx={{ color: isDark ? '#a3a3a3' : '#6b7280' }}/>
-                    </InputAdornment>
-                  ),
-                }
-              }}
-              sx={{ 
-                minWidth: { sm: 240 },
-                '& .MuiOutlinedInput-root': {
-                  bgcolor: isDark ? '#1e1e1e' : '#ffffff',
-                  color: isDark ? '#fff' : '#111',
-                  borderRadius: '8px',
-                  '& fieldset': { borderColor: isDark ? 'transparent' : '#e5e7eb' },
-                  '&:hover fieldset': { borderColor: isDark ? '#333333' : '#d1d5db' },
-                  '&.Mui-focused fieldset': { borderColor: isDark ? '#555555' : '#9ca3af' },
-                }
-              }}
-            />
-            <Button 
-              variant="contained" 
-              startIcon={<FilterListIcon fontSize="small" />} 
-              sx={{ 
-                bgcolor: isDark ? '#1e1e1e' : '#ffffff', 
-                color: isDark ? '#ffffff' : '#111827',
-                textTransform: 'none',
-                borderRadius: '8px',
-                px: 2,
-                boxShadow: 'none',
-                border: '1px solid',
-                borderColor: isDark ? '#2e2e2e' : '#e5e7eb',
-                '&:hover': { bgcolor: isDark ? '#2a2a2a' : '#f3f4f6', boxShadow: 'none' }
-              }}
-            >
-              Filtrar
-            </Button>
+
+          {/* Los 3 selectores en fila */}
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
+            gap: 2,
+          }}>
+
+            {/* Selector 1: Estado del pedido */}
+            <FormControl size="small" fullWidth>
+              <InputLabel
+                shrink
+                sx={{
+                  fontSize: '0.78rem', fontWeight: 600,
+                  color: isDark ? '#737373' : '#6b7280',
+                  '&.Mui-focused': { color: isDark ? '#818cf8' : '#6366f1' },
+                }}
+              >
+                Estado del pedido
+              </InputLabel>
+              <Select
+                value={filters.estado_pedido}
+                onChange={(e) => handleFilter('estado_pedido', e.target.value)}
+                label="Estado del pedido"
+                notched
+                sx={selectSx(isDark)}
+                slotProps={{ paper: { sx: { borderRadius: 2, mt: 0.5 } } }}
+              >
+                {FILTER_OPTIONS.estado_pedido.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value} sx={{ fontSize: '0.875rem' }}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Selector 2: Estado del pago */}
+            <FormControl size="small" fullWidth>
+              <InputLabel
+                shrink
+                sx={{
+                  fontSize: '0.78rem', fontWeight: 600,
+                  color: isDark ? '#737373' : '#6b7280',
+                  '&.Mui-focused': { color: isDark ? '#818cf8' : '#6366f1' },
+                }}
+              >
+                Estado del pago
+              </InputLabel>
+              <Select
+                value={filters.estado_pago}
+                onChange={(e) => handleFilter('estado_pago', e.target.value)}
+                label="Estado del pago"
+                notched
+                sx={selectSx(isDark)}
+                slotProps={{ paper: { sx: { borderRadius: 2, mt: 0.5 } } }}
+              >
+                {FILTER_OPTIONS.estado_pago.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value} sx={{ fontSize: '0.875rem' }}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Selector 3: Estado del envío */}
+            <FormControl size="small" fullWidth>
+              <InputLabel
+                shrink
+                sx={{
+                  fontSize: '0.78rem', fontWeight: 600,
+                  color: isDark ? '#737373' : '#6b7280',
+                  '&.Mui-focused': { color: isDark ? '#818cf8' : '#6366f1' },
+                }}
+              >
+                Estado del envío
+              </InputLabel>
+              <Select
+                value={filters.estado_envio}
+                onChange={(e) => handleFilter('estado_envio', e.target.value)}
+                label="Estado del envío"
+                notched
+                sx={selectSx(isDark)}
+                slotProps={{ paper: { sx: { borderRadius: 2, mt: 0.5 } } }}
+              >
+                {FILTER_OPTIONS.estado_envio.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value} sx={{ fontSize: '0.875rem' }}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
           </Box>
+
+          {/* Chips de filtros activos */}
+          {activeCount > 0 && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 2, pt: 2, borderTop: '1px solid', borderColor: isDark ? '#2e2e2e' : '#f3f4f6' }}>
+              <Typography sx={{ fontSize: '0.72rem', color: isDark ? '#737373' : '#9ca3af', alignSelf: 'center', mr: 0.5 }}>
+                Aplicados:
+              </Typography>
+              {filters.estado_pedido && (
+                <Chip
+                  label={`Pedido: ${FILTER_OPTIONS.estado_pedido.find(o => o.value === filters.estado_pedido)?.label}`}
+                  size="small" onDelete={() => handleFilter('estado_pedido', '')}
+                  sx={{ fontSize: '0.72rem', fontWeight: 600, bgcolor: isDark ? '#2a2a2a' : '#eef2ff', color: isDark ? '#c7d2fe' : '#4338ca', border: '1px solid', borderColor: isDark ? '#6366f1' : '#c7d2fe', '& .MuiChip-deleteIcon': { color: isDark ? '#818cf8' : '#6366f1', fontSize: 14 } }}
+                />
+              )}
+              {filters.estado_pago && (
+                <Chip
+                  label={`Pago: ${FILTER_OPTIONS.estado_pago.find(o => o.value === filters.estado_pago)?.label}`}
+                  size="small" onDelete={() => handleFilter('estado_pago', '')}
+                  sx={{ fontSize: '0.72rem', fontWeight: 600, bgcolor: isDark ? '#2a2a2a' : '#eef2ff', color: isDark ? '#c7d2fe' : '#4338ca', border: '1px solid', borderColor: isDark ? '#6366f1' : '#c7d2fe', '& .MuiChip-deleteIcon': { color: isDark ? '#818cf8' : '#6366f1', fontSize: 14 } }}
+                />
+              )}
+              {filters.estado_envio && (
+                <Chip
+                  label={`Envío: ${FILTER_OPTIONS.estado_envio.find(o => o.value === filters.estado_envio)?.label}`}
+                  size="small" onDelete={() => handleFilter('estado_envio', '')}
+                  sx={{ fontSize: '0.72rem', fontWeight: 600, bgcolor: isDark ? '#2a2a2a' : '#eef2ff', color: isDark ? '#c7d2fe' : '#4338ca', border: '1px solid', borderColor: isDark ? '#6366f1' : '#c7d2fe', '& .MuiChip-deleteIcon': { color: isDark ? '#818cf8' : '#6366f1', fontSize: 14 } }}
+                />
+              )}
+            </Box>
+          )}
         </Box>
 
         <ErrorMessage message={error} />
@@ -246,141 +382,103 @@ export const MyOrdersPage = () => {
             actionTo="/catalogo"
           />
         ) : (
-          <Stack spacing={5} sx={{ mt: 4 }}>
+          <Stack spacing={5}>
             {Object.entries(groupedOrders).map(([monthYear, monthOrders]) => (
               <Box key={monthYear}>
-                
-                {/* TÍTULO DEL MES */}
-                <Typography component="div" variant="body1" sx={{ color: isDark ? '#a3a3a3' : '#6b7280', fontWeight: '500', mb: 2, display: 'flex', alignItems: 'center' }}>
-                  {monthYear}
-                  <Box sx={{ flex: 1, height: '1px', bgcolor: isDark ? '#2e2e2e' : '#e5e7eb', ml: 2 }} />
-                </Typography>
 
-                {/* LISTA DE TARJETAS */}
-                <Stack spacing={2}>
+                {/* Encabezado de mes */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Typography sx={{
+                    fontWeight: 600, whiteSpace: 'nowrap',
+                    color: isDark ? '#a3a3a3' : '#374151',
+                    fontSize: { xs: '1rem', sm: '1.1rem' },
+                  }}>
+                    {monthYear}
+                  </Typography>
+                  <Box sx={{ flex: 1, height: '1px', bgcolor: isDark ? '#2e2e2e' : '#e5e7eb', mx: 2 }} />
+                  <Typography sx={{ fontSize: '0.75rem', color: isDark ? '#525252' : '#9ca3af', whiteSpace: 'nowrap' }}>
+                    {monthOrders.length} pedido{monthOrders.length !== 1 ? 's' : ''}
+                  </Typography>
+                </Box>
+
+                {/* Filas */}
+                <Stack spacing={1.5}>
                   {monthOrders.map((order) => {
-                    // En lugar de sacar 1 estilo, sacamos los estilos para ambos: envío y pago
-                    const envioStyle = getOrderStatusInfo(order.estado_envio, null);// Forzamos evaluación solo del envío
-                    const pagoStyle = order.estado_pago 
-                      ? getOrderStatusInfo(null, order.estado_pago) 
-                      : null; 
-                      
-                    // Si el pedido principal está cancelado (según estado_pedido) entonces obligatoriamente mandamos el look de Cancelado
-                    const pedidoStyle = order.estado_pedido === 'cancelado' 
-                      ? getOrderStatusInfo('cancelado', null) 
-                      : null;
-
-                    // Recolectamos en un array qué estilos se deben pintar
-                    // Las reglas de prioridad: Si está cancelado el pedido, va primero. Luego envío, luego pago.
-                    const chipsToRender = [];
-                    if (pedidoStyle) {
-                      chipsToRender.push(pedidoStyle); // Si está cancelado, el pedido entero es rojo
-                    } else {
-                      chipsToRender.push(envioStyle);
-                      if (pagoStyle && order.estado_pago !== 'pendiente') {
-                        chipsToRender.push(pagoStyle); // Se muestran juntos si el pago es algo interesante como vencido/pagado/etc
-                      }
-                    }
-
-                    // Tomamos el color lateral principal del primer chip que aparezca
-                    const mainBorderColor = chipsToRender[0]?.borderColor || '#9ca3af';
+                    const status = getDisplayStatus(order, filters);
+                    const Icon        = status.Icon;
+                    const isCancelled = status === STATUS_MAP.cancelado;
 
                     return (
-                      <Box 
-                        key={order.id} 
-                        sx={{ 
-                          bgcolor: isDark ? '#1e1e1e' : '#ffffff', 
-                          borderRadius: '12px',    
-                          border: '1px solid',
-                          borderColor: isDark ? '#2d2d2d' : '#e5e7eb', 
-                          borderLeft: `4px solid ${mainBorderColor}`, // Borde dinámico según el Estado primario
-                          p: { xs: 2.5, md: 3 },
-                          display: 'flex',
-                          flexDirection: { xs: 'column', md: 'row' },
+                      <Box
+                        key={order.id}
+                        sx={{
+                          bgcolor: isDark ? (isCancelled ? '#181818' : '#1e1e1e') : (isCancelled ? '#fafafa' : '#ffffff'),
+                          borderRadius: '12px', border: '1px solid',
+                          borderColor: isDark ? '#2d2d2d' : '#e5e7eb',
+                          borderLeft: `4px solid ${status.borderColor}`,
+                          px: { xs: 2, md: 2.5 }, py: { xs: 2, md: 2.25 },
+                          display: 'flex', flexDirection: { xs: 'column', md: 'row' },
                           alignItems: { xs: 'flex-start', md: 'center' },
                           justifyContent: 'space-between',
-                          gap: 2,
-                          transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
-                          '&:hover': { 
-                            bgcolor: isDark ? '#252525' : '#ffffff',
-                            boxShadow: isDark ? 'none' : '0 4px 12px rgba(0,0,0,0.03)'
-                          }
+                          gap: 2, opacity: isCancelled ? 0.75 : 1,
+                          transition: 'box-shadow 0.2s',
+                          '&:hover': { boxShadow: isCancelled ? 'none' : (isDark ? 'none' : '0 4px 12px rgba(0,0,0,0.04)') },
                         }}
                       >
-                        {/* 1. SECCIÓN IZQUIERDA: Identificador y Fecha */}
-                        <Box sx={{ minWidth: { md: 180 } }}>
-                          <Typography variant="caption" sx={{ color: isDark ? '#737373' : '#6b7280', fontWeight: '700', display: 'block', mb: 0.5, letterSpacing: '0.5px' }}>
-                            ORDEN #{order.numero_pedido || order.id.toString().substring(0, 6).toUpperCase()}
+                        {/* Identificador y fecha */}
+                        <Box sx={{ minWidth: { md: 190 }, flexShrink: 0 }}>
+                          <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em', color: isDark ? '#737373' : '#9ca3af', mb: 0.5 }}>
+                            ORDEN #{order.numero_pedido || order.id?.toString().substring(0, 6).toUpperCase()}
                           </Typography>
-                          <Typography variant="body1" sx={{ fontWeight: '700', color: isDark ? '#ffffff' : '#111827' }}>
+                          <Typography sx={{ fontWeight: 700, color: isDark ? '#ffffff' : '#111827', fontSize: { xs: '1rem', sm: '1.05rem' } }}>
                             {formatShortDate(order.created_at)}
                           </Typography>
                         </Box>
 
-                        {/* 2. SECCIÓN CENTRAL: Nombre del Producto/Lote y Detalles */}
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="body1" sx={{ fontWeight: '700', mb: 0.5, color: isDark ? '#ffffff' : '#111827' }}>
-                            {order.titulo_pedido || `PEDIDO-${order.numero_pedido || order.id.toString().substring(0, 6).toUpperCase()}`}
+                        {/* Descripción */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{
+                            fontWeight: 700, mb: 0.4,
+                            color: isCancelled ? (isDark ? '#525252' : '#9ca3af') : (isDark ? '#ffffff' : '#111827'),
+                            textDecoration: isCancelled ? 'line-through' : 'none',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                            fontSize: { xs: '0.95rem', sm: '1rem' },
+                          }}>
+                            {order.titulo_pedido || `Pedido-${order.numero_pedido || order.id?.toString().substring(0, 6).toUpperCase()}`}
                           </Typography>
-                          <Typography variant="body2" sx={{ color: isDark ? '#a3a3a3' : '#6b7280' }}>
-                            {order.total_items} artículo{order.total_items !== 1 && 's'} · {formatCurrency(order.total)}
+                          <Typography sx={{ color: isDark ? '#a3a3a3' : '#6b7280', fontSize: { xs: '0.82rem', sm: '0.875rem' } }}>
+                            {order.total_items} artículo{order.total_items !== 1 ? 's' : ''} · {formatCurrency(order.total)}
                           </Typography>
                         </Box>
 
-                        {/* 3. SECCIÓN DERECHA: Multipies Chips de Estado y Enlace */}
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
+                        {/* Estado único + botón */}
+                        <Box sx={{
+                          display: 'flex', alignItems: 'center',
                           justifyContent: { xs: 'space-between', md: 'flex-end' },
-                          width: { xs: '100%', md: 'auto' },
-                          flexWrap: 'wrap',
-                          gap: 3, 
+                          width: { xs: '100%', md: 'auto' }, gap: 3, flexShrink: 0,
                         }}>
-                          {/* El Stack no acepta flexWrap directamente, moverlo al sx y habilitar uso de FlexGap */}
-                          <Stack 
-                            direction="row" 
-                            spacing={1.5} 
-                            sx={{ 
-                              flexWrap: 'wrap', 
-                              gap: '8px 0' 
-                            }}
-                          >
-                            {chipsToRender.map((styleObj, idx) => (
-                              <Chip
-                                key={idx}
-                                icon={styleObj.icon}
-                                label={styleObj.label}
-                                size="small"
-                                sx={{ 
-                                  fontWeight: '600',
-                                  fontSize: '0.80rem',
-                                  px: 1,
-                                  py: 1.8,
-                                  borderRadius: '20px', 
-                                  bgcolor: isDark ? styleObj.bg : styleObj.bg.replace('0.1)', '0.3)'),
-                                  color: styleObj.color,
-                                  border: `1px solid ${styleObj.borderChip}`,
-                                  '& .MuiChip-icon': { color: 'inherit', fontSize: '1.1rem' }
-                                }}
-                              />
-                            ))}
-                          </Stack>
-                          
+                          <Box sx={{
+                            display: 'inline-flex', alignItems: 'center', gap: 0.75,
+                            px: 1.5, py: 0.6, borderRadius: '99px',
+                            bgcolor: status.bg, border: `1px solid ${status.borderColor}33`,
+                          }}>
+                            <Icon sx={{ fontSize: 15, color: status.color }} />
+                            <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: status.color, whiteSpace: 'nowrap' }}>
+                              {status.label}
+                            </Typography>
+                          </Box>
                           <Button
                             component={RouterLink}
                             to={`/mis-pedidos/${order.id}`}
-                            sx={{ 
-                              color: isDark ? '#a3a3a3' : '#4b5563',
-                              fontWeight: '500', 
-                              fontSize: '0.9rem',
-                              textTransform: 'none',
-                              p: 0,
-                              minWidth: 'auto',
-                              '&:hover': { bgcolor: 'transparent', color: isDark ? '#ffffff' : '#111827' } 
+                            endIcon={<ArrowForwardIcon sx={{ fontSize: '14px !important' }} />}
+                            sx={{
+                              color: isDark ? '#a3a3a3' : '#4b5563', fontWeight: 600,
+                              fontSize: '0.82rem', textTransform: 'none', p: 0, minWidth: 'auto',
+                              '&:hover': { bgcolor: 'transparent', color: isDark ? '#fff' : '#111827' },
                             }}
                             disableRipple
                           >
-                            Ver detalle <Box component="span" sx={{ ml: 0.8, display: 'inline-block', transition: 'transform 0.2s', '&:hover': { transform: 'translateX(3px)' } }}>→</Box>
+                            Ver detalle
                           </Button>
                         </Box>
                       </Box>
