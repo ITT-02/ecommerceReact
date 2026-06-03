@@ -10,6 +10,7 @@ import { useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
 import {
+  Badge,
   Box,
   Collapse,
   List,
@@ -80,7 +81,9 @@ export const AdminMenuList = ({ groups = [], collapsed = false, onItemClick }) =
                 })}
               >
                 <ListItemIcon sx={{ minWidth: 0, justifyContent: 'center' }}>
-                  <Icon fontSize="small" />
+                  <Badge badgeContent={item.badgeCount} color="warning" invisible={!item.badgeCount} max={99}>
+                    <Icon fontSize="small" />
+                  </Badge>
                 </ListItemIcon>
               </ListItemButton>
             </Tooltip>
@@ -193,7 +196,9 @@ export const AdminMenuList = ({ groups = [], collapsed = false, onItemClick }) =
                       })}
                     >
                       <ListItemIcon sx={{ minWidth: 38 }}>
-                        <Icon fontSize="small" />
+                        <Badge badgeContent={item.badgeCount} color="warning" invisible={!item.badgeCount} max={99}>
+                          <Icon fontSize="small" />
+                        </Badge>
                       </ListItemIcon>
 
                       <ListItemText

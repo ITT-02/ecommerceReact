@@ -286,10 +286,6 @@ export const ProductPersonalizationPage = () => {
         </Alert>
       )}
 
-      <Alert severity="info">
-        Configura las opciones que podrán asignarse a los productos personalizables.
-      </Alert>
-
       <AdminResourceTable
         rows={paginatedOptions}
         columns={columns}

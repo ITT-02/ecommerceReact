@@ -1,14 +1,16 @@
-import { uploadFile } from "../services/filesService";
-const BANNERS_BUCKET = 'banners'
-const BANNERS_FOLDER = 'home'
+import { uploadFile } from '../services/filesService';
+
+const BANNERS_BUCKET = 'banners';
+const BANNERS_FOLDER = 'home';
 
 export const initialBannerFormData = {
   titulo: '',
   subtitulo: '',
   imagen_url: '',
-  url_destino: '',
-  boton_texto: '',
-  orden_visual: '',
+  imagen_path: '',
+  url_destino: '/catalogo',
+  boton_texto: 'Ver catálogo',
+  orden_visual: 0,
   es_activo: true,
   fecha_inicio: '',
   fecha_fin: '',
@@ -31,15 +33,14 @@ const toNullableText = (value) => {
   return trimmed || null;
 };
 
-export const mapBannerToFormData = (banner) => (    
-  {
-  
+export const mapBannerToFormData = (banner = {}) => ({
   titulo: banner.titulo || '',
   subtitulo: banner.subtitulo || '',
   imagen_url: banner.imagen_url || '',
-  url_destino: banner.url_destino || '',
-  boton_texto: banner.boton_texto || '',
-  orden_visual: banner.orden_visual ?? '',
+  imagen_path: banner.imagen_path || '',
+  url_destino: banner.url_destino || '/catalogo',
+  boton_texto: banner.boton_texto || 'Ver catálogo',
+  orden_visual: banner.orden_visual ?? 0,
   es_activo: Boolean(banner.es_activo),
   fecha_inicio: toDateInputValue(banner.fecha_inicio),
   fecha_fin: toDateInputValue(banner.fecha_fin),
@@ -47,8 +48,8 @@ export const mapBannerToFormData = (banner) => (
 });
 
 export const mapFormDataToBanner = async (formData) => {
-  let imagen_url = toNullableText(formData.imagen_url);
-  let url_destino = formData.imagen_path || null;
+  let imagenUrl = toNullableText(formData.imagen_url);
+  let imagenPath = toNullableText(formData.imagen_path);
 
   if (formData._file) {
     const uploadedImage = await uploadFile({
@@ -57,20 +58,20 @@ export const mapFormDataToBanner = async (formData) => {
       file: formData._file,
     });
 
-    imagen_url = uploadedImage.url;
-    url_destino = uploadedImage.path;
+    imagenUrl = uploadedImage.url;
+    imagenPath = uploadedImage.path;
   }
 
-  
-  return( {
-  titulo: toNullableText(formData.titulo),
-  subtitulo: toNullableText(formData.subtitulo),
-  imagen_url,
-  url_destino,
-  boton_texto: toNullableText(formData.boton_texto),
-  orden_visual: formData.orden_visual === '' ? 0 : Number(formData.orden_visual),
-  es_activo: Boolean(formData.es_activo),
-  fecha_inicio: toNullableTimestamp(formData.fecha_inicio, 'T00:00:00Z'),
-  fecha_fin: toNullableTimestamp(formData.fecha_fin, 'T23:59:59Z'),
-  })
+  return {
+    titulo: toNullableText(formData.titulo),
+    subtitulo: toNullableText(formData.subtitulo),
+    imagen_url: imagenUrl,
+    imagen_path: imagenPath,
+    url_destino: toNullableText(formData.url_destino) || '/catalogo',
+    boton_texto: toNullableText(formData.boton_texto) || 'Ver catálogo',
+    orden_visual: formData.orden_visual === '' ? 0 : Number(formData.orden_visual),
+    es_activo: Boolean(formData.es_activo),
+    fecha_inicio: toNullableTimestamp(formData.fecha_inicio, 'T00:00:00Z'),
+    fecha_fin: toNullableTimestamp(formData.fecha_fin, 'T23:59:59Z'),
+  };
 };

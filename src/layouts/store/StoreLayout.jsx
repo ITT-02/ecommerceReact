@@ -12,6 +12,7 @@ import { Outlet } from 'react-router-dom';
 
 import { StoreFooter } from './footer/StoreFooter';
 import { StoreNavbar } from './navbar/StoreNavbar';
+import { WhatsAppFloatingButton } from '../../components/store/WhatsAppFloatingButton';
 
 export const StoreLayout = () => {
   return (
@@ -30,6 +31,7 @@ export const StoreLayout = () => {
       </Box>
 
       <StoreFooter />
+      <WhatsAppFloatingButton />
     </Box>
   );
 };

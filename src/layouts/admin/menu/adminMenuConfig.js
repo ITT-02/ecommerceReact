@@ -91,8 +91,8 @@ export const adminMenuGroups = [
     title: 'Marketing',
     icon: CampaignOutlinedIcon,
     items: [
+      { label: 'Banners de tienda', path: '/admin/banners', icon: ImageIcon, roles: MARKETING_ROLES },
       { label: 'Promociones', path: '/admin/promociones', icon: LocalOfferIcon, roles: MARKETING_ROLES },
-      { label: 'Banners', path: '/admin/banners', icon: ImageIcon, roles: MARKETING_ROLES },
     ],
   },
   {
@@ -100,7 +100,8 @@ export const adminMenuGroups = [
     icon: SupportAgentRoundedIcon,
     items: [
       { label: 'Pedidos', path: '/admin/pedidos', icon: ReceiptLongIcon, roles: SALES_ROLES },
-      { label: 'Cotizaciones', path: '/admin/cotizaciones', icon: RequestQuoteIcon, roles: SALES_ROLES },
+      { label: 'Cotizaciones', path: '/admin/cotizaciones', icon: RequestQuoteIcon, roles: SALES_ROLES, counterKey: 'cotizaciones_pendientes' },
+      { label: 'Mensajes de contacto', path: '/admin/mensajes-contacto', icon: SupportAgentRoundedIcon, roles: SALES_ROLES, counterKey: 'mensajes_contacto_nuevos' },
       { label: 'Envíos', path: '/admin/envios', icon: LocalShippingOutlinedIcon, roles: SALES_ROLES },
       { label: 'Venta manual', path: '/admin/venta-manual', icon: PointOfSaleIcon, roles: SALES_ROLES },
       { label: 'Seguimiento vendedor', path: '/admin/seguimiento-vendedor', icon: PersonSearchOutlinedIcon, roles: SALES_ROLES },

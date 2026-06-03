@@ -1,4 +1,4 @@
-// Servicios de tienda: catálogo, detalle de producto y filtros.
+// Servicios de tienda: catálogo, detalle de producto, filtros, banners y promociones públicas.
 // Usa RPC para mantener el frontend desacoplado del modelo físico de Supabase.
 
 import { restApi } from '../../api/restApi';
@@ -6,17 +6,17 @@ import { restApi } from '../../api/restApi';
 const normalizePaginated = (data, pageNumber, pageSize) => {
   const value = Array.isArray(data) ? data[0] : data;
   const items = value?.items ?? [];
-  const totalCount = value?.totalCount ?? items.length;
-  const currentPage = value?.pageNumber ?? pageNumber;
-  const currentPageSize = value?.pageSize ?? pageSize;
-  const totalPages = value?.totalPages ?? Math.max(Math.ceil(totalCount / currentPageSize), 1);
+  const totalCount = Number(value?.totalCount ?? items.length);
+  const currentPage = Number(value?.pageNumber ?? pageNumber);
+  const currentPageSize = Number(value?.pageSize ?? pageSize);
+  const totalPages = Number(value?.totalPages ?? Math.max(Math.ceil(totalCount / Math.max(currentPageSize, 1)), 1));
 
   return {
     items,
     totalCount,
     pageNumber: currentPage,
     pageSize: currentPageSize,
-    totalPages,
+    totalPages: Number.isFinite(totalPages) && totalPages > 0 ? totalPages : 1,
     hasPreviousPage: value?.hasPreviousPage ?? currentPage > 1,
     hasNextPage: value?.hasNextPage ?? currentPage < totalPages,
   };
@@ -32,22 +32,47 @@ export const getStoreCatalogFilters = async () => {
   return response.data || {};
 };
 
+export const getStoreBanners = async () => {
+  const response = await restApi.post('/rpc/listar_banners_tienda_publicos', {});
+  return Array.isArray(response.data) ? response.data : [];
+};
+
+export const getStoreActivePromotions = async ({ limit = 6 } = {}) => {
+  const response = await restApi.post('/rpc/listar_promociones_tienda_publicas', {
+    p_limit: limit,
+  });
+
+  return Array.isArray(response.data) ? response.data : [];
+};
+
 export const getStoreCatalog = async ({
   pageNumber = 1,
   pageSize = 12,
   search = '',
   categoriaId = null,
+  categoriaIds = [],
   destacado = null,
   tipoCompra = null,
+  disponibilidad = null,
+  personalizable = null,
+  precioMin = null,
+  precioMax = null,
   orderBy = 'recientes',
 } = {}) => {
+  const cleanCategoryIds = Array.isArray(categoriaIds) ? categoriaIds.filter(Boolean) : [];
+
   const response = await restApi.post('/rpc/listar_catalogo_tienda_paginado', {
     p_page_number: pageNumber,
     p_page_size: pageSize,
-    p_search: search,
-    p_categoria_id: categoriaId,
+    p_search: search?.trim() || null,
+    p_categoria_id: categoriaId || null,
+    p_categoria_ids: cleanCategoryIds.length ? cleanCategoryIds : null,
     p_destacado: destacado,
-    p_tipo_compra: tipoCompra,
+    p_tipo_compra: tipoCompra || null,
+    p_disponibilidad: disponibilidad || null,
+    p_es_personalizable: personalizable,
+    p_precio_min: precioMin === '' || precioMin === null ? null : Number(precioMin),
+    p_precio_max: precioMax === '' || precioMax === null ? null : Number(precioMax),
     p_order_by: orderBy,
   });
 

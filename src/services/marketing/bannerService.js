@@ -67,16 +67,18 @@ export const updateBanner = async (id, bannerData) => {
 };
 
 export const deleteBanner = async (id) => {
+  const banner = await getBannerById(id);
+
   const response = await restApi.delete('/banners_home', {
     params: { id: `eq.${id}`, select: '*' },
     headers: { Prefer: 'return=representation' },
   });
-  let banner = getBannerById(id)
-  if(banner.url_destino){
+
+  if (banner?.imagen_path) {
     await deleteFile({
-      bucket : BANNERS_BUCKET,
-      path: banner.url_destino,
-    })
+      bucket: BANNERS_BUCKET,
+      path: banner.imagen_path,
+    });
   }
 
   return response.data[0] || null;

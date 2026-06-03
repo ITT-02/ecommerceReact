@@ -230,14 +230,16 @@ export const ProductGallery = ({
           {/* Contenedor con relación de aspecto fija */}
           <Box
             ref = {viewerBoxRef}
-            sx={{
+              sx={(t) => ({
               position    : 'relative',
               width       : '100%',
               aspectRatio : ASPECT_RATIO,
               borderRadius: 2.5,
               overflow    : 'hidden',
               bgcolor     : 'background.paper',
-            }}
+              border      : `1px solid ${t.palette.custom.semantic.borderStrong}`,
+              boxShadow   : t.palette.custom.shadows.sm,
+            })}
           >
             {/* ── Imagen ────────────────────────────────────────── */}
             {!isVideo && !srcBroken && (
@@ -602,7 +604,7 @@ const ThumbnailItem = ({ item, index, isActive, isBroken, onClick }) => {
       onKeyDown     = {(e) =>
         (e.key === 'Enter' || e.key === ' ') && onClick()
       }
-      sx={{
+      sx={(t) => ({
         position    : 'relative',
         width       : THUMB_SIZE,
         height      : THUMB_SIZE,
@@ -613,12 +615,13 @@ const ThumbnailItem = ({ item, index, isActive, isBroken, onClick }) => {
         outline     : 'none',
         transition  : 'opacity 0.18s',
         bgcolor     : 'background.paper',
+        border      : `1px solid ${t.palette.custom.semantic.borderStrong}`,
         '&:hover'   : { opacity: 0.82 },
         '&:focus-visible': {
           // inset box-shadow: nunca se recorta por el overflow del padre
           boxShadow: (t) => `inset 0 0 0 2px ${t.palette.primary.main}`,
         },
-      }}
+      })}
     >
       {/* Contenido de la miniatura */}
       {isBroken ? (

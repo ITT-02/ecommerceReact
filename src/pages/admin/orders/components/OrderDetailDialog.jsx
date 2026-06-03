@@ -32,6 +32,47 @@ const tableBoxSx = {
   borderColor: 'divider',
 };
 
+
+const compactJoin = (values = [], separator = ', ') => values.filter(Boolean).join(separator);
+
+const getDeliveryAddressLine = (deliveryData = {}) => {
+  return (
+    deliveryData.direccion_completa ||
+    deliveryData.direccion ||
+    deliveryData.direccion_linea ||
+    deliveryData.direccion_linea_1 ||
+    ''
+  );
+};
+
+const getDeliveryLocationLine = (deliveryData = {}) => {
+  if ((deliveryData.pais_codigo || 'PE') === 'PE') {
+    return compactJoin([
+      deliveryData.distrito,
+      deliveryData.provincia,
+      deliveryData.departamento,
+      deliveryData.pais || deliveryData.pais_nombre || 'Perú',
+    ]);
+  }
+
+  return compactJoin([
+    deliveryData.ciudad || deliveryData.ciudad_texto || deliveryData.distrito,
+    deliveryData.region || deliveryData.region_texto || deliveryData.departamento,
+    deliveryData.codigo_postal,
+    deliveryData.pais || deliveryData.pais_nombre || deliveryData.pais_codigo,
+  ]);
+};
+
+const hasDeliveryData = (deliveryData = {}) => {
+  return Boolean(
+    getDeliveryAddressLine(deliveryData) ||
+      deliveryData.destinatario ||
+      deliveryData.nombre_receptor ||
+      deliveryData.telefono ||
+      deliveryData.telefono_receptor
+  );
+};
+
 export const OrderDetailDialog = ({ open, order = {}, deliveryData = {}, onClose }) => {
   return (
     <OrderDialogShell
@@ -98,14 +139,22 @@ export const OrderDetailDialog = ({ open, order = {}, deliveryData = {}, onClose
 
           <Grid size={{ xs: 12, md: 4 }}>
             <OrderSection title="Entrega">
-              <Stack spacing={1.25}>
-                <OrderInfoLine label="Tipo" value={order.tipo_entrega || deliveryData.tipo_entrega || 'recojo'} />
-                <OrderInfoLine label="Receptor" value={deliveryData.nombre_receptor || deliveryData.destinatario} />
-                <OrderInfoLine label="Teléfono" value={deliveryData.telefono_receptor || deliveryData.telefono} />
-                <OrderInfoLine label="Dirección" value={deliveryData.direccion || deliveryData.direccion_linea} />
-                <OrderInfoLine label="Distrito" value={deliveryData.distrito} />
-                <OrderInfoLine label="Referencia" value={deliveryData.referencia} />
-              </Stack>
+              {hasDeliveryData(deliveryData) ? (
+                <Stack spacing={1.25}>
+                  <OrderInfoLine label="Tipo" value={order.tipo_entrega || deliveryData.tipo_entrega || 'envío a domicilio'} />
+                  <OrderInfoLine label="Receptor" value={deliveryData.nombre_receptor || deliveryData.destinatario} />
+                  <OrderInfoLine label="Teléfono" value={deliveryData.telefono_receptor || deliveryData.telefono} />
+                  <OrderInfoLine label="Dirección" value={getDeliveryAddressLine(deliveryData)} />
+                  <OrderInfoLine label="Ubicación" value={getDeliveryLocationLine(deliveryData)} />
+                  <OrderInfoLine label="UBIGEO" value={deliveryData.ubigeo} />
+                  <OrderInfoLine label="Referencia" value={deliveryData.referencia} />
+                </Stack>
+              ) : (
+                <Alert severity="warning" variant="outlined">
+                  Este pedido no tiene dirección de entrega registrada. No debería enviarse por
+                  transportista hasta completar los datos de despacho.
+                </Alert>
+              )}
             </OrderSection>
           </Grid>
 

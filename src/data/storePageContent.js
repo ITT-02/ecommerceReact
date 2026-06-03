@@ -64,7 +64,7 @@ export const wholesalePageContent = {
     title: '¿Tienes un pedido recurrente o necesitas abastecimiento mensual?',
     description:
       'Cuéntanos qué productos necesitas y te ayudamos a armar una propuesta mayorista ordenada.',
-    action: { label: 'Hablar con ventas', to: '/contacto' },
+    action: { label: 'Hablar con ventas', to: '/contacto?motivo=mayorista' },
   },
 };
 

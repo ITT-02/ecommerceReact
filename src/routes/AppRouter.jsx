@@ -39,6 +39,7 @@ import { GoodsReceptionPage } from '../pages/admin/reception/GoodsReceptionPage'
 import { RefundsPage } from '../pages/admin/refunds/RefundsPage';
 import { ShipmentsPage } from '../pages/admin/shipments/ShipmentsPage';
 import { StoreCustomizationPage } from '../pages/admin/storeSettings/StoreCustomizationPage';
+import { ContactMessagesPage } from '../pages/admin/contactMessages/ContactMessagesPage';
 import { SuppliersPage } from '../pages/admin/suppliers/SuppliersPage';
 import { ProductPersonalizationPage } from '../pages/admin/productsPersonalization/ProductPersonalizationPage';
 
@@ -61,6 +62,7 @@ import { StoryPage } from '../pages/store/StoryPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
 import { RoleRoute } from './RoleRoute';
+import { ScrollToTop } from './ScrollToTop';
 
 import {
   ADMIN_ROLES,
@@ -74,89 +76,93 @@ import {
 
 export const AppRouter = () => {
   return (
-    <Routes>
-      {/* Rutas públicas de autenticación */}
-      <Route element={<PublicRoute />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/registro" element={<RegisterPage />} />
-      </Route>
+    <>
+      <ScrollToTop />
+      <Routes>
+        {/* Rutas públicas de autenticación */}
+        <Route element={<PublicRoute />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/registro" element={<RegisterPage />} />
+        </Route>
 
-      {/* Rutas públicas de tienda */}
-      <Route element={<StoreLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="nosotros" element={<Navigate to="/nuestra-historia" replace />} />
-        <Route path="nuestra-historia" element={<StoryPage />} />
-        <Route path="mayoristas" element={<WholesalePage />} />
-        <Route path="contacto" element={<ContactPage />} />
-        <Route path="catalogo" element={<CatalogPage />} />
-        <Route path="productos/:slug" element={<ProductDetailPage />} />
-        <Route path="no-autorizado" element={<NotAuthorizedPage />} />
+        {/* Rutas públicas de tienda */}
+        <Route element={<StoreLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="nosotros" element={<Navigate to="/nuestra-historia" replace />} />
+          <Route path="nuestra-historia" element={<StoryPage />} />
+          <Route path="mayoristas" element={<WholesalePage />} />
+          <Route path="contacto" element={<ContactPage />} />
+          <Route path="catalogo" element={<CatalogPage />} />
+          <Route path="productos/:slug" element={<ProductDetailPage />} />
+          <Route path="no-autorizado" element={<NotAuthorizedPage />} />
 
-        {/* Rutas protegidas del cliente */}
+          {/* Rutas protegidas del cliente */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="carrito" element={<CartPage />} />
+            <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="cotizacion/:slug" element={<QuoteRequestPage />} />
+            <Route path="mis-cotizaciones" element={<MyQuotesPage />} />
+            <Route path="mis-cotizaciones/:id" element={<QuoteDetailPage />} />
+            <Route path="mis-pedidos" element={<MyOrdersPage />} />
+            <Route path="mis-pedidos/:id" element={<OrderTrackingPage />} />
+            <Route path="perfil" element={<ProfilePage />} />
+            <Route path="direcciones" element={<AddressesPage />} />
+          </Route>
+        </Route>
+
+        {/* Rutas protegidas del panel administrativo */}
         <Route element={<ProtectedRoute />}>
-          <Route path="carrito" element={<CartPage />} />
-          <Route path="checkout" element={<CheckoutPage />} />
-          <Route path="cotizacion/:slug" element={<QuoteRequestPage />} />
-          <Route path="mis-cotizaciones" element={<MyQuotesPage />} />
-          <Route path="mis-cotizaciones/:id" element={<QuoteDetailPage />} />
-          <Route path="mis-pedidos" element={<MyOrdersPage />} />
-          <Route path="mis-pedidos/:id" element={<OrderTrackingPage />} />
-          <Route path="perfil" element={<ProfilePage />} />
-          <Route path="direcciones" element={<AddressesPage />} />
+          <Route path="admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+
+            {/* Panel */}
+            <Route path="dashboard" element={<RoleRoute allowedRoles={DASHBOARD_ROLES}><DashboardPage /></RoleRoute>} />
+
+            {/* Catálogo */}
+            <Route path="categorias" element={<RoleRoute allowedRoles={CATALOG_ROLES}><CategoriesPage /></RoleRoute>} />
+            <Route path="atributos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><AttributesPage /></RoleRoute>} />
+            <Route path="productos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductsPage /></RoleRoute>} />
+            <Route path="variantes" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductVariantsPage /></RoleRoute>} />
+            <Route path="personalizacion-productos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductPersonalizationPage /></RoleRoute>} />
+
+            {/* Inventario */}
+            <Route path="almacenes" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><WarehousesPage /></RoleRoute>} />
+            <Route path="inventario" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><InventoryPage /></RoleRoute>} />
+            <Route path="movimientos" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><MovementsPage /></RoleRoute>} />
+            <Route path="proveedores" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><SuppliersPage /></RoleRoute>} />
+            <Route path="abastecimiento" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><ProcurementPage /></RoleRoute>} />
+            <Route path="recepcion-mercaderia" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><GoodsReceptionPage /></RoleRoute>} />
+
+            {/* Marketing */}
+            <Route path="promociones" element={<RoleRoute allowedRoles={MARKETING_ROLES}><PromotionsPage /></RoleRoute>} />
+            <Route path="banners" element={<RoleRoute allowedRoles={MARKETING_ROLES}><BannersPage /></RoleRoute>} />
+
+            {/* Ventas */}
+            <Route path="pedidos" element={<RoleRoute allowedRoles={SALES_ROLES}><OrdersPage /></RoleRoute>} />
+            <Route path="cotizaciones" element={<RoleRoute allowedRoles={SALES_ROLES}><QuotesPage /></RoleRoute>} />
+            <Route path="mensajes-contacto" element={<RoleRoute allowedRoles={SALES_ROLES}><ContactMessagesPage /></RoleRoute>} />
+            <Route path="venta-manual" element={<RoleRoute allowedRoles={SALES_ROLES}><ManualSalesPage /></RoleRoute>} />
+            <Route path="seguimiento-vendedor" element={<RoleRoute allowedRoles={SALES_ROLES}><SellerFollowUpPage /></RoleRoute>} />
+            <Route path="envios" element={<RoleRoute allowedRoles={SALES_ROLES}><ShipmentsPage /></RoleRoute>} />
+            <Route path="pagos" element={<RoleRoute allowedRoles={SALES_ROLES}><PaymentsPage /></RoleRoute>} />
+            <Route path="metodos-pago" element={<RoleRoute allowedRoles={SALES_ROLES}><PaymentMethodsPage /></RoleRoute>} />
+            <Route path="transportistas" element={<RoleRoute allowedRoles={SALES_ROLES}><CarriersPage /></RoleRoute>} />
+            <Route path="personalizacion-tienda" element={<RoleRoute allowedRoles={ADMIN_ROLES}><StoreCustomizationPage /></RoleRoute>} />
+
+            {/* Finanzas */}
+            <Route path="finanzas" element={<RoleRoute allowedRoles={FINANCE_ROLES}><FinancePage /></RoleRoute>} />
+            <Route path="reembolsos" element={<RoleRoute allowedRoles={FINANCE_ROLES}><RefundsPage /></RoleRoute>} />
+
+            {/* Administración */}
+            <Route path="usuarios" element={<RoleRoute allowedRoles={ADMIN_ROLES}><UsersPage /></RoleRoute>} />
+            <Route path="roles" element={<RoleRoute allowedRoles={ADMIN_ROLES}><RolesPage /></RoleRoute>} />
+            <Route path="permisos" element={<RoleRoute allowedRoles={ADMIN_ROLES}><PermissionsPage /></RoleRoute>} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Rutas protegidas del panel administrativo */}
-      <Route element={<ProtectedRoute />}>
-        <Route path="admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-
-          {/* Panel */}
-          <Route path="dashboard" element={<RoleRoute allowedRoles={DASHBOARD_ROLES}><DashboardPage /></RoleRoute>} />
-
-          {/* Catálogo */}
-          <Route path="categorias" element={<RoleRoute allowedRoles={CATALOG_ROLES}><CategoriesPage /></RoleRoute>} />
-          <Route path="atributos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><AttributesPage /></RoleRoute>} />
-          <Route path="productos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductsPage /></RoleRoute>} />
-          <Route path="variantes" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductVariantsPage /></RoleRoute>} />
-          <Route path="personalizacion-productos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductPersonalizationPage /></RoleRoute>} />
-
-          {/* Inventario */}
-          <Route path="almacenes" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><WarehousesPage /></RoleRoute>} />
-          <Route path="inventario" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><InventoryPage /></RoleRoute>} />
-          <Route path="movimientos" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><MovementsPage /></RoleRoute>} />
-          <Route path="proveedores" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><SuppliersPage /></RoleRoute>} />
-          <Route path="abastecimiento" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><ProcurementPage /></RoleRoute>} />
-          <Route path="recepcion-mercaderia" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><GoodsReceptionPage /></RoleRoute>} />
-
-          {/* Marketing */}
-          <Route path="promociones" element={<RoleRoute allowedRoles={MARKETING_ROLES}><PromotionsPage /></RoleRoute>} />
-          <Route path="banners" element={<RoleRoute allowedRoles={MARKETING_ROLES}><BannersPage /></RoleRoute>} />
-
-          {/* Ventas */}
-          <Route path="pedidos" element={<RoleRoute allowedRoles={SALES_ROLES}><OrdersPage /></RoleRoute>} />
-          <Route path="cotizaciones" element={<RoleRoute allowedRoles={SALES_ROLES}><QuotesPage /></RoleRoute>} />
-          <Route path="venta-manual" element={<RoleRoute allowedRoles={SALES_ROLES}><ManualSalesPage /></RoleRoute>} />
-          <Route path="seguimiento-vendedor" element={<RoleRoute allowedRoles={SALES_ROLES}><SellerFollowUpPage /></RoleRoute>} />
-          <Route path="envios" element={<RoleRoute allowedRoles={SALES_ROLES}><ShipmentsPage /></RoleRoute>} />
-          <Route path="pagos" element={<RoleRoute allowedRoles={SALES_ROLES}><PaymentsPage /></RoleRoute>} />
-          <Route path="metodos-pago" element={<RoleRoute allowedRoles={SALES_ROLES}><PaymentMethodsPage /></RoleRoute>} />
-          <Route path="transportistas" element={<RoleRoute allowedRoles={SALES_ROLES}><CarriersPage /></RoleRoute>} />
-          <Route path="personalizacion-tienda" element={<RoleRoute allowedRoles={ADMIN_ROLES}><StoreCustomizationPage /></RoleRoute>} />
-
-          {/* Finanzas */}
-          <Route path="finanzas" element={<RoleRoute allowedRoles={FINANCE_ROLES}><FinancePage /></RoleRoute>} />
-          <Route path="reembolsos" element={<RoleRoute allowedRoles={FINANCE_ROLES}><RefundsPage /></RoleRoute>} />
-
-          {/* Administración */}
-          <Route path="usuarios" element={<RoleRoute allowedRoles={ADMIN_ROLES}><UsersPage /></RoleRoute>} />
-          <Route path="roles" element={<RoleRoute allowedRoles={ADMIN_ROLES}><RolesPage /></RoleRoute>} />
-          <Route path="permisos" element={<RoleRoute allowedRoles={ADMIN_ROLES}><PermissionsPage /></RoleRoute>} />
-        </Route>
-      </Route>
-
-      {/* Ruta 404 */}
+        {/* Ruta 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    </>
   );
 };

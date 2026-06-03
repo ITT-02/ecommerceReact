@@ -45,7 +45,7 @@ export const AdminTopbar = ({
         backdropFilter: 'blur(12px)',
       })}
     >
-      <Toolbar sx={{ gap: 2, px: { xs: 2, md: 3 } }}>
+      <Toolbar sx={{ gap: 1, px: { xs: 0, md: 3 }, minHeight: { xs: 64, md: 72 } }}>
         <IconButton
           onClick={onOpenMobileMenu}
           sx={{ display: { xs: 'inline-flex', lg: 'none' } }}
@@ -55,11 +55,30 @@ export const AdminTopbar = ({
         </IconButton>
 
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <Typography variant="h6" sx={{ fontWeight: 800 }} noWrap>
-            Panel administrativo
+          <Typography
+            component="div"
+            variant="h6"
+            sx={{
+              fontWeight: 900,
+              lineHeight: { xs: 1.05, sm: 1.2 },
+              letterSpacing: { xs: '0.04em', sm: '0.02em' },
+              color: 'text.primary',
+              textTransform: 'uppercase',
+            }}
+          >
+              Panel administrativo
           </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
-            Catálogo, ventas, inventario y logística
+
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            noWrap
+            sx={{
+              display: { xs: 'none', md: 'block' },
+              mt: 0.25,
+            }}
+          >
+            Centro administrativo del sistema
           </Typography>
         </Box>
 

@@ -1,5 +1,6 @@
 // Checkout del cliente.
-// El checkout crea el pedido. El comprobante se registra después desde el detalle del pedido.
+// El checkout crea el pedido y exige una dirección guardada para poder despachar.
+// El comprobante se registra después desde el detalle del pedido.
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -25,10 +26,30 @@ import { useStoreProfile } from '../../hooks/store/useStoreProfile';
 import { useActiveStorePaymentMethods, useCheckout } from '../../hooks/store/useStoreOrders';
 import { formatCurrency } from '../../utils/formatters';
 
+const getAddressLabel = (address = {}) => {
+  if (address.direccion_completa) return address.direccion_completa;
+
+  if ((address.pais_codigo || 'PE') === 'PE') {
+    return [address.alias, address.direccion_linea, address.distrito, address.provincia, address.departamento]
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+  return [
+    address.alias,
+    address.direccion_linea,
+    address.ciudad_texto || address.distrito,
+    address.region_texto || address.departamento,
+    address.pais_nombre || address.pais_codigo,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+};
+
 export const CheckoutPage = () => {
   const navigate = useNavigate();
   const { cart, items, loading: loadingCart } = useCart();
-  const { addresses, loading: loadingProfile } = useStoreProfile();
+  const { addresses, isLoadingAddresses } = useStoreProfile();
   const { methods, loading: loadingMethods, error: methodsError } = useActiveStorePaymentMethods();
   const { createOrder, creating, error } = useCheckout();
 
@@ -36,12 +57,18 @@ export const CheckoutPage = () => {
   const [metodoPago, setMetodoPago] = useState('');
   const [notasCliente, setNotasCliente] = useState('');
   const [notice, setNotice] = useState('');
+  const [formError, setFormError] = useState('');
 
-  const loading = loadingCart || loadingProfile || loadingMethods;
+  const loading = loadingCart || isLoadingAddresses || loadingMethods;
 
   const selectedMethod = useMemo(
     () => methods.find((method) => method.nombre === metodoPago) || null,
     [methods, metodoPago]
+  );
+
+  const selectedAddress = useMemo(
+    () => addresses.find((address) => address.id === direccionId) || null,
+    [addresses, direccionId]
   );
 
   useEffect(() => {
@@ -50,11 +77,24 @@ export const CheckoutPage = () => {
     }
   }, [methods, metodoPago]);
 
+  useEffect(() => {
+    if (direccionId || !addresses.length) return;
+
+    const mainAddress = addresses.find((address) => address.es_principal) || addresses[0];
+    setDireccionId(mainAddress.id);
+  }, [addresses, direccionId]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setFormError('');
+
+    if (!direccionId) {
+      setFormError('Selecciona una dirección de entrega antes de confirmar el pedido.');
+      return;
+    }
 
     const pedidoId = await createOrder({
-      direccionId: direccionId || null,
+      direccionId,
       metodoPago: metodoPago || null,
       notasCliente,
     });
@@ -76,7 +116,7 @@ export const CheckoutPage = () => {
             <Typography variant="h2">Checkout</Typography>
           </Box>
 
-          <ErrorMessage message={error || methodsError} />
+          <ErrorMessage message={error || methodsError || formError} />
           {notice && <Alert severity="success">{notice}</Alert>}
 
           <Grid container spacing={3}>
@@ -87,24 +127,44 @@ export const CheckoutPage = () => {
                     <Stack spacing={2}>
                       <Typography variant="h5">Dirección de entrega</Typography>
 
+                      {!addresses.length && (
+                        <Alert severity="warning" variant="outlined">
+                          No tienes direcciones guardadas. Agrega una dirección desde Mi perfil para
+                          poder enviar el pedido.
+                        </Alert>
+                      )}
+
                       <TextField
                         select
+                        required
                         fullWidth
                         label="Dirección"
                         value={direccionId}
                         onChange={(event) => setDireccionId(event.target.value)}
+                        disabled={!addresses.length}
+                        helperText="Esta dirección se copiará al pedido para que administración pueda despachar."
                       >
-                        <MenuItem value="">Usar dirección principal / coordinar entrega</MenuItem>
+                        <MenuItem value="">Seleccionar dirección de entrega</MenuItem>
                         {addresses.map((address) => (
                           <MenuItem key={address.id} value={address.id}>
-                            {address.alias || address.direccion_linea} · {address.distrito || 'Sin distrito'}
+                            {getAddressLabel(address)}
                           </MenuItem>
                         ))}
                       </TextField>
 
-                      <Typography variant="caption" color="text.secondary">
-                        Puedes gestionar tus direcciones desde Mi perfil.
-                      </Typography>
+                      {selectedAddress && (
+                        <Alert severity="info" variant="outlined">
+                          <Typography variant="subtitle2" fontWeight={900}>
+                            Se enviará a:
+                          </Typography>
+                          <Typography variant="body2">{getAddressLabel(selectedAddress)}</Typography>
+                          {selectedAddress.destinatario && (
+                            <Typography variant="body2">
+                              Recibe: {selectedAddress.destinatario} · {selectedAddress.telefono || '-'}
+                            </Typography>
+                          )}
+                        </Alert>
+                      )}
                     </Stack>
                   </CardContent>
                 </Card>
@@ -145,9 +205,7 @@ export const CheckoutPage = () => {
                                 <Typography variant="body2">Titular: {selectedMethod.titular}</Typography>
                               )}
                               {selectedMethod.numero_cuenta && (
-                                <Typography variant="body2">
-                                  Cuenta: {selectedMethod.numero_cuenta}
-                                </Typography>
+                                <Typography variant="body2">Cuenta: {selectedMethod.numero_cuenta}</Typography>
                               )}
                               {selectedMethod.telefono && (
                                 <Typography variant="body2">Teléfono: {selectedMethod.telefono}</Typography>
@@ -216,7 +274,7 @@ export const CheckoutPage = () => {
                       variant="contained"
                       size="large"
                       fullWidth
-                      disabled={!items.length || creating}
+                      disabled={!items.length || !direccionId || creating}
                     >
                       {creating ? 'Creando pedido...' : 'Confirmar pedido'}
                     </Button>
