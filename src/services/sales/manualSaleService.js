@@ -8,9 +8,20 @@ const QUOTE_DESIGNS_FOLDER = 'venta-manual';
 const PAYMENT_PROOFS_BUCKET = 'payment-proofs';
 const PAYMENT_PROOFS_FOLDER = 'venta-manual';
 
-const normalizePaginated = (data) => {
+const normalizeManualProductsResponse = (data) => {
   const value = Array.isArray(data) ? data[0] : data;
-  return value?.items ?? [];
+
+  return {
+    items: value?.items ?? [],
+    pagination: {
+      totalCount: Number(value?.totalCount || 0),
+      pageNumber: Number(value?.pageNumber || 1),
+      pageSize: Number(value?.pageSize || 12),
+      totalPages: Number(value?.totalPages || 0),
+      hasPreviousPage: Boolean(value?.hasPreviousPage),
+      hasNextPage: Boolean(value?.hasNextPage),
+    },
+  };
 };
 
 const uploadPersonalizationFile = async ({ productoId, file }) => {
@@ -100,7 +111,7 @@ export const searchManualSaleProducts = async ({
     p_page_size: pageSize,
   });
 
-  return normalizePaginated(response.data);
+  return normalizeManualProductsResponse(response.data);
 };
 
 export const createManualSale = async ({ cliente, entrega, items, pago, notasInternas }) => {

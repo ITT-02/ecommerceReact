@@ -1,7 +1,16 @@
 // Adapta respuestas y formularios de autenticación entre React y la API externa.
 
+import {
+  trimText,
+  validateEmailField,
+  validatePasswordField,
+  validatePhoneField,
+  validateRequiredTextField,
+} from '../../utils/validators';
+
 export const authResponseToSession = (data) => {
-  const expiresAt = data.expires_at || Math.floor(Date.now() / 1000) + Number(data.expires_in || 3600);
+  const expiresAt =
+    data.expires_at || Math.floor(Date.now() / 1000) + Number(data.expires_in || 3600);
 
   return {
     accessToken: data.access_token,
@@ -10,6 +19,11 @@ export const authResponseToSession = (data) => {
     tokenType: data.token_type || 'bearer',
     user: data.user || null,
   };
+};
+
+export const initialLoginFormData = {
+  email: '',
+  password: '',
 };
 
 export const initialRegisterFormData = {
@@ -23,31 +37,99 @@ export const initialRegisterFormData = {
   documento_identidad: '',
 };
 
-export const registerFormToAuthPayload = (formData) => {
-    const nombres = formData.nombres?.trim() || '';
-    const apellidos = formData.apellidos?.trim() || '';
-    const nombreCompleto = `${nombres} ${apellidos}`.trim();
+export const normalizeLoginFormData = (formData) => ({
+  email: trimText(formData.email).toLowerCase(),
+  password: formData.password || '',
+});
 
-    return {
-      email: formData.email?.trim(),
-      password: formData.password,
-      data: {
-        nombres,
-        apellidos,
-        nombre_completo: nombreCompleto,
-        telefono: formData.telefono?.trim() || null,
-        tipo_documento: formData.tipo_documento || null,
-        documento_identidad: formData.documento_identidad?.trim() || null,
-      },
-    };
+export const normalizeRegisterFormData = (formData) => ({
+  ...initialRegisterFormData,
+  ...formData,
+  nombres: trimText(formData.nombres),
+  apellidos: trimText(formData.apellidos),
+  telefono: trimText(formData.telefono),
+  email: trimText(formData.email).toLowerCase(),
+  tipo_documento: formData.tipo_documento || '',
+  documento_identidad: trimText(formData.documento_identidad),
+});
+
+export const loginFormToAuthPayload = (formData) => {
+  const normalized = normalizeLoginFormData(formData);
+
+  return {
+    email: normalized.email,
+    password: normalized.password,
   };
+};
+
+export const registerFormToAuthPayload = (formData) => {
+  const normalized = normalizeRegisterFormData(formData);
+
+  const nombreCompleto = `${normalized.nombres} ${normalized.apellidos}`.trim();
+
+  return {
+    email: normalized.email,
+    password: normalized.password,
+    data: {
+      nombres: normalized.nombres,
+      apellidos: normalized.apellidos,
+      nombre_completo: nombreCompleto,
+      telefono: normalized.telefono || null,
+      tipo_documento: normalized.tipo_documento || null,
+      documento_identidad: normalized.documento_identidad || null,
+    },
+  };
+};
+
+export const validateLoginForm = (formData) => {
+  const errors = {};
+
+  const emailError = validateEmailField(formData.email, 'correo electrónico');
+  if (emailError) errors.email = emailError;
+
+  const passwordError = validatePasswordField(formData.password, 'contraseña', {
+    minLength: 1,
+  });
+  if (passwordError) errors.password = passwordError;
+
+  return errors;
+};
 
 export const validateRegisterForm = (formData) => {
-  if (!formData.nombres?.trim()) return 'Ingresa tus nombres.';
-  if (!formData.apellidos?.trim()) return 'Ingresa tus apellidos.';
-  if (!formData.email?.trim()) return 'Ingresa tu correo electrónico.';
-  if (!formData.password) return 'Ingresa una contraseña.';
-  if (formData.password.length < 8) return 'La contraseña debe tener mínimo 8 caracteres.';
-  if (formData.password !== formData.confirmPassword) return 'Las contraseñas no coinciden.';
-  return null;
+  const errors = {};
+
+  const nombresError = validateRequiredTextField(formData.nombres, 'tus nombres', {
+    minLength: 2,
+    rejectOnlyNumbers: true,
+  });
+  if (nombresError) errors.nombres = nombresError;
+
+  const apellidosError = validateRequiredTextField(formData.apellidos, 'tus apellidos', {
+    minLength: 2,
+    rejectOnlyNumbers: true,
+  });
+  if (apellidosError) errors.apellidos = apellidosError;
+
+  const telefonoError = validatePhoneField(formData.telefono, 'teléfono', {
+    minDigits: 9,
+    maxDigits: 15,
+    optional: true,
+  });
+  if (telefonoError) errors.telefono = telefonoError;
+
+  const emailError = validateEmailField(formData.email, 'correo electrónico');
+  if (emailError) errors.email = emailError;
+
+  const passwordError = validatePasswordField(formData.password, 'contraseña', {
+    minLength: 8,
+  });
+  if (passwordError) errors.password = passwordError;
+
+  if (!formData.confirmPassword) {
+    errors.confirmPassword = 'Confirma tu contraseña.';
+  } else if (formData.password !== formData.confirmPassword) {
+    errors.confirmPassword = 'Las contraseñas no coinciden.';
+  }
+
+  return errors;
 };

@@ -1,8 +1,11 @@
 // Página administrativa: venta manual asistida.
 // Permite registrar ventas directas o cotizaciones gestionadas por un vendedor.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AddShoppingCartOutlinedIcon from '@mui/icons-material/AddShoppingCartOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined';
@@ -15,21 +18,26 @@ import {
   CardActionArea,
   CardContent,
   Checkbox,
+  CircularProgress,
   Chip,
   Divider,
   FormControlLabel,
   Grid,
   IconButton,
+  InputAdornment,
   MenuItem,
+  Pagination,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { FileUploadField } from '../../../components/common/Field/FileUploadField';
 import { PageHeader } from '../../../components/common/PageHeader';
+import { useDebouncedValue } from '../../../hooks/common/useDebouncedValue';
 import { useManualSale, useManualSaleProducts } from '../../../hooks/sales/useManualSale';
 import { formatCurrency } from '../../../utils/formatters';
 
@@ -60,6 +68,8 @@ const initialPayment = {
   referenciaTransaccion: '',
   comprobanteFile: null,
 };
+
+const CATALOG_PAGE_SIZE = 4;
 
 const deliveryTypes = ['envio_domicilio', 'agencia'];
 const contactDeliveryTypes = ['envio_domicilio', 'agencia', 'por_coordinar'];
@@ -184,6 +194,156 @@ function calculateItem(item) {
 const getProductPriceLabel = (product) => {
   if (!product?.mostrar_precio || product?.requiere_cotizacion) return 'Precio por acordar';
   return formatCurrency(product.precio);
+};
+
+const ProductThumb = ({ src, alt, size = 72 }) => (
+  <Box
+    component="img"
+    src={src || '/vite.svg'}
+    alt={alt || 'Producto'}
+    onError={(event) => {
+      event.currentTarget.onerror = null;
+      event.currentTarget.src = '/vite.svg';
+    }}
+    sx={(theme) => ({
+      width: size,
+      height: size,
+      borderRadius: theme.palette.custom.radius.xs,
+      objectFit: 'cover',
+      bgcolor: theme.palette.action.hover,
+      border: `1px solid ${theme.palette.divider}`,
+      flexShrink: 0,
+    })}
+  />
+);
+
+const ProductResultCard = ({ product, selected, onSelect }) => {
+  const stockStatus = getStockStatus(product);
+  const availableStock = getAvailableStock(product);
+  const variantLabel = product.nombre_variante || product.etiqueta_medida || product.codigoproducto || 'Variante principal';
+  const detailLine = [
+    product.codigoproducto && `Cod. ${product.codigoproducto}`,
+    product.etiqueta_medida,
+    product.material_variante,
+    product.color_principal,
+    product.acabado,
+  ].filter(Boolean).join(' · ');
+
+  const stockChipColor = stockStatus === 'sin_stock'
+    ? 'error'
+    : stockStatus === 'stock_bajo'
+      ? 'warning'
+      : 'success';
+
+  return (
+    <Card
+      variant="outlined"
+      sx={(theme) => {
+        const m = theme.palette.custom.semantic.storeMarketing;
+
+        return {
+          boxShadow: 'none',
+          borderRadius: theme.palette.custom.radius.xs,
+          backgroundImage: 'none',
+          bgcolor: selected ? alpha(m.lightAccent, 0.08) : m.lightCardBg,
+          borderColor: selected ? m.lightAccent : m.lightCardBorder,
+          minHeight: 128,
+          transition: `border-color ${theme.palette.custom.motion.durationBase} ${theme.palette.custom.motion.easeOut}, background-color ${theme.palette.custom.motion.durationBase} ${theme.palette.custom.motion.easeOut}`,
+          '&:hover': {
+            borderColor: m.lightAccent,
+            bgcolor: selected ? alpha(m.lightAccent, 0.1) : alpha(m.lightAccent, 0.04),
+          },
+        };
+      }}
+    >
+      <CardActionArea onClick={onSelect} sx={{ alignItems: 'stretch' }}>
+        <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
+          <Stack direction="row" spacing={1.25} sx={{ alignItems: 'flex-start' }}>
+            <ProductThumb src={product.imagen_url} alt={product.nombre_producto} />
+
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={(theme) => ({
+                      color: theme.palette.custom.semantic.storeMarketing.lightText,
+                      fontWeight: 900,
+                      lineHeight: 1.2,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    })}
+                  >
+                    {product.nombre_producto}
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={(theme) => ({
+                      mt: 0.25,
+                      color: theme.palette.custom.semantic.storeMarketing.lightMuted,
+                      fontWeight: 700,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 1,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    })}
+                  >
+                    {variantLabel}
+                  </Typography>
+                </Box>
+
+                {selected && <Chip size="small" color="primary" label="Elegido" />}
+              </Stack>
+
+              {detailLine && (
+                <Typography
+                  variant="caption"
+                  sx={(theme) => ({
+                    display: '-webkit-box',
+                    mt: 0.5,
+                    color: theme.palette.text.secondary,
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  })}
+                >
+                  {detailLine}
+                </Typography>
+              )}
+
+              {product.categoria_nombre && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+                  Categoría: {product.categoria_nombre}
+                </Typography>
+              )}
+
+              <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75, mt: 1 }}>
+                <Chip
+                  size="small"
+                  icon={<LocalOfferOutlinedIcon />}
+                  label={getProductPriceLabel(product)}
+                  color={product.requiere_cotizacion || !product.mostrar_precio ? 'warning' : 'default'}
+                  variant={product.requiere_cotizacion || !product.mostrar_precio ? 'filled' : 'outlined'}
+                />
+                <Chip
+                  size="small"
+                  icon={<Inventory2OutlinedIcon />}
+                  label={stockStatus === 'sin_stock' ? 'Sin stock' : `Stock ${availableStock}`}
+                  color={stockChipColor}
+                  variant={stockStatus === 'normal' ? 'outlined' : 'filled'}
+                />
+                {product.vender_sin_stock && <Chip size="small" color="info" label="Bajo pedido" variant="outlined" />}
+                {product.es_personalizable && <Chip size="small" color="secondary" label="Personalizable" variant="outlined" />}
+              </Stack>
+            </Box>
+          </Stack>
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  );
 };
 
 const hasContact = (cliente) => Boolean(cliente.nombre_cliente?.trim()) && Boolean(cliente.telefono_cliente?.trim() || cliente.correo_cliente?.trim());
@@ -389,15 +549,18 @@ const ProductDetailSummary = ({ item }) => {
         component="img"
         src={item.imagen_url || '/vite.svg'}
         alt={item.nombre_producto}
-        sx={{
+        onError={(event) => {
+          event.currentTarget.onerror = null;
+          event.currentTarget.src = '/vite.svg';
+        }}
+        sx={(theme) => ({
           width: '100%',
           height: 220,
-          borderRadius: 3,
+          borderRadius: theme.palette.custom.radius.xs,
           objectFit: 'cover',
-          bgcolor: 'action.hover',
-          border: '1px solid',
-          borderColor: 'divider',
-        }}
+          bgcolor: theme.palette.action.hover,
+          border: `1px solid ${theme.palette.divider}`,
+        })}
       />
 
       <Box>
@@ -461,6 +624,8 @@ const ProductDetailSummary = ({ item }) => {
 export const ManualSalesPage = () => {
   const [operationType, setOperationType] = useState('venta_directa');
   const [search, setSearch] = useState('');
+  const [catalogPage, setCatalogPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(search, 350);
   const [cliente, setCliente] = useState(initialClient);
   const [entrega, setEntrega] = useState(initialDelivery);
   const [pago, setPago] = useState(initialPayment);
@@ -470,7 +635,21 @@ export const ManualSalesPage = () => {
   const [notasInternas, setNotasInternas] = useState('');
   const [notice, setNotice] = useState(null);
 
-  const { products, loading, fetching, error: searchError } = useManualSaleProducts({ search });
+  useEffect(() => {
+    setCatalogPage(1);
+  }, [debouncedSearch]);
+
+  const {
+    products,
+    pagination,
+    loading,
+    fetching,
+    error: searchError,
+  } = useManualSaleProducts({
+    search: debouncedSearch,
+    pageNumber: catalogPage,
+    pageSize: CATALOG_PAGE_SIZE,
+  });
   const { createSale, createQuote, creating, error: saleError } = useManualSale();
 
   const total = useMemo(() => items.reduce((acc, item) => acc + numberValue(item.total_linea), 0), [items]);
@@ -610,67 +789,127 @@ export const ManualSalesPage = () => {
           </Alert>
         )}
 
-        <Grid container spacing={2.5}>
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Stack spacing={2}>
-                  <Typography variant="h6" fontWeight={900}>Catálogo</Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, lg: 4, xl: 4 }}>
+            <Card
+              sx={(theme) => ({
+                height: '100%',
+                borderRadius: theme.palette.custom.radius.xs,
+                backgroundImage: 'none',
+              })}
+            >
+              <CardContent sx={{ height: '100%', '&:last-child': { pb: 2 } }}>
+                <Stack spacing={2} sx={{ height: '100%' }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight={900}>Catálogo</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Selecciona una variante exacta para vender: código, medida, stock y precio.
+                    </Typography>
+                  </Box>
+
                   <TextField
                     fullWidth
                     label="Buscar producto"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    helperText={fetching ? 'Buscando productos.' : 'Busca por nombre, código o variante.'}
+                    helperText={
+                      fetching
+                        ? 'Buscando productos.'
+                        : 'Busca por nombre, código, variante, medida, material o categoría.'
+                    }
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchOutlinedIcon fontSize="small" />
+                          </InputAdornment>
+                        ),
+                        endAdornment: fetching ? (
+                          <InputAdornment position="end">
+                            <CircularProgress size={18} />
+                          </InputAdornment>
+                        ) : null,
+                      },
+                    }}
                   />
 
-                  <Stack spacing={1.25} sx={{ maxHeight: { lg: 620 }, overflow: 'auto', pr: 0.5 }}>
-                    {products.map((product) => {
-                      const selected = selectedProduct?.variante_id === product.variante_id;
-                      const stockStatus = getStockStatus(product);
-                      return (
-                        <Card key={product.variante_id} variant="outlined" sx={{ boxShadow: 'none' }}>
-                          <CardActionArea onClick={() => handleSelectProduct(product)}>
-                            <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                              <Stack direction="row" spacing={1.5}>
-                                <Box
-                                  component="img"
-                                  src={product.imagen_url || '/vite.svg'}
-                                  alt={product.nombre_producto}
-                                  sx={{ width: 64, height: 64, borderRadius: 2, objectFit: 'cover', bgcolor: 'action.hover' }}
-                                />
-                                <Box sx={{ minWidth: 0, flex: 1 }}>
-                                  <Typography fontWeight={900} noWrap>{product.nombre_producto}</Typography>
-                                  <Typography variant="body2" color="text.secondary" noWrap>{product.nombre_variante || product.codigoproducto}</Typography>
-                                  <Typography variant="body2" fontWeight={800}>{getProductPriceLabel(product)}</Typography>
-                                  <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75, mt: 0.75 }}>
-                                    <Chip size="small" label={`Stock ${getAvailableStock(product)}`} color={stockStatus === 'stock_bajo' ? 'warning' : 'default'} />
-                                    {product.vender_sin_stock && <Chip size="small" color="info" label="Bajo pedido" />}
-                                    {product.es_personalizable && <Chip size="small" color="secondary" label="Personalizable" />}
-                                    {product.requiere_cotizacion && <Chip size="small" color="warning" label="Precio acordado" />}
-                                    {selected && <Chip size="small" color="primary" label="Seleccionado" />}
-                                  </Stack>
-                                </Box>
-                              </Stack>
-                            </CardContent>
-                          </CardActionArea>
-                        </Card>
-                      );
-                    })}
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      minHeight: 28,
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      {pagination.totalCount > 0
+                        ? `${pagination.totalCount} variante(s) encontrada(s)`
+                        : 'Sin resultados para mostrar'}
+                    </Typography>
 
-                    {!loading && !products.length && (
-                      <Typography variant="body2" color="text.secondary">
-                        Busca un producto para iniciar la venta.
+                    {pagination.totalPages > 1 && (
+                      <Typography variant="caption" color="text.secondary">
+                        Página {pagination.pageNumber} de {pagination.totalPages}
                       </Typography>
                     )}
                   </Stack>
+
+                  <Stack
+                    spacing={1.25}
+                    sx={{
+                      // No usamos una altura fija en desktop porque con 4 tarjetas
+                      // el listado se veía cortado y comprimido. La página completa
+                      // puede desplazarse de forma natural.
+                      maxHeight: 'none',
+                      minHeight: 0,
+                      overflow: 'visible',
+                      pr: 0,
+                    }}
+                  >
+                    {products.map((product) => (
+                      <ProductResultCard
+                        key={product.variante_id}
+                        product={product}
+                        selected={selectedProduct?.variante_id === product.variante_id}
+                        onSelect={() => handleSelectProduct(product)}
+                      />
+                    ))}
+
+                    {!loading && !products.length && (
+                      <Alert severity="info">
+                        No se encontraron variantes. Prueba con nombre, código, medida o categoría.
+                      </Alert>
+                    )}
+                  </Stack>
+
+                  {pagination.totalPages > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', pt: 0.5 }}>
+                      <Pagination
+                        page={catalogPage}
+                        count={pagination.totalPages}
+                        onChange={(_, page) => setCatalogPage(page)}
+                        color="primary"
+                        size="small"
+                        siblingCount={0}
+                        boundaryCount={1}
+                        disabled={fetching}
+                      />
+                    </Box>
+                  )}
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Card sx={{ height: '100%' }}>
+          <Grid size={{ xs: 12, lg: 4, xl: 4 }}>
+            <Card
+              sx={(theme) => ({
+                height: '100%',
+                borderRadius: theme.palette.custom.radius.xs,
+                backgroundImage: 'none',
+              })}
+            >
               <CardContent>
                 <Stack spacing={2}>
                   <Typography variant="h6" fontWeight={900}>Producto seleccionado</Typography>
@@ -874,8 +1113,15 @@ export const ManualSalesPage = () => {
             </Card>
           </Grid>
 
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Card sx={{ position: { lg: 'sticky' }, top: 96 }}>
+          <Grid size={{ xs: 12, lg: 4, xl: 4 }}>
+            <Card
+              sx={(theme) => ({
+                position: { lg: 'sticky' },
+                top: 96,
+                borderRadius: theme.palette.custom.radius.xs,
+                backgroundImage: 'none',
+              })}
+            >
               <CardContent>
                 <Stack spacing={2}>
                   <Typography variant="h6" fontWeight={900}>Operación</Typography>

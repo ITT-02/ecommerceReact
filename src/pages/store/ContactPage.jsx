@@ -1,12 +1,14 @@
 /**
  * Página pública Contacto.
- * Ahora toma canales desde configuración de tienda y guarda mensajes en backend.
+ * Toma canales desde configuración de tienda y guarda mensajes en backend.
+ * Valida nombre, email, WhatsApp y mensaje antes de enviar.
  */
 
 import { useMemo, useState } from 'react';
 
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
+
 import {
   Accordion,
   AccordionDetails,
@@ -23,6 +25,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+
 import { useSearchParams } from 'react-router-dom';
 
 import { ErrorMessage } from '../../components/common/ErrorMessage';
@@ -32,13 +35,24 @@ import { contactPageContent } from '../../data/storePageContent';
 import { useCreateContactMessage } from '../../hooks/store/useContactMessages';
 import { useStoreSettings } from '../../hooks/store/useStoreSettings';
 import { buildWhatsAppUrl } from '../../services/store/storeSettingsService';
+import {
+  sanitizePhoneInput,
+  trimText,
+  validateEmailField,
+  validatePhoneField,
+} from '../../utils/validators';
 
 const normalizeReasonFromQuery = (value, reasons) => {
   if (!value) return reasons[0];
+
   const cleanValue = value.toLowerCase();
+
   if (cleanValue.includes('mayorista')) return 'Registro como mayorista';
-  if (cleanValue.includes('cotizacion') || cleanValue.includes('cotización')) return 'Cotización personalizada';
+  if (cleanValue.includes('cotizacion') || cleanValue.includes('cotización')) {
+    return 'Cotización personalizada';
+  }
   if (cleanValue.includes('pedido')) return 'Seguimiento de pedido';
+
   return reasons[0];
 };
 
@@ -81,6 +95,45 @@ const buildContactChannels = (settings, fallbackChannels) => {
   return dynamicChannels.length ? dynamicChannels : fallbackChannels;
 };
 
+const validateContactForm = (formData) => {
+  const errors = {};
+
+  const nombre = trimText(formData.nombre);
+  const mensaje = trimText(formData.mensaje);
+
+  if (!nombre) {
+    errors.nombre = 'Ingresa tu nombre completo.';
+  } else if (nombre.length < 3) {
+    errors.nombre = 'El nombre debe tener al menos 3 caracteres.';
+  } else if (/^\d+$/.test(nombre)) {
+    errors.nombre = 'El nombre no puede contener solo números.';
+  }
+
+  const emailError = validateEmailField(formData.email, 'email');
+
+  if (emailError) {
+    errors.email = emailError;
+  }
+
+  const whatsappError = validatePhoneField(formData.whatsapp, 'WhatsApp', {
+    minDigits: 9,
+    maxDigits: 15,
+    optional: true,
+  });
+
+  if (whatsappError) {
+    errors.whatsapp = whatsappError;
+  }
+
+  if (!mensaje) {
+    errors.mensaje = 'Ingresa tu mensaje.';
+  } else if (mensaje.length < 10) {
+    errors.mensaje = 'El mensaje debe tener al menos 10 caracteres.';
+  }
+
+  return errors;
+};
+
 const ContactChannelCard = ({ channel }) => {
   const Icon = getStoreMarketingIcon(channel.iconKey);
 
@@ -88,6 +141,7 @@ const ContactChannelCard = ({ channel }) => {
     <Card
       sx={(theme) => {
         const m = theme.palette.custom.semantic.storeMarketing;
+
         return {
           height: '100%',
           borderRadius: theme.palette.custom.radius.xs,
@@ -108,6 +162,7 @@ const ContactChannelCard = ({ channel }) => {
           <Box
             sx={(theme) => {
               const m = theme.palette.custom.semantic.storeMarketing;
+
               return {
                 width: 46,
                 height: 46,
@@ -125,13 +180,35 @@ const ContactChannelCard = ({ channel }) => {
           </Box>
 
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="overline" component="p" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightAccent, fontWeight: 800, letterSpacing: '0.12em' })}>
+            <Typography
+              variant="overline"
+              component="p"
+              sx={(theme) => ({
+                color: theme.palette.custom.semantic.storeMarketing.lightAccent,
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+              })}
+            >
               {channel.label}
             </Typography>
-            <Typography variant="subtitle1" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightText, fontWeight: 800, overflowWrap: 'anywhere' })}>
+
+            <Typography
+              variant="subtitle1"
+              sx={(theme) => ({
+                color: theme.palette.custom.semantic.storeMarketing.lightText,
+                fontWeight: 800,
+                overflowWrap: 'anywhere',
+              })}
+            >
               {channel.value}
             </Typography>
-            <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightMuted })}>
+
+            <Typography
+              variant="body2"
+              sx={(theme) => ({
+                color: theme.palette.custom.semantic.storeMarketing.lightMuted,
+              })}
+            >
               {channel.helper}
             </Typography>
           </Box>
@@ -143,7 +220,13 @@ const ContactChannelCard = ({ channel }) => {
   if (!channel.href) return content;
 
   return (
-    <Box component="a" href={channel.href} target={channel.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer" sx={{ textDecoration: 'none' }}>
+    <Box
+      component="a"
+      href={channel.href}
+      target={channel.href.startsWith('http') ? '_blank' : undefined}
+      rel="noreferrer"
+      sx={{ textDecoration: 'none' }}
+    >
       {content}
     </Box>
   );
@@ -151,6 +234,7 @@ const ContactChannelCard = ({ channel }) => {
 
 export const ContactPage = () => {
   const [searchParams] = useSearchParams();
+
   const { hero, channels: fallbackChannels, reasons, faqs } = contactPageContent;
   const { settings } = useStoreSettings();
   const { createMessage, sending, error } = useCreateContactMessage();
@@ -172,12 +256,28 @@ export const ContactPage = () => {
     motivo: defaultReason,
     mensaje: '',
   });
+
+  const [fieldErrors, setFieldErrors] = useState({});
   const [sent, setSent] = useState(false);
   const [formError, setFormError] = useState('');
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    const nextValue = name === 'whatsapp'
+      ? sanitizePhoneInput(value)
+      : value;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: nextValue,
+    }));
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: '',
+    }));
+
     setFormError('');
     setSent(false);
   };
@@ -185,14 +285,28 @@ export const ContactPage = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!formData.nombre.trim() || !formData.email.trim() || !formData.mensaje.trim()) {
-      setFormError('Completa nombre, email y mensaje para enviar tu consulta.');
+    const validationErrors = validateContactForm(formData);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      setFormError('Revisa los campos marcados antes de enviar tu consulta.');
       return;
     }
 
+    setFieldErrors({});
+    setFormError('');
+
     try {
-      await createMessage(formData);
+      await createMessage({
+        ...formData,
+        nombre: trimText(formData.nombre),
+        email: trimText(formData.email).toLowerCase(),
+        whatsapp: trimText(formData.whatsapp),
+        mensaje: trimText(formData.mensaje),
+      });
+
       setSent(true);
+
       setFormData({
         nombre: '',
         email: '',
@@ -201,7 +315,12 @@ export const ContactPage = () => {
         mensaje: '',
       });
     } catch (err) {
-      const message = err?.response?.data?.message || err.message || 'No se pudo enviar la consulta.';
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err.message ||
+        'No se pudo enviar la consulta.';
+
       setFormError(message);
     }
   };
@@ -217,7 +336,12 @@ export const ContactPage = () => {
         })}
       >
         <Container maxWidth="lg">
-          <StoreSectionHeader eyebrow={hero.eyebrow} title={hero.title} description={hero.description} tone="dark" />
+          <StoreSectionHeader
+            eyebrow={hero.eyebrow}
+            title={hero.title}
+            description={hero.description}
+            tone="dark"
+          />
         </Container>
       </Box>
 
@@ -225,7 +349,15 @@ export const ContactPage = () => {
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, md: 5 }}>
             <Stack spacing={2}>
-              <Typography variant="overline" component="p" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightAccent, fontWeight: 800, letterSpacing: '0.18em' })}>
+              <Typography
+                variant="overline"
+                component="p"
+                sx={(theme) => ({
+                  color: theme.palette.custom.semantic.storeMarketing.lightAccent,
+                  fontWeight: 800,
+                  letterSpacing: '0.18em',
+                })}
+              >
                 Canales de contacto
               </Typography>
 
@@ -234,7 +366,13 @@ export const ContactPage = () => {
               ))}
 
               <Box sx={{ pt: 2 }}>
-                <Typography variant="h5" sx={(theme) => ({ mb: 1.5, color: theme.palette.custom.semantic.storeMarketing.lightText })}>
+                <Typography
+                  variant="h5"
+                  sx={(theme) => ({
+                    mb: 1.5,
+                    color: theme.palette.custom.semantic.storeMarketing.lightText,
+                  })}
+                >
                   Preguntas frecuentes
                 </Typography>
 
@@ -244,6 +382,7 @@ export const ContactPage = () => {
                     disableGutters
                     sx={(theme) => {
                       const m = theme.palette.custom.semantic.storeMarketing;
+
                       return {
                         borderRadius: `${theme.palette.custom.radius.xs}px !important`,
                         border: `1px solid ${m.lightCardBorder}`,
@@ -255,12 +394,24 @@ export const ContactPage = () => {
                     }}
                   >
                     <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
-                      <Typography variant="subtitle2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightText, fontWeight: 800 })}>
+                      <Typography
+                        variant="subtitle2"
+                        sx={(theme) => ({
+                          color: theme.palette.custom.semantic.storeMarketing.lightText,
+                          fontWeight: 800,
+                        })}
+                      >
                         {faq.question}
                       </Typography>
                     </AccordionSummary>
+
                     <AccordionDetails>
-                      <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightMuted })}>
+                      <Typography
+                        variant="body2"
+                        sx={(theme) => ({
+                          color: theme.palette.custom.semantic.storeMarketing.lightMuted,
+                        })}
+                      >
                         {faq.answer}
                       </Typography>
                     </AccordionDetails>
@@ -274,6 +425,7 @@ export const ContactPage = () => {
             <Card
               sx={(theme) => {
                 const m = theme.palette.custom.semantic.storeMarketing;
+
                 return {
                   borderRadius: theme.palette.custom.radius.xs,
                   backgroundImage: 'none',
@@ -285,13 +437,33 @@ export const ContactPage = () => {
             >
               <CardContent sx={{ p: { xs: 2.5, md: 4 }, '&:last-child': { pb: { xs: 2.5, md: 4 } } }}>
                 <Stack spacing={1} sx={{ mb: 3 }}>
-                  <Typography variant="overline" component="p" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightAccent, fontWeight: 800, letterSpacing: '0.18em' })}>
+                  <Typography
+                    variant="overline"
+                    component="p"
+                    sx={(theme) => ({
+                      color: theme.palette.custom.semantic.storeMarketing.lightAccent,
+                      fontWeight: 800,
+                      letterSpacing: '0.18em',
+                    })}
+                  >
                     Formulario de contacto
                   </Typography>
-                  <Typography variant="h3" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightText })}>
+
+                  <Typography
+                    variant="h3"
+                    sx={(theme) => ({
+                      color: theme.palette.custom.semantic.storeMarketing.lightText,
+                    })}
+                  >
                     Envíanos tu consulta
                   </Typography>
-                  <Typography variant="body2" sx={(theme) => ({ color: theme.palette.custom.semantic.storeMarketing.lightMuted })}>
+
+                  <Typography
+                    variant="body2"
+                    sx={(theme) => ({
+                      color: theme.palette.custom.semantic.storeMarketing.lightMuted,
+                    })}
+                  >
                     La consulta quedará registrada en el panel administrativo para seguimiento comercial.
                   </Typography>
                 </Stack>
@@ -307,19 +479,65 @@ export const ContactPage = () => {
                 <Box component="form" onSubmit={handleSubmit} noValidate>
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField label="Nombre completo" name="nombre" value={formData.nombre} onChange={handleChange} required />
+                      <TextField
+                        fullWidth
+                        label="Nombre completo"
+                        name="nombre"
+                        value={formData.nombre}
+                        onChange={handleChange}
+                        required
+                        error={Boolean(fieldErrors.nombre)}
+                        helperText={fieldErrors.nombre || ' '}
+                        disabled={sending}
+                      />
                     </Grid>
 
                     <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        error={Boolean(fieldErrors.email)}
+                        helperText={fieldErrors.email || ' '}
+                        disabled={sending}
+                      />
                     </Grid>
 
                     <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField label="WhatsApp" name="whatsapp" value={formData.whatsapp} onChange={handleChange} placeholder="+51 999 000 000" />
+                    <TextField
+                      fullWidth
+                      label="WhatsApp"
+                      name="whatsapp"
+                      value={formData.whatsapp}
+                      onChange={handleChange}
+                      error={Boolean(fieldErrors.whatsapp)}
+                      helperText={
+                        fieldErrors.whatsapp || ''
+                      }
+                      disabled={sending}
+                      slotProps={{
+                        htmlInput: {
+                          inputMode: 'tel',
+                          maxLength: 20,
+                        },
+                      }}
+                    />
                     </Grid>
 
                     <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField select label="Motivo" name="motivo" value={formData.motivo} onChange={handleChange}>
+                      <TextField
+                        fullWidth
+                        select
+                        label="Motivo"
+                        name="motivo"
+                        value={formData.motivo}
+                        onChange={handleChange}
+                        disabled={sending}
+                      >
                         {reasons.map((reason) => (
                           <MenuItem key={reason} value={reason}>
                             {reason}
@@ -330,6 +548,7 @@ export const ContactPage = () => {
 
                     <Grid size={{ xs: 12 }}>
                       <TextField
+                        fullWidth
                         label="Mensaje"
                         name="mensaje"
                         value={formData.mensaje}
@@ -338,11 +557,21 @@ export const ContactPage = () => {
                         multiline
                         minRows={5}
                         placeholder="Cuéntanos qué producto buscas, cantidades aproximadas, destino de envío o número de pedido."
+                        error={Boolean(fieldErrors.mensaje)}
+                        helperText={fieldErrors.mensaje || ' '}
+                        disabled={sending}
                       />
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                      <Button type="submit" variant="contained" size="large" disabled={sending} endIcon={<SendRoundedIcon />}>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        size="large"
+                        disabled={sending}
+                        endIcon={<SendRoundedIcon />}
+                        sx={{ width: { xs: '100%', sm: 'auto' } }}
+                      >
                         {sending ? 'Enviando...' : 'Enviar consulta'}
                       </Button>
                     </Grid>

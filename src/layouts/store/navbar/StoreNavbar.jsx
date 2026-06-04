@@ -19,6 +19,8 @@ import {
   Typography,
 } from '@mui/material';
 
+import { alpha } from '@mui/material/styles';
+
 import {
   AccountCircle,
   CloseRounded,
@@ -37,7 +39,11 @@ import { useThemeMode } from '../../../providers/AppThemeProvider';
 import { StoreCartButton } from './StoreCartButton';
 import { StoreMobileDrawer } from './StoreMobileDrawer';
 import { StoreUserMenu } from './StoreUserMenu';
-import { storeAfterCatalogMenuItems, storeCatalogMenuItems, storeMainMenuItems } from './storeNavigationConfig';
+import {
+  storeAfterCatalogMenuItems,
+  storeCatalogMenuItems,
+  storeMainMenuItems,
+} from './storeNavigationConfig';
 
 import { StoreBrandLogo } from './StoreBrandLogo';
 
@@ -72,27 +78,32 @@ export const StoreNavbar = () => {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
-  const [dismissedTopbarText, setDismissedTopbarText] = useState('');
+  const [dismissedTopbarKey, setDismissedTopbarKey] = useState('');
   const closeTimerRef = useRef(null);
 
   const topbarText = settings.mensaje_topbar || settings.slogan || '';
-  const showTopbar = Boolean(topbarText) && dismissedTopbarText !== topbarText;
+  const topbarRightText = settings.metadata?.mensaje_topbar_derecha || '';
+  const topbarDismissKey = `${topbarText}__${topbarRightText}`;
+  const showTopbar =
+    Boolean(topbarText || topbarRightText) && dismissedTopbarKey !== topbarDismissKey;
+
   const isLoggedIn = isAuthenticated ?? Boolean(user);
   const isCatalogActive = location.pathname === '/catalogo';
   const currentUrl = `${location.pathname}${location.search}`;
 
   useEffect(() => {
     try {
-      setDismissedTopbarText(sessionStorage.getItem('aliqora_topbar_dismissed_text') || '');
+      setDismissedTopbarKey(sessionStorage.getItem('aliqora_topbar_dismissed_key') || '');
     } catch {
-      setDismissedTopbarText('');
+      setDismissedTopbarKey('');
     }
   }, []);
 
   const handleDismissTopbar = () => {
-    setDismissedTopbarText(topbarText);
+    setDismissedTopbarKey(topbarDismissKey);
+
     try {
-      sessionStorage.setItem('aliqora_topbar_dismissed_text', topbarText);
+      sessionStorage.setItem('aliqora_topbar_dismissed_key', topbarDismissKey);
     } catch {
       // sessionStorage puede no estar disponible en algunos entornos.
     }
@@ -104,14 +115,22 @@ export const StoreNavbar = () => {
   const scheduleCatalogClose = () => {
     closeTimerRef.current = setTimeout(() => setIsCatalogOpen(false), 250);
   };
+
   const cancelCatalogClose = () => clearTimeout(closeTimerRef.current);
+
   const handleCatalogEnter = () => {
     cancelCatalogClose();
     setIsCatalogOpen(true);
   };
 
   const renderMainNavButton = (item) => (
-    <Button key={item.to} component={NavLink} to={item.to} color="inherit" sx={getNavButtonSx()}>
+    <Button
+      key={item.to}
+      component={NavLink}
+      to={item.to}
+      color="inherit"
+      sx={getNavButtonSx()}
+    >
       {item.label}
     </Button>
   );
@@ -153,17 +172,32 @@ export const StoreNavbar = () => {
               </Typography>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-                <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1, flexWrap: 'wrap' }}>
-                  {settings.telefono_atencion && <Chip label={settings.telefono_atencion} color="primary" size="small" />}
-                  {settings.whatsapp && <Chip label="WhatsApp disponible" color="secondary" size="small" />}
-                  {!settings.telefono_atencion && !settings.whatsapp && <Chip label="Atención personalizada" color="secondary" size="small" />}
-                </Box>
+                {topbarRightText && (
+                  <Chip
+                    label={topbarRightText}
+                    size="small"
+                    sx={(theme) => {
+                      const nav = theme.palette.custom.semantic.storeNavigation;
+
+                      return {
+                        display: { xs: 'none', sm: 'inline-flex' },
+                        fontWeight: 800,
+                        letterSpacing: '0.04em',
+                        bgcolor: alpha(nav.brandText, 0.12),
+                        color: nav.brandText,
+                        border: `1px solid ${alpha(nav.brandText, 0.18)}`,
+                      };
+                    }}
+                  />
+                )}
 
                 <IconButton
                   size="small"
                   onClick={handleDismissTopbar}
                   aria-label="Cerrar aviso superior"
-                  sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.textMuted })}
+                  sx={(theme) => ({
+                    color: theme.palette.custom.semantic.storeNavigation.textMuted,
+                  })}
                 >
                   <CloseRounded fontSize="small" />
                 </IconButton>
@@ -196,33 +230,39 @@ export const StoreNavbar = () => {
               gap: 2,
             }}
           >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <IconButton
-              onClick={handleDrawerToggle}
-              sx={(theme) => ({
-                display: { xs: 'inline-flex', md: 'none' },
-                color: theme.palette.custom.semantic.storeNavigation.brandText,
-              })}
-              aria-label="Abrir menú"
-            >
-              <Menu />
-            </IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <IconButton
+                onClick={handleDrawerToggle}
+                sx={(theme) => ({
+                  display: { xs: 'inline-flex', md: 'none' },
+                  color: theme.palette.custom.semantic.storeNavigation.brandText,
+                })}
+                aria-label="Abrir menú"
+              >
+                <Menu />
+              </IconButton>
+
+              <Box
+                component={NavLink}
+                to="/"
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                  textDecoration: 'none',
+                }}
+              >
+                <StoreBrandLogo />
+              </Box>
+            </Box>
 
             <Box
-              component={NavLink}
-              to="/"
               sx={{
-                display: 'flex',
+                display: { xs: 'none', md: 'flex' },
                 alignItems: 'center',
-                flexShrink: 0,
-                textDecoration: 'none',
+                gap: 0.5,
               }}
             >
-              <StoreBrandLogo />
-            </Box>
-          </Box>
-    
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5 }}>
               {storeMainMenuItems.map(renderMainNavButton)}
 
               <Box
@@ -277,10 +317,24 @@ export const StoreNavbar = () => {
               {storeAfterCatalogMenuItems.map(renderMainNavButton)}
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexShrink: 0 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: { xs: 0.5, sm: 1 },
+                flexShrink: 0,
+              }}
+            >
               <StoreCartButton />
 
-              <IconButton onClick={toggleColorMode} size="small" aria-label="Cambiar tema" sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.brandText })}>
+              <IconButton
+                onClick={toggleColorMode}
+                size="small"
+                aria-label="Cambiar tema"
+                sx={(theme) => ({
+                  color: theme.palette.custom.semantic.storeNavigation.brandText,
+                })}
+              >
                 {mode === 'light' ? <DarkMode /> : <LightMode />}
               </IconButton>
 
@@ -292,7 +346,10 @@ export const StoreNavbar = () => {
                     component={NavLink}
                     to="/login"
                     size="small"
-                    sx={(theme) => ({ display: { xs: 'inline-flex', md: 'none' }, color: theme.palette.custom.semantic.storeNavigation.brandText })}
+                    sx={(theme) => ({
+                      display: { xs: 'inline-flex', md: 'none' },
+                      color: theme.palette.custom.semantic.storeNavigation.brandText,
+                    })}
                     aria-label="Ingresar"
                   >
                     <AccountCircle />
@@ -302,6 +359,7 @@ export const StoreNavbar = () => {
                     <Button component={NavLink} to="/login" variant="contained" size="small" sx={{ minWidth: 'auto' }}>
                       Ingresar
                     </Button>
+
                     <Button
                       component={NavLink}
                       to="/registro"

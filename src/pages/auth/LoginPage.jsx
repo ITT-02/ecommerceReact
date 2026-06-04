@@ -1,39 +1,48 @@
-// Página de inicio de sesión.
-// Envía email y password a la API externa y redirige según el rol.
+/**
+ * Página de inicio de sesión.
+ * Valida email y contraseña antes de enviar a la API  y redirige según el rol..
+ */
 
-import {
-  Box,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Link,
-  Stack,
-  TextField,
-  Typography,
-  InputAdornment,
-  IconButton,
-  Alert,
-} from '@mui/material';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import InventoryIcon from '@mui/icons-material/Inventory';
+
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  Link,
+  Stack,
+  Typography,
+} from '@mui/material';
 
 import { useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 
+import {
+  initialLoginFormData,
+  loginFormToAuthPayload,
+  validateLoginForm,
+} from '../../adapters/auth/authAdapter';
 import { useAuth } from '../../hooks/auth/useAuth';
 import { getDefaultPathByRoles } from '../../utils/access/menuByRole';
+import { hasFieldErrors } from '../../utils/validators';
 
+import { AuthFormTextField } from './components/AuthFormTextField';
 import { AuthPageShell } from './components/AuthPageShell';
 
 export const LoginPage = () => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState(initialLoginFormData);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { login, loading } = useAuth();
-  const [showPass, setShowPass] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -44,205 +53,148 @@ export const LoginPage = () => {
       ...prev,
       [name]: value,
     }));
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: '',
+    }));
+
+    setError(null);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
 
+    const validationErrors = validateLoginForm(formData);
+
+    if (hasFieldErrors(validationErrors)) {
+      setFieldErrors(validationErrors);
+      setError('Revisa los campos marcados antes de ingresar.');
+      return;
+    }
+
     try {
-      const result = await login(formData);
+      const result = await login(loginFormToAuthPayload(formData));
 
       const roles = result.roles || result.context?.roles || [];
       const defaultPath = getDefaultPathByRoles(roles);
-
       const fromPath = location.state?.from?.pathname;
 
-      const redirectTo = fromPath?.startsWith('/admin')
-        ? fromPath
-        : defaultPath;
+      const redirectTo = fromPath?.startsWith('/admin') ? fromPath : defaultPath;
 
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || 'No se pudo iniciar sesión.');
     }
   };
 
   return (
-    <Box component="section" sx={{display:'flex', minHeight:'100vh' }}>
-     
-      <Box sx={{
-        width: { md: '40%' },
-        minWidth: { md: 300 },
-        background:(theme)=> `linear-gradient(155deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-        display: { xs: 'none', md: 'flex' }, flexDirection: 'column',
-        p: 6, gap: 4,
-      }}>
-          {/* Logo */}
-          <Box sx ={{ display: 'flex', alignItems: 'center', gap: 1.5}}>
-            {/* Panel Izquierdo */}
-            <Box sx={{ width: 42,
-                        height: 42, borderRadius:2.5,
-                        bgcolor: (theme) => theme.palette.custom.semantic.storeNavigation.brandSurface,
-                        display :'flex',alignItems: 'center',justifyContent: 'center',
-            }}>
+    <AuthPageShell
+      sideDescription="Accede a tu cuenta para revisar pedidos, cotizaciones, pagos y seguimiento de envíos."
+      maxWidth={420}
+    >
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        noValidate
+        sx={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3,
+        }}
+      >
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+            Iniciar sesión
+          </Typography>
 
-              <InventoryIcon sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.text })}></InventoryIcon>
-            </Box>
-            <Typography variant='h5' fontWeight={700} sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.text })}>
-              Aliqora
-            </Typography>
-          </Box>
-
-          {/* Tagline     */}
-          <Box sx={{flex:1,display:'flex', flexDirection: 'column',
-                    justifyContent:'center', gap: 2
-          }}>
-            <Typography variant='h4' fontWeight={700} sx={(theme) => ({ color: theme.palette.custom.semantic.storeNavigation.text })}>
-              Tu plataforma de empaques, en un solo lugar
-            </Typography>
-            <Typography sx={(theme) => ({ lineHeight: 1.8, color: theme.palette.custom.semantic.storeNavigation.textMuted })}>
-              Accede a tus productos,pedidos y cuenta desde cualquier dispositivo
-            </Typography>
-          </Box>
-          {/* Feature pills */}
-          {['Catalogo de productos',
-          'Seguimiento de pedidos',
-          'Pagos y facturacion'].map(feat => (
-          <Box key={feat} sx={{
-            display: 'flex', alignItems: 'center', gap: 1.5,
-            bgcolor: (theme)=>theme.palette.primary.dark,
-            borderRadius: 2, px: 1, py: 1.5,
-          }}>
-            {/* Punto decorativo */}
-            <Box sx={{ width: 6, height: 6, borderRadius: '10%',
-                       bgcolor: (theme) => theme.palette.custom.semantic.storeNavigation.text, flexShrink: 0 }} />
-            {/* Texto de la pill */}
-            <Typography fontSize={13} sx={{ color: (theme) => theme.palette.primary.contrastText}} fontWeight={500}>
-              {feat}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-      {/* Panel derecho */}
-      <Box sx={{
-        flex:1, display:'flex', flexDirection:'column',
-        alignItems: 'center',
-        p:{xs:3, md:'0 40px'},
-      }}>
-        {/* Barra superior con logo y ayuda */}
-        <Box sx={{
-          width: '100%', maxWidth: 400,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          py: 3.5, borderBottom: '1px solid', borderColor: 'divider',
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{
-              width: 28, height: 28, borderRadius: 1.5,
-              bgcolor: 'primary.main',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <InventoryIcon sx={{ fontSize: 15, color: 'primary.contrastText' }} />
-            </Box>
-            <Typography fontWeight={700} fontSize={16}>Aliqora</Typography>
-          </Box>
-          <Typography fontSize={12} color="text.secondary">
-            ¿Necesitas ayuda?{' '}
-            <Link href="/contacto" underline="hover" fontWeight={600} fontSize={12}>
-              Contáctanos
-            </Link>
+          <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>
+            Ingresa con tu correo registrado.
           </Typography>
         </Box>
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: 400 }}>
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3,
-          }}
-        >
-          <Typography variant="h4" fontWeight={700}>
-            Iniciar Sesion
-          </Typography>
-          <Typography sx={{ color: 'text.secondary' }} mt={0.5}>
-            Ingresa con tu usuario registrado.
-          </Typography>
 
-          {error && <Alert severity="error">{error}</Alert>}
+        {error && <Alert severity="error">{error}</Alert>}
 
-          <TextField
+        <Stack spacing={2.25}>
+          <AuthFormTextField
             name="email"
             label="Correo electrónico"
             type="email"
             value={formData.email}
             onChange={handleChange}
-            fullWidth
             required
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailOutlinedIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
-            }}
+            icon={EmailOutlinedIcon}
+            error={Boolean(fieldErrors.email)}
+            helperText={fieldErrors.email}
+            disabled={loading}
           />
 
-          <TextField
+          <AuthFormTextField
             name="password"
             label="Contraseña"
-            type={showPass ? 'text' : 'password'}
+            type={showPassword ? 'text' : 'password'}
             value={formData.password}
             onChange={handleChange}
-            fullWidth
             required
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockOutlinedIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPass(v => !v)} edge="end">
-                      {showPass
-                        ? <VisibilityOffIcon fontSize="small" />
-                        : <VisibilityIcon fontSize="small" />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-            }}
+            icon={LockOutlinedIcon}
+            error={Boolean(fieldErrors.password)}
+            helperText={fieldErrors.password}
+            disabled={loading}
+            endAdornment={
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  edge="end"
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  {showPassword ? (
+                    <VisibilityOffIcon fontSize="small" />
+                  ) : (
+                    <VisibilityIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </InputAdornment>
+            }
           />
-          <Box sx={{ display: 'flex', alignItems: 'center',
-                     justifyContent: 'space-between' }}>
+
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              gap: 1,
+              flexDirection: { xs: 'column', sm: 'row' },
+            }}
+          >
             <FormControlLabel
-              control={<Checkbox size="small" />}
-              label={<Typography fontSize={13}>Recordarme</Typography>}
+              control={<Checkbox size="small" disabled={loading} />}
+              label={<Typography sx={{ fontSize: 13 }}>Recordarme</Typography>}
             />
-            <Link href="/forgot-password" underline="hover"
-                  fontSize={13} fontWeight={500}>
+
+            <Link
+              component={RouterLink}
+              to="/forgot-password"
+              underline="hover"
+              sx={{ fontSize: 13, fontWeight: 700 }}
+            >
               ¿Olvidaste tu contraseña?
             </Link>
           </Box>
+
           <Button type="submit" variant="contained" size="large" disabled={loading}>
             {loading ? 'Ingresando...' : 'Ingresar'}
           </Button>
 
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" align="center">
             ¿Eres cliente nuevo?{' '}
-            <Link component={RouterLink} to="/registro" underline="hover">
+            <Link component={RouterLink} to="/registro" underline="hover" sx={{ fontWeight: 700 }}>
               Crear cuenta
             </Link>
           </Typography>
-        </Box>
-        </Box>
+        </Stack>
       </Box>
-    </Box>
+    </AuthPageShell>
   );
 };

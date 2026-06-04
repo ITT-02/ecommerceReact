@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   createManualQuote,
@@ -9,14 +9,28 @@ import {
 const getErrorMessage = (error) =>
   error?.response?.data?.message || error?.response?.data?.error || error?.message || null;
 
-export const useManualSaleProducts = ({ search = '', categoriaId = null } = {}) => {
+export const useManualSaleProducts = ({
+  search = '',
+  categoriaId = null,
+  pageNumber = 1,
+  pageSize = 12,
+} = {}) => {
   const query = useQuery({
-    queryKey: ['manual-sale-products', search, categoriaId],
-    queryFn: () => searchManualSaleProducts({ search, categoriaId }),
+    queryKey: ['manual-sale-products', search, categoriaId, pageNumber, pageSize],
+    queryFn: () => searchManualSaleProducts({ search, categoriaId, pageNumber, pageSize }),
+    placeholderData: keepPreviousData,
   });
 
   return {
-    products: query.data || [],
+    products: query.data?.items || [],
+    pagination: query.data?.pagination || {
+      totalCount: 0,
+      pageNumber,
+      pageSize,
+      totalPages: 0,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    },
     loading: query.isLoading,
     fetching: query.isFetching,
     error: getErrorMessage(query.error),
