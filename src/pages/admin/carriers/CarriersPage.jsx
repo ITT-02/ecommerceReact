@@ -1,26 +1,20 @@
-// Página administrativa: Transportistas.
-// Catálogo base de empresas externas de envío usadas en seguimiento.
-
 import { useState } from 'react';
 import {
   Alert,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
   Stack,
   Switch,
   TextField,
   Typography,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
+import { AdminDialog } from '../../../components/common/adminDialog/AdminDialog';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
+import { StatusChip } from '../../../components/common/StatusChip';
 import { useCarriers } from '../../../hooks/logistics/useShipments';
 
 const initialForm = {
@@ -50,9 +44,7 @@ export const CarriersPage = () => {
     fetching,
     error,
     saving,
-    changingStatus,
     saveCarrier,
-    toggleCarrierActive,
   } = useCarriers({
     pageNumber,
     pageSize,
@@ -60,8 +52,15 @@ export const CarriersPage = () => {
     esActivo: filters.esActivo === '' ? null : filters.esActivo,
   });
 
+  const isEditing = Boolean(form.id);
+  const disableSave = saving || !form.nombre.trim();
+
   const updateField = (name, value) => {
-    setForm((current) => ({ ...current, [name]: value }));
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+
     setFormError('');
   };
 
@@ -82,6 +81,7 @@ export const CarriersPage = () => {
       notas: carrier.notas || '',
       es_activo: carrier.es_activo ?? true,
     });
+
     setFormError('');
     setNotice('');
     setFormOpen(true);
@@ -89,6 +89,7 @@ export const CarriersPage = () => {
 
   const handleCloseForm = () => {
     if (saving) return;
+
     setFormOpen(false);
     setForm(initialForm);
     setFormError('');
@@ -98,80 +99,90 @@ export const CarriersPage = () => {
     event.preventDefault();
 
     if (!form.nombre.trim()) {
-      setFormError('Ingresa el nombre de la empresa transportista.');
+      setFormError('Nombre requerido.');
       return;
     }
 
     try {
       await saveCarrier(form);
-      setNotice(form.id ? 'Transportista actualizado correctamente.' : 'Transportista registrado correctamente.');
+
+      setNotice(isEditing ? 'Transportista actualizado.' : 'Transportista registrado.');
       setFormOpen(false);
       setForm(initialForm);
+      setFormError('');
     } catch (err) {
-      setFormError(err?.response?.data?.message || err.message);
-    }
-  };
-
-  const handleToggleStatus = async (carrier, nextValue) => {
-    setNotice('');
-    setFormError('');
-
-    try {
-      await toggleCarrierActive(carrier, nextValue);
-      setNotice(nextValue ? 'Transportista activado.' : 'Transportista desactivado.');
-    } catch (err) {
-      setFormError(err?.response?.data?.message || err.message);
+      setFormError(
+        err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err.message ||
+          'No se pudo guardar.'
+      );
     }
   };
 
   const columns = [
-    { field: 'nombre', headerName: 'Transportista', width: 220 },
-    { field: 'telefono', headerName: 'Teléfono', width: 145, emptyText: '-' },
-    { field: 'correo', headerName: 'Correo', width: 210, emptyText: '-' },
-    { field: 'url_rastreo_base', headerName: 'URL rastreo base', width: 280, emptyText: '-' },
+    {
+      field: 'nombre',
+      headerName: 'Transportista',
+      width: 220,
+    },
+    {
+      field: 'telefono',
+      headerName: 'Teléfono',
+      width: 145,
+      emptyText: '-',
+    },
+    {
+      field: 'correo',
+      headerName: 'Correo',
+      width: 210,
+      emptyText: '-',
+    },
+    {
+      field: 'url_rastreo_base',
+      headerName: 'Rastreo',
+      width: 260,
+      emptyText: '-',
+    },
     {
       field: 'es_activo',
       headerName: 'Estado',
-      width: 135,
+      width: 120,
       renderCell: (carrier) => (
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-          <Switch
-            size="small"
-            checked={Boolean(carrier.es_activo)}
-            disabled={saving || changingStatus}
-            onChange={(event) => handleToggleStatus(carrier, event.target.checked)}
-            slotProps={{
-              input: {
-                'aria-label': `Cambiar estado de ${carrier.nombre}`,
-              },
-            }}
-          />
-          <Typography variant="caption" sx={{ fontWeight: 800 }}>
-            {carrier.es_activo ? 'Activo' : 'Inactivo'}
-          </Typography>
-        </Stack>
+        <StatusChip
+          label={carrier.es_activo ? 'Activo' : 'Inactivo'}
+          color={carrier.es_activo ? 'success' : 'error'}
+          variant="outlined"
+          sx={{ fontWeight: 800 }}
+        />
       ),
     },
   ];
 
   const actions = [
-    { type: 'edit', label: 'Editar', onClick: openEditForm },
+    {
+      type: 'edit',
+      label: 'Editar',
+      onClick: openEditForm,
+    },
   ];
 
   return (
-    <PlaceholderPage
-      title="Transportistas"
-      description="Administra las empresas externas que entregan los pedidos y sus datos de rastreo."
-    >
+    <PlaceholderPage title="Transportistas" description="Empresas de envío.">
       <Stack spacing={2}>
-        <ErrorMessage message={error || formError} />
-        {notice && <Alert severity="success" onClose={() => setNotice('')}>{notice}</Alert>}
+        <ErrorMessage message={error} />
+
+        {notice && (
+          <Alert severity="success" onClose={() => setNotice('')}>
+            {notice}
+          </Alert>
+        )}
 
         <AdminResourceTable
           rows={carriers}
           columns={columns}
           actions={actions}
-          loading={loading || fetching || saving || changingStatus}
+          loading={loading || fetching || saving}
           pagination={pagination}
           searchValue={search}
           searchLabel="Buscar transportista"
@@ -193,7 +204,11 @@ export const CarriersPage = () => {
             setPageNumber(1);
           }}
           onFilterChange={(name, value) => {
-            setFilters((current) => ({ ...current, [name]: value }));
+            setFilters((current) => ({
+              ...current,
+              [name]: value,
+            }));
+
             setPageNumber(1);
           }}
           onResetFilters={() => {
@@ -206,138 +221,142 @@ export const CarriersPage = () => {
             setPageSize(value);
             setPageNumber(1);
           }}
-          primaryActionLabel="Agregar transportista"
+          primaryActionLabel="Nuevo transportista"
           onPrimaryAction={openNewForm}
           emptyTitle="Sin transportistas"
-          emptyDescription="Registra empresas de envío como Shalom, Olva, Marvisur o courier propio."
+          emptyDescription="Aún no hay registros."
         />
       </Stack>
 
-      <Dialog
+      <AdminDialog
         open={formOpen}
         onClose={handleCloseForm}
-        fullWidth
+        onSubmit={handleSubmit}
+        loading={saving}
+        title={isEditing ? 'Editar transportista' : 'Nuevo transportista'}
+        icon={<LocalShippingOutlinedIcon />}
         maxWidth="sm"
-        disableRestoreFocus
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 3,
-            },
-          },
-        }}
-      >
-        <Box component="form" onSubmit={handleSubmit}>
-          <DialogTitle sx={{ pr: 6 }}>
-            {form.id ? 'Editar transportista' : 'Nuevo transportista'}
-
-            <IconButton
-              onClick={handleCloseForm}
-              disabled={saving}
-              size="small"
-              aria-label="Cerrar"
-              sx={{ position: 'absolute', top: 8, right: 8 }}
-            >
-              <CloseRoundedIcon fontSize="small" />
-            </IconButton>
-          </DialogTitle>
-
-          <DialogContent dividers>
-            <Stack spacing={2}>
-              <ErrorMessage message={formError} />
-
-              <TextField
-                required
-                label="Nombre"
-                value={form.nombre}
-                disabled={saving}
-                onChange={(event) => updateField('nombre', event.target.value)}
-              />
-
-              <TextField
-                label="Teléfono"
-                value={form.telefono}
-                disabled={saving}
-                onChange={(event) => updateField('telefono', event.target.value)}
-              />
-
-              <TextField
-                label="Correo"
-                type="email"
-                value={form.correo}
-                disabled={saving}
-                onChange={(event) => updateField('correo', event.target.value)}
-              />
-
-              <TextField
-                label="URL rastreo base"
-                type="url"
-                value={form.url_rastreo_base}
-                disabled={saving}
-                helperText="Opcional. Puedes usar {tracking}, {numero} o {guia} para armar la URL automáticamente."
-                onChange={(event) => updateField('url_rastreo_base', event.target.value)}
-              />
-
-              <Box
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'background.paper',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 2,
-                }}
-              >
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 800 }}>
-                    Estado del transportista
-                  </Typography>
-
-                  <Typography variant="caption" color="text.secondary">
-                    {form.es_activo
-                      ? 'Activo para asignarlo en pedidos y envíos.'
-                      : 'Inactivo para nuevas asignaciones.'}
-                  </Typography>
-                </Box>
-
-                <Switch
-                  checked={Boolean(form.es_activo)}
-                  disabled={saving}
-                  color="primary"
-                  onChange={(event) => updateField('es_activo', event.target.checked)}
-                  slotProps={{
-                    input: {
-                      'aria-label': 'Cambiar estado del transportista',
-                    },
-                  }}
-                />
-              </Box>
-
-              <TextField
-                multiline
-                minRows={3}
-                label="Notas"
-                value={form.notas}
-                disabled={saving}
-                onChange={(event) => updateField('notas', event.target.value)}
-              />
-            </Stack>
-          </DialogContent>
-
-          <DialogActions sx={{ px: 3, py: 2 }}>
+        actions={
+          <>
             <Button variant="outlined" onClick={handleCloseForm} disabled={saving}>
               Cancelar
             </Button>
 
-            <Button type="submit" variant="contained" disabled={saving || !form.nombre.trim()}>
+            <Button type="submit" variant="contained" disabled={disableSave}>
               {saving ? 'Guardando...' : 'Guardar'}
             </Button>
-          </DialogActions>
+          </>
+        }
+      >
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, minmax(0, 1fr))',
+            },
+            gap: 2,
+            minWidth: 0,
+          }}
+        >
+          <Box sx={{ gridColumn: '1 / -1' }}>
+            <ErrorMessage message={formError} />
+          </Box>
+
+          <TextField
+            required
+            fullWidth
+            label="Nombre"
+            value={form.nombre}
+            disabled={saving}
+            sx={{ gridColumn: '1 / -1' }}
+            onChange={(event) => updateField('nombre', event.target.value)}
+          />
+
+          <TextField
+            fullWidth
+            label="Teléfono"
+            value={form.telefono}
+            disabled={saving}
+            onChange={(event) => updateField('telefono', event.target.value)}
+          />
+
+          <TextField
+            fullWidth
+            label="Correo"
+            type="email"
+            value={form.correo}
+            disabled={saving}
+            onChange={(event) => updateField('correo', event.target.value)}
+          />
+
+          <TextField
+            fullWidth
+            label="URL de rastreo"
+            type="url"
+            value={form.url_rastreo_base}
+            disabled={saving}
+            sx={{ gridColumn: '1 / -1' }}
+            onChange={(event) => updateField('url_rastreo_base', event.target.value)}
+          />
+
+          <Box
+            sx={(theme) => {
+              const custom = theme.palette.custom || {};
+              const semantic = custom.semantic || {};
+              const dialog = semantic.adminDialog || {};
+              const radius = custom.radius || {};
+
+              return {
+                gridColumn: '1 / -1',
+                px: 2,
+                py: 1.35,
+                borderRadius: radius.xs || 1.5,
+                border: '1px solid',
+                borderColor: dialog.separator || theme.palette.divider,
+                bgcolor: dialog.contentBg || theme.palette.background.paper,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+              };
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              Estado
+            </Typography>
+
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                {form.es_activo ? 'Activo' : 'Inactivo'}
+              </Typography>
+
+              <Switch
+                checked={Boolean(form.es_activo)}
+                disabled={saving}
+                color="primary"
+                onChange={(event) => updateField('es_activo', event.target.checked)}
+                slotProps={{
+                  input: {
+                    'aria-label': 'Cambiar estado',
+                  },
+                }}
+              />
+            </Stack>
+          </Box>
+
+          <TextField
+            fullWidth
+            multiline
+            minRows={3}
+            label="Notas"
+            value={form.notas}
+            disabled={saving}
+            sx={{ gridColumn: '1 / -1' }}
+            onChange={(event) => updateField('notas', event.target.value)}
+          />
         </Box>
-      </Dialog>
+      </AdminDialog>
     </PlaceholderPage>
   );
 };

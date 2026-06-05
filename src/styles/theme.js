@@ -459,6 +459,27 @@ const semanticByMode = {
       // Borde de la zona o contenedor según el bloque donde se use.
       border: alpha(colors.carbon[900], 0.10),
     },
+    adminDialog: {
+      paperBg: colors.warm.white,
+      headerBg: alpha(colors.gold[700], 0.07),
+      contentBg: colors.warm.white,
+      footerBg: colors.warm.white,
+
+      paperBorder: alpha(colors.gold[700], 0.42),
+      separator: alpha(colors.gold[700], 0.18),
+
+      titleColor: colors.emerald[900],
+
+      iconColor: colors.gold[700],
+      iconBg: alpha(colors.gold[700], 0.08),
+      iconBorder: alpha(colors.gold[700], 0.2),
+
+      closeColor: alpha(colors.emerald[900], 0.55),
+      closeHoverColor: colors.emerald[900],
+      closeHoverBg: alpha(colors.gold[700], 0.09),
+
+      shadow: `0 24px 50px ${alpha(colors.emerald[900], 0.14)}`,
+    },
     dataTable: {
       /*
        * TABLAS ADMINISTRATIVAS.
@@ -768,6 +789,27 @@ const semanticByMode = {
       surfaceMuted: colors.carbon[875], // #222222 - superficie secundaria.
       // Borde de la zona o contenedor según el bloque donde se use.
       border: alpha(colors.warm.ivory, 0.10), // #F6F3EE al 10% - borde suave.
+    },
+    adminDialog: {
+      paperBg: colors.carbon[925],
+      headerBg: alpha(colors.gold[650], 0.1),
+      contentBg: colors.carbon[925],
+      footerBg: colors.carbon[925],
+
+      paperBorder: alpha(colors.gold[650], 0.32),
+      separator: alpha(colors.gold[650], 0.16),
+
+      titleColor: colors.metal.silver100,
+
+      iconColor: colors.gold[550],
+      iconBg: alpha(colors.gold[650], 0.14),
+      iconBorder: alpha(colors.gold[650], 0.22),
+
+      closeColor: colors.metal.silver300,
+      closeHoverColor: colors.metal.silver100,
+      closeHoverBg: alpha(colors.gold[650], 0.12),
+
+      shadow: `0 28px 55px ${alpha(colors.carbon[1000], 0.7)}`,
     },
     dataTable: {
       /*
