@@ -15,25 +15,26 @@ import {
 } from '@mui/material';
 
 import { TrackingCard } from '../../../../components/orders/TrackingCard';
-import { getOrderStatusLabel } from '../../../../adapters/orderAdapter';
 import { formatCurrency, formatDate } from '../utils/ordersPageUtils';
 import { preventButtonFocus } from '../utils/dialogFocusUtils';
+
 import { OrderDialogShell } from './OrderDialogShell';
 import { OrderInfoLine } from './OrderInfoLine';
+import { OrderInternalHistory } from './OrderInternalHistory';
 import { OrderSection } from './OrderSection';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { OrderSummaryPanel } from './OrderSummaryPanel';
 
-const tableBoxSx = {
+const tableBoxSx = (theme) => ({
   width: '100%',
   overflowX: 'auto',
-  borderRadius: 2,
-  border: '1px solid',
-  borderColor: 'divider',
+  borderRadius: theme.palette.custom.radius.xs,
+  border: `1px solid ${theme.palette.divider}`,
+});
+
+const compactJoin = (values = [], separator = ', ') => {
+  return values.filter(Boolean).join(separator);
 };
-
-
-const compactJoin = (values = [], separator = ', ') => values.filter(Boolean).join(separator);
 
 const getDeliveryAddressLine = (deliveryData = {}) => {
   return (
@@ -73,7 +74,12 @@ const hasDeliveryData = (deliveryData = {}) => {
   );
 };
 
-export const OrderDetailDialog = ({ open, order = {}, deliveryData = {}, onClose }) => {
+export const OrderDetailDialog = ({
+  open,
+  order = {},
+  deliveryData = {},
+  onClose,
+}) => {
   return (
     <OrderDialogShell
       open={open}
@@ -103,31 +109,46 @@ export const OrderDetailDialog = ({ open, order = {}, deliveryData = {}, onClose
         <OrderSummaryPanel
           items={[
             { label: 'N° pedido', value: order.numero_pedido },
-            { label: 'Estado pedido', value: <OrderStatusBadge value={order.estado_pedido} /> },
-            { label: 'Estado pago', value: <OrderStatusBadge type="payment" value={order.estado_pago} /> },
+            {
+              label: 'Estado pedido',
+              value: <OrderStatusBadge value={order.estado_pedido} />,
+            },
+            {
+              label: 'Estado pago',
+              value: <OrderStatusBadge type="payment" value={order.estado_pago} />,
+            },
             { label: 'Total', value: formatCurrency(order.total) },
           ]}
         />
 
+        {/* FILA 1: Pedido, Cliente, Entrega y Totales */}
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
             <OrderSection title="Pedido">
               <Stack spacing={1.25}>
                 <OrderInfoLine label="Método pago" value={order.metodo_pago} />
                 <OrderInfoLine label="Fecha límite pago" value={formatDate(order.fecha_limite_pago)} />
-                <OrderInfoLine label="Origen" value={order.canal_venta === 'manual' ? 'Venta manual' : 'Tienda'} />
+                <OrderInfoLine
+                  label="Origen"
+                  value={order.canal_venta === 'manual' ? 'Venta manual' : 'Tienda'}
+                />
+
                 {order.canal_venta === 'manual' && (
                   <OrderInfoLine
                     label="Vendedor"
-                    value={order.vendedor_nombre || (order.vendedor_responsable_id ? 'Usuario interno' : '-')}
+                    value={
+                      order.vendedor_nombre ||
+                      (order.vendedor_responsable_id ? 'Usuario interno' : '-')
+                    }
                   />
                 )}
+
                 <OrderInfoLine label="Fecha" value={formatDate(order.created_at)} />
               </Stack>
             </OrderSection>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
             <OrderSection title="Cliente">
               <Stack spacing={1.25}>
                 <OrderInfoLine label="Nombre" value={order.nombre_cliente} />
@@ -137,13 +158,22 @@ export const OrderDetailDialog = ({ open, order = {}, deliveryData = {}, onClose
             </OrderSection>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
             <OrderSection title="Entrega">
               {hasDeliveryData(deliveryData) ? (
                 <Stack spacing={1.25}>
-                  <OrderInfoLine label="Tipo" value={order.tipo_entrega || deliveryData.tipo_entrega || 'envío a domicilio'} />
-                  <OrderInfoLine label="Receptor" value={deliveryData.nombre_receptor || deliveryData.destinatario} />
-                  <OrderInfoLine label="Teléfono" value={deliveryData.telefono_receptor || deliveryData.telefono} />
+                  <OrderInfoLine
+                    label="Tipo"
+                    value={order.tipo_entrega || deliveryData.tipo_entrega || 'envío a domicilio'}
+                  />
+                  <OrderInfoLine
+                    label="Receptor"
+                    value={deliveryData.nombre_receptor || deliveryData.destinatario}
+                  />
+                  <OrderInfoLine
+                    label="Teléfono"
+                    value={deliveryData.telefono_receptor || deliveryData.telefono}
+                  />
                   <OrderInfoLine label="Dirección" value={getDeliveryAddressLine(deliveryData)} />
                   <OrderInfoLine label="Ubicación" value={getDeliveryLocationLine(deliveryData)} />
                   <OrderInfoLine label="UBIGEO" value={deliveryData.ubigeo} />
@@ -158,7 +188,7 @@ export const OrderDetailDialog = ({ open, order = {}, deliveryData = {}, onClose
             </OrderSection>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
             <OrderSection title="Totales">
               <Stack spacing={1.25}>
                 <OrderInfoLine label="Subtotal" value={formatCurrency(order.subtotal)} />
@@ -169,14 +199,6 @@ export const OrderDetailDialog = ({ open, order = {}, deliveryData = {}, onClose
               </Stack>
             </OrderSection>
           </Grid>
-
-          <Grid size={{ xs: 12, md: 8 }}>
-            <OrderSection title="Seguimiento logístico" description="Estado del despacho y datos de rastreo." sx={{ p: 0 }}>
-              <Box sx={{ p: { xs: 1.5, sm: 2 }, pt: 0 }}>
-                <TrackingCard order={order} title="Seguimiento logístico" />
-              </Box>
-            </OrderSection>
-          </Grid>
         </Grid>
 
         {order.cancelacion_motivo && (
@@ -185,7 +207,11 @@ export const OrderDetailDialog = ({ open, order = {}, deliveryData = {}, onClose
           </Alert>
         )}
 
-        <OrderSection title="Items del pedido" description="Productos, variantes y personalizaciones solicitadas.">
+        {/* FILA 2: Items del pedido */}
+        <OrderSection
+          title="Items del pedido"
+          description="Productos, variantes y personalizaciones solicitadas."
+        >
           <Box sx={tableBoxSx}>
             <Table size="small" sx={{ minWidth: 760 }}>
               <TableHead>
@@ -207,32 +233,38 @@ export const OrderDetailDialog = ({ open, order = {}, deliveryData = {}, onClose
                           {item.nombre_producto || '-'}
                         </Typography>
 
-                        {Array.isArray(item.personalizaciones) && item.personalizaciones.length > 0 && (
-                          <Alert severity="warning" variant="outlined" sx={{ py: 0.5 }}>
-                            <Typography variant="caption" fontWeight={900}>
-                              Personalización solicitada
-                            </Typography>
-
-                            {item.personalizaciones.map((custom) => (
-                              <Typography
-                                key={custom.id || custom.opcion_codigo}
-                                variant="caption"
-                                sx={{ display: 'block', wordBreak: 'break-word' }}
-                              >
-                                {custom.opcion_nombre || custom.opcion_codigo}:{' '}
-                                {custom.valor_texto || custom.observacion || 'Archivo adjunto'}
-                                {custom.archivo_url && (
-                                  <>
-                                    {' '}·{' '}
-                                    <Link href={custom.archivo_url} target="_blank" rel="noreferrer">
-                                      Ver archivo
-                                    </Link>
-                                  </>
-                                )}
+                        {Array.isArray(item.personalizaciones) &&
+                          item.personalizaciones.length > 0 && (
+                            <Alert severity="warning" variant="outlined" sx={{ py: 0.5 }}>
+                              <Typography variant="caption" fontWeight={900}>
+                                Personalización solicitada
                               </Typography>
-                            ))}
-                          </Alert>
-                        )}
+
+                              {item.personalizaciones.map((custom) => (
+                                <Typography
+                                  key={custom.id || custom.opcion_codigo}
+                                  variant="caption"
+                                  sx={{ display: 'block', wordBreak: 'break-word' }}
+                                >
+                                  {custom.opcion_nombre || custom.opcion_codigo}:{' '}
+                                  {custom.valor_texto || custom.observacion || 'Archivo adjunto'}
+
+                                  {custom.archivo_url && (
+                                    <>
+                                      {' '}·{' '}
+                                      <Link
+                                        href={custom.archivo_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                      >
+                                        Ver archivo
+                                      </Link>
+                                    </>
+                                  )}
+                                </Typography>
+                              ))}
+                            </Alert>
+                          )}
                       </Stack>
                     </TableCell>
 
@@ -249,31 +281,29 @@ export const OrderDetailDialog = ({ open, order = {}, deliveryData = {}, onClose
 
         <Divider />
 
-        <OrderSection title="Historial de estados" description="Registro de cambios realizados sobre el pedido.">
-          <Box sx={tableBoxSx}>
-            <Table size="small" sx={{ minWidth: 680 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Anterior</TableCell>
-                  <TableCell>Nuevo</TableCell>
-                  <TableCell>Comentario</TableCell>
-                  <TableCell>Fecha</TableCell>
-                </TableRow>
-              </TableHead>
+        {/* FILA 3: Seguimiento e historial interno */}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <OrderSection
+              title="Seguimiento logístico"
+              description="Estado del despacho, transportista y datos de rastreo."
+              sx={{ height: '100%', p: 0 }}
+            >
+              <Box sx={{ p: { xs: 1.5, sm: 2 }, pt: 0 }}>
+                <TrackingCard order={order} title="" />
+              </Box>
+            </OrderSection>
+          </Grid>
 
-              <TableBody>
-                {(order.historial_estados || []).map((history) => (
-                  <TableRow key={history.id || `${history.estado_nuevo}-${history.created_at}`}>
-                    <TableCell>{getOrderStatusLabel(history.estado_anterior)}</TableCell>
-                    <TableCell>{getOrderStatusLabel(history.estado_nuevo)}</TableCell>
-                    <TableCell>{history.comentario || '-'}</TableCell>
-                    <TableCell>{formatDate(history.created_at)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        </OrderSection>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <OrderInternalHistory
+              order={order}
+              title="Historial interno"
+              description="Cambios administrativos y trazabilidad del pedido."
+              compact
+            />
+          </Grid>
+        </Grid>
       </Stack>
     </OrderDialogShell>
   );

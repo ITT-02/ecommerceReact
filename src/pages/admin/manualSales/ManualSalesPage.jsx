@@ -803,7 +803,7 @@ export const ManualSalesPage = () => {
                   <Box>
                     <Typography variant="h6" fontWeight={900}>Catálogo</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Selecciona una variante exacta para vender: código, medida, stock y precio.
+                      Selecciona una variante exacta para vender.
                     </Typography>
                   </Box>
 
