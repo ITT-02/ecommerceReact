@@ -2,14 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import {
     Box,
     Button,
-    Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
     FormControlLabel,
     Grid,
-    IconButton,
     ListSubheader,
     MenuItem,
     Paper,
@@ -21,9 +15,9 @@ import {
 
 import { alpha, useTheme } from '@mui/material/styles';
 
-import CloseIcon from '@mui/icons-material/Close';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 
+import { AdminDialog } from '../../common/adminDialog/AdminDialog';
 import { FileUploadField } from '../../common/Field/FileUploadField';
 import { ConfirmDialog } from '../../common/ConfirmDialog';
 import { CATEGORY_ICON_OPTIONS } from '../../../utils/categoryIconOptions';
@@ -258,288 +252,239 @@ export const CategoryModal = ({
 
     return (
         <>
-            <Dialog
+            <AdminDialog
                 open={open}
-                onClose={isLoading ? undefined : onClose}
-                fullWidth
+                onClose={onClose}
+                title={modalTitle}
                 maxWidth="md"
-                scroll="paper"
-                slotProps={{
-                    paper: {
-                        sx: {
-                            borderRadius: `${theme.palette.custom?.radius?.xl ?? 20}px`,
-                            border: `1px solid ${theme.palette.divider}`,
-                            backgroundImage: 'none',
-                        },
-                    },
-                }}
-            >
-                <DialogTitle
-                    sx={{
-                        px: 3,
-                        py: 2,
-                        borderBottom: `1px solid ${theme.palette.divider}`,
-                        backgroundColor: alpha(theme.palette.primary.main, 0.06),
-                    }}
-                >
-                    <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                            <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                                {modalTitle}
-                            </Typography>
-
-                            <Chip
-                                size="small"
-                                label={parentCategory?.id || category?.categoria_padre_id ? 'Subcategoría' : 'Categoría'}
-                                color={parentCategory?.id || category?.categoria_padre_id ? 'info' : 'primary'}
-                                variant="outlined"
-                            />
-                        </Stack>
-
-                        <IconButton onClick={onClose} disabled={isLoading}>
-                            <CloseIcon />
-                        </IconButton>
-                    </Stack>
-                </DialogTitle>
-
-                <DialogContent
-                    sx={{
-                        p: 3,
-                        backgroundColor: theme.palette.background.default,
-                    }}
-                >
-                    <Stack spacing={2}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                p: 2,
-                                borderRadius: `${theme.palette.custom?.radius?.lg ?? 16}px`,
-                                border: `1px solid ${alpha(previewColor, 0.35)}`,
-                                backgroundColor: alpha(previewColor, 0.08),
-                            }}
+                loading={isLoading}
+                actions={
+                    <>
+                        <Button
+                            variant="outlined"
+                            onClick={onClose}
+                            disabled={isLoading}
                         >
-                            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                                <Box
-                                    sx={{
-                                        width: 48,
-                                        height: 48,
-                                        borderRadius: `${theme.palette.custom?.radius?.md ?? 12}px`,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: previewColor,
-                                        backgroundColor: alpha(previewColor, 0.14),
+                            Cancelar
+                        </Button>
+
+                        <Button
+                            variant="contained"
+                            onClick={handleSave}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Guardando...' : 'Guardar'}
+                        </Button>
+                    </>
+                }
+            >
+                <Stack spacing={2}>
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: 2,
+                            borderRadius: `${theme.palette.custom?.radius?.lg ?? 16}px`,
+                            border: `1px solid ${alpha(previewColor, 0.35)}`,
+                            backgroundColor: alpha(previewColor, 0.08),
+                        }}
+                    >
+                        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                            <Box
+                                sx={{
+                                    width: 48,
+                                    height: 48,
+                                    borderRadius: `${theme.palette.custom?.radius?.md ?? 12}px`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: previewColor,
+                                    backgroundColor: alpha(previewColor, 0.14),
+                                }}
+                            >
+                                <SelectedIcon />
+                            </Box>
+
+                            <Box>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                                    {formData.nombre || 'Nombre de categoría'}
+                                </Typography>
+
+                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                    {selectedIconOption?.label}
+                                </Typography>
+                            </Box>
+                        </Stack>
+                    </Paper>
+
+                    <Section title="Datos">
+                        <Grid container spacing={2}>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <TextField
+                                    required
+                                    label="Nombre"
+                                    value={formData.nombre}
+                                    onChange={(e) => handleChange('nombre', e.target.value)}
+                                    error={Boolean(errors.nombre)}
+                                    helperText={errors.nombre}
+                                />
+                            </Grid>
+
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <TextField
+                                    label="Orden Visual"
+                                    type="number"
+                                    value={formData.orden_visual}
+                                    onChange={(e) => handleChange('orden_visual', e.target.value)}
+                                    error={Boolean(errors.orden_visual)}
+                                    helperText={errors.orden_visual}
+                                    slotProps={{
+                                        htmlInput: { min: 1 },
                                     }}
+                                />
+                            </Grid>
+
+                            <Grid size={{ xs: 12 }}>
+                                <TextField
+                                    label="Descripción"
+                                    multiline
+                                    rows={3}
+                                    value={formData.descripcion}
+                                    onChange={(e) => handleChange('descripcion', e.target.value)}
+                                />
+                            </Grid>
+                        </Grid>
+                    </Section>
+
+                    <Section title="Entidad Visual">
+                        <Grid container spacing={2}>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <TextField
+                                id="categoria-icono"
+                                name="icono"
+                                select
+                                label="Ícono"
+                                value={getSafeIconValue(formData.icono)}
+                                onChange={(e) => handleChange('icono', e.target.value)}
                                 >
-                                    <SelectedIcon />
-                                </Box>
+                                    {groupedIconOptions.flatMap(({ group, options }) => [
+                                        <ListSubheader key={`${group}-header`} disableSticky>
+                                            {group}
+                                        </ListSubheader>,
+                                        ...options.map((option) => {
+                                            const Icon = option.Icon;
 
-                                <Box>
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                                        {formData.nombre || 'Nombre de categoría'}
-                                    </Typography>
+                                            return (
+                                                <MenuItem key={option.value} value={option.value}>
+                                                    <Stack direction="row" spacing={1.2} sx={{ alignItems: 'center' }}>
+                                                        <Icon fontSize="small" />
+                                                        <Typography variant="body2">
+                                                            {option.label}
+                                                        </Typography>
+                                                    </Stack>
+                                                </MenuItem>
+                                            );
+                                        }),
+                                    ])}
+                                </TextField>
+                            </Grid>
 
-                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                        {selectedIconOption?.label}
-                                    </Typography>
-                                </Box>
-                            </Stack>
-                        </Paper>
-
-                        <Section title="Datos">
-                            <Grid container spacing={2}>
-                                <Grid size={{ xs: 12, md: 6 }}>
+                            <Grid size={{ xs: 12, md: 6 }}>
+                                <Stack direction="row" spacing={1.5}>
                                     <TextField
-                                        required
-                                        label="Nombre"
-                                        value={formData.nombre}
-                                        onChange={(e) => handleChange('nombre', e.target.value)}
-                                        error={Boolean(errors.nombre)}
-                                        helperText={errors.nombre}
-                                    />
-                                </Grid>
-
-                                <Grid size={{ xs: 12, md: 6 }}>
-                                    <TextField
-                                        label="Orden Visual"
-                                        type="number"
-                                        value={formData.orden_visual}
-                                        onChange={(e) => handleChange('orden_visual', e.target.value)}
-                                        error={Boolean(errors.orden_visual)}
-                                        helperText={errors.orden_visual}
+                                        id="categoria-color-picker"
+                                        name="color_picker"
+                                        type="color"
+                                        value={previewColor}
+                                        onChange={(e) => handleColorChange(e.target.value)}
                                         slotProps={{
-                                            htmlInput: { min: 1 },
+                                            htmlInput: {
+                                                id: 'categoria-color-picker',
+                                                name: 'color_picker',
+                                                'aria-label': 'Selector de color',
+                                            },
+                                        }}
+                                        sx={{
+                                                flexGrow: 2,
+                                                width: '100%',
+                                                '& input': {
+                                                    height: 44,
+                                                    p: 0.75,
+                                                    cursor: 'pointer',
+                                                    width: '100%',
+                                                },
+                                            }}
+                                    />
+
+                                    <TextField
+                                        id="categoria-color-hex"
+                                        name="color_hex"
+                                        label="Color"
+                                        value={color}
+                                        onChange={(e) => handleColorChange(e.target.value)}
+                                        error={Boolean(errors.color_hex)}
+                                        helperText={errors.color_hex}
+                                        sx={{
+                                            flexGrow: 1,
+                                            minWidth: '120px'
                                         }}
                                     />
-                                </Grid>
+                                </Stack>
+                            </Grid>
+                        </Grid>
+                    </Section>
 
-                                <Grid size={{ xs: 12 }}>
-                                    <TextField
-                                        label="Descripción"
-                                        multiline
-                                        rows={3}
-                                        value={formData.descripcion}
-                                        onChange={(e) => handleChange('descripcion', e.target.value)}
+                    <Section title="Imagen de categoría">
+                        <FileUploadField
+                            label="Seleccionar imagen"
+                            accept="image/*"
+                            value={formData._file}
+                            previewUrl={formData.imagen_url}
+                            onChange={handleImageChange}
+                            onRemove={handleImageRemove}
+                            helperText="PNG, JPG o JPEG."
+                            height={180}
+                        />
+                    </Section>
+
+                    <Section title="Estado">
+                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={Boolean(formData.es_visible)}
+                                        onChange={(e) => handleChange('es_visible', e.target.checked)}
+                                        slotProps={{
+                                            input: {
+                                                id: 'categoria-es-visible',
+                                                name: 'es_visible',
+                                                'aria-label': 'Visible',
+                                            },
+                                        }}
                                     />
-                                </Grid>
-                            </Grid>
-                        </Section>
-
-                        <Section title="Entidad Visual">
-                            <Grid container spacing={2}>
-                                <Grid size={{ xs: 12, md: 6 }}>
-                                    <TextField
-                                    id="categoria-icono"
-                                    name="icono"
-                                    select
-                                    label="Ícono"
-                                    value={getSafeIconValue(formData.icono)}
-                                    onChange={(e) => handleChange('icono', e.target.value)}
-                                    >
-                                        {groupedIconOptions.flatMap(({ group, options }) => [
-                                            <ListSubheader key={`${group}-header`} disableSticky>
-                                                {group}
-                                            </ListSubheader>,
-                                            ...options.map((option) => {
-                                                const Icon = option.Icon;
-
-                                                return (
-                                                    <MenuItem key={option.value} value={option.value}>
-                                                        <Stack direction="row" spacing={1.2} sx={{ alignItems: 'center' }}>
-                                                            <Icon fontSize="small" />
-                                                            <Typography variant="body2">
-                                                                {option.label}
-                                                            </Typography>
-                                                        </Stack>
-                                                    </MenuItem>
-                                                );
-                                            }),
-                                        ])}
-                                    </TextField>
-                                </Grid>
-
-                                <Grid size={{ xs: 12, md: 6 }}>
-                                    <Stack direction="row" spacing={1.5}>
-                                        <TextField
-                                            id="categoria-color-picker"
-                                            name="color_picker"
-                                            type="color"
-                                            value={previewColor}
-                                            onChange={(e) => handleColorChange(e.target.value)}
-                                            slotProps={{
-                                                htmlInput: {
-                                                    id: 'categoria-color-picker',
-                                                    name: 'color_picker',
-                                                    'aria-label': 'Selector de color',
-                                                },
-                                            }}
-                                            sx={{
-                                                    flexGrow: 2,   
-                                                    width: '100%',
-                                                    '& input': {
-                                                        height: 44,
-                                                        p: 0.75,
-                                                        cursor: 'pointer',
-                                                        width: '100%',
-                                                    },
-                                                }}
-                                        />
-
-                                        <TextField
-                                            id="categoria-color-hex"
-                                            name="color_hex"
-                                            label="Color"
-                                            value={color}
-                                            onChange={(e) => handleColorChange(e.target.value)}
-                                            error={Boolean(errors.color_hex)}
-                                            helperText={errors.color_hex}
-                                            sx={{
-                                                flexGrow: 1,
-                                                minWidth: '120px'
-                                            }}
-                                        />
-                                    </Stack>
-                                </Grid>
-                            </Grid>
-                        </Section>
-
-                        <Section title="Imagen de categoría">
-                            <FileUploadField
-                                label="Seleccionar imagen"
-                                accept="image/*"
-                                value={formData._file}
-                                previewUrl={formData.imagen_url}
-                                onChange={handleImageChange}
-                                onRemove={handleImageRemove}
-                                helperText="PNG, JPG o JPEG."
-                                height={180}
+                                }
+                                label={formData.es_visible ? "Visible" : "No visible"}
                             />
-                        </Section>
 
-                        <Section title="Estado">
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={Boolean(formData.es_visible)}
-                                            onChange={(e) => handleChange('es_visible', e.target.checked)}
-                                            slotProps={{
-                                                input: {
-                                                    id: 'categoria-es-visible',
-                                                    name: 'es_visible',
-                                                    'aria-label': 'Visible',
-                                                },
-                                            }}
-                                        />
-                                    }
-                                    label={formData.es_visible ? "Visible" : "No visible"}
-                                />
-
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={Boolean(formData.es_activa)}
-                                            onChange={(e) => handleChange('es_activa', e.target.checked)}
-                                            slotProps={{
-                                                input: {
-                                                    id: 'categoria-es-activa',
-                                                    name: 'es_activa',
-                                                    'aria-label': 'Activa',
-                                                },
-                                            }}
-                                        />
-                                    }
-                                    label={formData.es_activa ? "Activo" : "Inactivo"}
-                                />
-                            </Stack>
-                        </Section>
-                    </Stack>
-                </DialogContent>
-
-                <DialogActions
-                    sx={{
-                        px: 3,
-                        py: 2,
-                        borderTop: `1px solid ${theme.palette.divider}`,
-                    }}
-                >
-                    <Button
-                        variant="outlined"
-                        onClick={onClose}
-                        disabled={isLoading}
-                    >
-                        Cancelar
-                    </Button>
-
-                    <Button
-                        variant="contained"
-                        onClick={handleSave}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? 'Guardando...' : 'Guardar'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={Boolean(formData.es_activa)}
+                                        onChange={(e) => handleChange('es_activa', e.target.checked)}
+                                        slotProps={{
+                                            input: {
+                                                id: 'categoria-es-activa',
+                                                name: 'es_activa',
+                                                'aria-label': 'Activa',
+                                            },
+                                        }}
+                                    />
+                                }
+                                label={formData.es_activa ? "Activo" : "Inactivo"}
+                            />
+                        </Stack>
+                    </Section>
+                </Stack>
+            </AdminDialog>
 
             <ConfirmDialog
                 open={openConfirmSave}

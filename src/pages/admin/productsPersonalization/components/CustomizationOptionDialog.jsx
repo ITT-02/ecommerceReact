@@ -3,10 +3,6 @@ import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRou
 import {
   Alert,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControlLabel,
   Grid,
   MenuItem,
@@ -15,10 +11,8 @@ import {
   TextField,
 } from '@mui/material';
 
-/**
- * Modal reutilizable para crear y editar opciones de personalización.
- * Mantiene el formulario fuera de la página principal para mejorar mantenimiento.
- */
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
+
 export const CustomizationOptionDialog = ({
   open,
   formData,
@@ -39,176 +33,166 @@ export const CustomizationOptionDialog = ({
     : '';
 
   return (
-    <Dialog
+    <AdminDialog
       open={open}
       onClose={onClose}
-      fullWidth
-      maxWidth="md"
+      title={isEditing ? 'Editar opción' : 'Nueva opción'}
+      maxWidth="sm"
+      loading={saving}
+      onSubmit={onSubmit}
+      actions={
+        <>
+          <Button onClick={onClose} disabled={saving}>
+            Cancelar
+          </Button>
+
+          <Button
+            type="submit"
+            variant="contained"
+            startIcon={<AddCircleOutlineRoundedIcon />}
+            disabled={saving}
+          >
+            {saving ? 'Guardando...' : 'Guardar opción'}
+          </Button>
+        </>
+      }
     >
-      <DialogTitle>
-        {isEditing ? 'Editar opción' : 'Nueva opción de personalización'}
-      </DialogTitle>
+      <Stack spacing={2}>
+        {formError && (
+          <Alert severity="error">
+            {formError}
+          </Alert>
+        )}
 
-      <DialogContent dividers>
-        <Stack
-          component="form"
-          id="customization-option-form"
-          spacing={2}
-          onSubmit={onSubmit}
-          sx={{ pt: 1 }}
-        >
-          {formError && (
-            <Alert severity="error">
-              {formError}
-            </Alert>
-          )}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              name="nombre"
+              label="Nombre visible"
+              value={formData.nombre}
+              onChange={onChange}
+              fullWidth
+              required
+              disabled={saving}
+            />
+          </Grid>
 
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                name="nombre"
-                label="Nombre visible"
-                value={formData.nombre}
-                onChange={onChange}
-                fullWidth
-                required
-                disabled={saving}
-              />
-            </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              name="codigo"
+              label="Código interno"
+              value={formData.codigo}
+              onChange={onChange}
+              fullWidth
+              required
+              disabled={saving}
+              helperText="Se genera automáticamente desde el nombre, pero puedes ajustarlo."
+            />
+          </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                name="codigo"
-                label="Código interno"
-                value={formData.codigo}
-                onChange={onChange}
-                fullWidth
-                required
-                disabled={saving}
-                helperText="Se genera automáticamente desde el nombre, pero puedes ajustarlo."
-              />
-            </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              select
+              name="tipo_campo"
+              label="Tipo de campo"
+              value={fieldTypeValue}
+              onChange={onChange}
+              fullWidth
+              disabled={saving}
+            >
+              {fieldTypes.map((type) => (
+                <MenuItem key={type.value} value={type.value}>
+                  {type.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                select
-                name="tipo_campo"
-                label="Tipo de campo"
-                value={fieldTypeValue}
-                onChange={onChange}
-                fullWidth
-                disabled={saving}
-              >
-                {fieldTypes.map((type) => (
-                  <MenuItem key={type.value} value={type.value}>
-                    {type.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField
+              name="orden_visual"
+              label="Orden visual"
+              type="number"
+              value={formData.orden_visual}
+              onChange={onChange}
+              fullWidth
+              disabled={saving}
+            />
+          </Grid>
 
-            <Grid size={{ xs: 12, md: 3 }}>
-              <TextField
-                name="orden_visual"
-                label="Orden visual"
-                type="number"
-                value={formData.orden_visual}
-                onChange={onChange}
-                fullWidth
-                disabled={saving}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 3 }}>
-              <Stack
-                spacing={1}
-                sx={{
-                  height: '100%',
-                  justifyContent: 'center',
-                }}
-              >
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={Boolean(formData.es_activo)}
-                      onChange={(event) =>
-                        onBooleanChange('es_activo', event.target.checked)
-                      }
-                      disabled={saving}
-                    />
-                  }
-                  label={formData.es_activo ? 'Activa' : 'Inactiva'}
-                />
-              </Stack>
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Stack
+              spacing={1}
+              sx={{
+                height: '100%',
+                justifyContent: 'center',
+              }}
+            >
               <FormControlLabel
                 control={
                   <Switch
-                    checked={Boolean(formData.acepta_archivo)}
+                    checked={Boolean(formData.es_activo)}
                     onChange={(event) =>
-                      onBooleanChange(
-                        'acepta_archivo',
-                        event.target.checked,
-                      )
+                      onBooleanChange('es_activo', event.target.checked)
                     }
                     disabled={saving}
                   />
                 }
-                label={
-                  formData.acepta_archivo
-                    ? 'Esta opción permite adjuntar archivo'
-                    : 'Esta opción no requiere archivo'
-                }
+                label={formData.es_activo ? 'Activa' : 'Inactiva'}
               />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                name="descripcion"
-                label="Descripción / ayuda interna"
-                value={formData.descripcion}
-                onChange={onChange}
-                multiline
-                minRows={2}
-                fullWidth
-                disabled={saving}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                name="opcionesTexto"
-                label="Opciones para listas desplegables"
-                value={formData.opcionesTexto}
-                onChange={onChange}
-                multiline
-                minRows={3}
-                fullWidth
-                disabled={saving}
-                helperText="Una opción por línea. Solo se usa cuando el tipo de campo es Lista de opciones."
-              />
-            </Grid>
+            </Stack>
           </Grid>
-        </Stack>
-      </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={saving}>
-          Cancelar
-        </Button>
+          <Grid size={{ xs: 12 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={Boolean(formData.acepta_archivo)}
+                  onChange={(event) =>
+                    onBooleanChange(
+                      'acepta_archivo',
+                      event.target.checked,
+                    )
+                  }
+                  disabled={saving}
+                />
+              }
+              label={
+                formData.acepta_archivo
+                  ? 'Esta opción permite adjuntar archivo'
+                  : 'Esta opción no requiere archivo'
+              }
+            />
+          </Grid>
 
-        <Button
-          type="submit"
-          form="customization-option-form"
-          variant="contained"
-          startIcon={<AddCircleOutlineRoundedIcon />}
-          disabled={saving}
-        >
-          {saving ? 'Guardando...' : 'Guardar opción'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              name="descripcion"
+              label="Descripción / ayuda interna"
+              value={formData.descripcion}
+              onChange={onChange}
+              multiline
+              minRows={2}
+              fullWidth
+              disabled={saving}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              name="opcionesTexto"
+              label="Opciones para listas desplegables"
+              value={formData.opcionesTexto}
+              onChange={onChange}
+              multiline
+              minRows={3}
+              fullWidth
+              disabled={saving}
+              helperText="Una opción por línea. Solo se usa cuando el tipo de campo es Lista de opciones."
+            />
+          </Grid>
+        </Grid>
+      </Stack>
+    </AdminDialog>
   );
 };

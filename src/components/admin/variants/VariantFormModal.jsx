@@ -3,10 +3,6 @@ import {
   Autocomplete,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
   FormControlLabel,
   Grid,
@@ -20,8 +16,9 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
+
+import { AdminDialog } from '../../common/adminDialog/AdminDialog';
 
 import {
   useProductOptions,
@@ -357,37 +354,29 @@ export const VariantFormModal = ({
   };
 
   return (
-    <Dialog
+    <AdminDialog
       open={open}
       onClose={handleClose}
+      title={modalTitle}
       maxWidth="md"
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: 3,
-            maxHeight: { xs: 'calc(100dvh - 16px)', sm: 'calc(100dvh - 48px)' },
-          },
-        },
-      }}
+      onSubmit={handleSubmit}
+      actions={
+        <>
+          <Button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={handleClose}
+          >
+            Cancelar
+          </Button>
+
+          <Button type="submit" variant="contained" color="primary">
+            {isDuplicate ? 'Crear variante similar' : 'Guardar'}
+          </Button>
+        </>
+      }
     >
-      <Box component="form" onSubmit={handleSubmit} sx={{ minHeight: 0 }}>
-        <DialogTitle sx={{ pr: 6, fontWeight: 900 }}>
-          {modalTitle}
-        </DialogTitle>
-
-        <IconButton
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={handleClose}
-          size="small"
-          aria-label="Cerrar formulario de variante"
-          sx={{ position: 'absolute', right: 8, top: 8 }}
-        >
-          <CloseRoundedIcon fontSize="small" />
-        </IconButton>
-
-        <DialogContent dividers>
-          <Grid container spacing={2.5}>
+      <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <Autocomplete
                 options={productOptions}
@@ -726,22 +715,6 @@ export const VariantFormModal = ({
               )}
             </Grid>
           </Grid>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={handleClose}
-          >
-            Cancelar
-          </Button>
-
-          <Button type="submit" variant="contained" color="primary">
-            {isDuplicate ? 'Crear variante similar' : 'Guardar'}
-          </Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
+    </AdminDialog>
   );
 };

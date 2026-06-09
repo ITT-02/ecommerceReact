@@ -4,26 +4,22 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
   MenuItem,
   Stack,
   Switch,
   TextField,
   Typography,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 
 import { mapFormDataToPayload, mapPromotionToFormData } from '../../../adapters/promotionsMapper';
-import { ErrorMessage } from '../../../components/common/ErrorMessage';
+import { AdminDialog } from '../../common/adminDialog/AdminDialog';
+import { ErrorMessage } from '../../common/ErrorMessage';
 import { getCategoriesForPromotion } from '../../../services/catalog/categoryService';
 import { getProductsForPromotion } from '../../../services/catalog/productService';
 import { getVariantsForPromotion } from '../../../services/catalog/variantService';
-import { AppDatePicker } from '../../../components/common/AppDatePicker';
+import { AppDatePicker } from '../../common/AppDatePicker';
+
 const getApplicationOptionLabel = (option) => {
   if (!option) return '';
 
@@ -42,6 +38,7 @@ const isValidDateRange = (start, end) => {
   if (!start || !end) return true;
   return new Date(end).getTime() >= new Date(start).getTime();
 };
+
 const blurActiveElement = () => {
   if (typeof document === 'undefined') return;
 
@@ -220,16 +217,17 @@ export const PromotionFormDialog = ({
 
     return '';
   };
-  const handleDialogClose = (event, reason) => {
-  blurActiveElement();
 
-  window.requestAnimationFrame(() => {
-    onClose?.(event, reason);
-  });
-};
+  const handleDialogClose = (event, reason) => {
+    blurActiveElement();
+
+    window.requestAnimationFrame(() => {
+      onClose?.(event, reason);
+    });
+  };
 
   const handleSubmit = async (event) => {
-    event.preventDefault();
+    event.preventDefault?.();
 
     blurActiveElement();
 
@@ -249,338 +247,296 @@ export const PromotionFormDialog = ({
     await onSave(payload, promotion?.id || null);
   };
 
+  const dialogTitle = isViewMode
+    ? 'Detalle de promoción'
+    : isEditMode
+      ? 'Editar promoción'
+      : 'Nueva promoción';
+
   return (
-    <Dialog
+    <AdminDialog
       open={open}
       onClose={handleDialogClose}
-      fullWidth
+      title={dialogTitle}
       maxWidth="md"
-      disableRestoreFocus
-      slotProps={{
-        paper: {
-          sx: (theme) => ({
-            borderRadius: `${theme.palette.custom.radius.xxl}px`,
-            bgcolor: theme.palette.background.paper,
-            p: 1,
-          }),
-        },
-      }}
-    >
-      <Box component="form" onSubmit={handleSubmit} noValidate>
-        <DialogTitle
-          sx={{
-            m: 0,
-            p: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-          }}
-        >
-          <Box component="span" sx={{ typography: 'h5', fontWeight: 800, color: 'text.primary' }}>
-            {isViewMode ? 'Detalle de promoción' : isEditMode ? 'Editar promoción' : 'Crear promoción'}
-          </Box>
-
-          <IconButton
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={handleDialogClose}
-            sx={{ color: 'text.secondary' }}
-            aria-label="Cerrar"
-          >
-            <CloseIcon sx={{ fontSize: 24 }} />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent dividers sx={{ borderColor: 'divider', bgcolor: 'background.paper' }}>
-          <Stack spacing={2}>
-            <ErrorMessage message={localError || error} />
-
-            <Grid container spacing={2} sx={{ mt: 0.5 }}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  required
-                  label="Nombre de la promoción"
-                  name="nombre"
-                  value={formData.nombre}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  select
-                  label="Tipo de promoción"
-                  name="tipo_promocion"
-                  value={formData.tipo_promocion}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                >
-                  <MenuItem value="descuento_directo">Descuento directo</MenuItem>
-                  <MenuItem value="cupon">Cupón</MenuItem>
-                  <MenuItem value="envio_gratis">Envío gratis</MenuItem>
-                </TextField>
-              </Grid>
-
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  multiline
-                  minRows={2}
-                  label="Descripción"
-                  name="descripcion"
-                  value={formData.descripcion}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  select
-                  label="Tipo de descuento"
-                  name="tipo_descuento"
-                  value={isFreeShipping ? 'envio_gratis' : formData.tipo_descuento}
-                  onChange={handleChange}
-                  disabled={isViewMode || isFreeShipping}
-                  helperText={isFreeShipping ? 'El envío gratis no requiere valor de descuento.' : ''}
-                >
-                  {!isFreeShipping && <MenuItem value="porcentaje">Porcentaje (%)</MenuItem>}
-                  {!isFreeShipping && <MenuItem value="monto_fijo">Monto fijo</MenuItem>}
-                  {isFreeShipping && <MenuItem value="envio_gratis">Envío gratis</MenuItem>}
-                </TextField>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  required={!isFreeShipping}
-                  type="number"
-                  label="Valor descuento"
-                  name="valor_descuento"
-                  disabled={isViewMode || isFreeShipping}
-                  value={isFreeShipping ? 0 : formData.valor_descuento}
-                  onChange={handleChange}
-                  slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  required={isCoupon}
-                  disabled={isViewMode || !isCoupon}
-                  label="Código cupón"
-                  name="codigo"
-                  value={isCoupon ? formData.codigo : ''}
-                  onChange={handleChange}
-                  placeholder={isCoupon ? 'Ingrese codigo cupón' : 'Solo para cupones'}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  type="number"
-                  label="Prioridad"
-                  name="prioridad"
-                  value={formData.prioridad}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                  helperText="Si hay varias promociones, la de mayor prioridad se evalúa primero."
-                  slotProps={{ htmlInput: { min: 0, step: 1 } }}
-                />
-              </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <AppDatePicker
-                    label="Fecha inicio"
-                    name="fecha_inicio"
-                    value={formData.fecha_inicio}
-                    onChange={updateField}
-                    disabled={isViewMode}
-                    withTime
-                    width="100%"
-                    size="small"
-                    actionBarActions={['cancel', 'accept']}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <AppDatePicker
-                    label="Fecha fin"
-                    name="fecha_fin"
-                    value={formData.fecha_fin}
-                    onChange={updateField}
-                    disabled={isViewMode}
-                    withTime
-                    width="100%"
-                    size="small"
-                    minDate={formData.fecha_inicio || null}
-                    actionBarActions={['cancel', 'accept']}
-                  />
-                </Grid>
-
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <TextField
-                  type="number"
-                  label="Monto mínimo pedido"
-                  name="monto_minimo_pedido"
-                  value={formData.monto_minimo_pedido}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                  slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <TextField
-                  type="number"
-                  label="Uso máximo total"
-                  name="uso_maximo"
-                  value={formData.uso_maximo}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                  placeholder="Ilimitado"
-                  slotProps={{ htmlInput: { min: 0, step: 1 } }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <TextField
-                  type="number"
-                  label="Uso máximo por cliente"
-                  name="uso_por_cliente"
-                  value={formData.uso_por_cliente}
-                  onChange={handleChange}
-                  disabled={isViewMode}
-                  placeholder="Ilimitado"
-                  slotProps={{ htmlInput: { min: 0, step: 1 } }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  select
-                  label="Aplica a"
-                  name="aplica_a"
-                  value={formData.aplica_a}
-                  disabled={isViewMode}
-                  onChange={handleChange}
-                >
-                  <MenuItem value="todos">Todo el catálogo</MenuItem>
-                  <MenuItem value="categoria">Categorías específicas</MenuItem>
-                  <MenuItem value="producto">Productos específicos</MenuItem>
-                  <MenuItem value="variante">Variantes específicas</MenuItem>
-                </TextField>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Box
-                  sx={(theme) => ({
-                    px: 2,
-                    py: 1.25,
-                    borderRadius: 2,
-                    border: `1px solid ${theme.palette.divider}`,
-                    bgcolor: theme.palette.background.paper,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 2,
-                    minHeight: 56,
-                  })}
-                >
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                      Estado operativo
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                      {formData.es_activa ? 'Activa para ser evaluada en tienda.' : 'Inactiva temporalmente.'}
-                    </Typography>
-                  </Box>
-
-                  <Switch
-                    checked={Boolean(formData.es_activa)}
-                    onChange={(event) => updateField('es_activa', event.target.checked)}
-                    color="primary"
-                    disabled={isViewMode}
-                    slotProps={{
-                      input: {
-                        'aria-label': 'Cambiar estado de la promoción',
-                      },
-                    }}
-                  />
-                </Box>
-              </Grid>
-
-              {formData.aplica_a !== 'todos' && (
-                <Grid size={{ xs: 12 }}>
-                  <Autocomplete
-                    multiple
-                    disabled={isViewMode}
-                    options={applicationOptions}
-                    value={selectedApplicationOptions}
-                    onChange={handleApplicationsChange}
-                    loading={applicationsLoading}
-                    getOptionLabel={getApplicationOptionLabel}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Seleccionar aplicaciones"
-                      placeholder="Buscar y seleccionar..."
-                      slotProps={{
-                        ...params.slotProps,
-                        input: {
-                          ...params.slotProps?.input,
-                          endAdornment: (
-                            <>
-                              {applicationsLoading ? <CircularProgress color="inherit" size={18} /> : null}
-                              {params.slotProps?.input?.endAdornment}
-                            </>
-                          ),
-                        },
-                      }}
-                    />
-                    )}
-                  />
-                </Grid>
-              )}
-            </Grid>
-          </Stack>
-        </DialogContent>
-
-        <DialogActions sx={{ p: 2.5, gap: 1 }}>
-         <Button
+      loading={loading}
+      actions={
+        <>
+          <Button
             onMouseDown={(event) => event.preventDefault()}
             onClick={handleDialogClose}
             variant={isViewMode ? 'contained' : 'outlined'}
-            color={isViewMode ? 'primary' : 'secondary'}
             disabled={loading}
-            sx={(theme) => ({
-              borderRadius: `${theme.palette.custom.radius.md}px`,
-              px: 4,
-              py: 1.2,
-            })}
           >
             {isViewMode ? 'Cerrar' : 'Cancelar'}
           </Button>
 
           {!isViewMode && (
             <Button
-              type="submit"
               variant="contained"
               color="primary"
               disabled={loading}
               onMouseDown={(event) => event.preventDefault()}
-              sx={(theme) => ({
-                borderRadius: `${theme.palette.custom.radius.md}px`,
-                px: 4,
-                py: 1.2,
-                fontWeight: 800,
-              })}
+              onClick={handleSubmit}
             >
               {loading ? 'Guardando...' : isEditMode ? 'Guardar cambios' : 'Crear promoción'}
             </Button>
           )}
-        </DialogActions>
-      </Box>
-    </Dialog>
+        </>
+      }
+    >
+      <Stack spacing={2}>
+        <ErrorMessage message={localError || error} />
+
+        <Grid container spacing={2} sx={{ mt: 0.5 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              required
+              label="Nombre de la promoción"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              disabled={isViewMode}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              select
+              label="Tipo de promoción"
+              name="tipo_promocion"
+              value={formData.tipo_promocion}
+              onChange={handleChange}
+              disabled={isViewMode}
+            >
+              <MenuItem value="descuento_directo">Descuento directo</MenuItem>
+              <MenuItem value="cupon">Cupón</MenuItem>
+              <MenuItem value="envio_gratis">Envío gratis</MenuItem>
+            </TextField>
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              multiline
+              minRows={2}
+              label="Descripción"
+              name="descripcion"
+              value={formData.descripcion}
+              onChange={handleChange}
+              disabled={isViewMode}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              select
+              label="Tipo de descuento"
+              name="tipo_descuento"
+              value={isFreeShipping ? 'envio_gratis' : formData.tipo_descuento}
+              onChange={handleChange}
+              disabled={isViewMode || isFreeShipping}
+              helperText={isFreeShipping ? 'El envío gratis no requiere valor de descuento.' : ''}
+            >
+              {!isFreeShipping && <MenuItem value="porcentaje">Porcentaje (%)</MenuItem>}
+              {!isFreeShipping && <MenuItem value="monto_fijo">Monto fijo</MenuItem>}
+              {isFreeShipping && <MenuItem value="envio_gratis">Envío gratis</MenuItem>}
+            </TextField>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              required={!isFreeShipping}
+              type="number"
+              label="Valor descuento"
+              name="valor_descuento"
+              disabled={isViewMode || isFreeShipping}
+              value={isFreeShipping ? 0 : formData.valor_descuento}
+              onChange={handleChange}
+              slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              required={isCoupon}
+              disabled={isViewMode || !isCoupon}
+              label="Código cupón"
+              name="codigo"
+              value={isCoupon ? formData.codigo : ''}
+              onChange={handleChange}
+              placeholder={isCoupon ? 'Ingrese codigo cupón' : 'Solo para cupones'}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              type="number"
+              label="Prioridad"
+              name="prioridad"
+              value={formData.prioridad}
+              onChange={handleChange}
+              disabled={isViewMode}
+              helperText="Si hay varias promociones, la de mayor prioridad se evalúa primero."
+              slotProps={{ htmlInput: { min: 0, step: 1 } }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <AppDatePicker
+              label="Fecha inicio"
+              name="fecha_inicio"
+              value={formData.fecha_inicio}
+              onChange={updateField}
+              disabled={isViewMode}
+              withTime
+              width="100%"
+              size="small"
+              actionBarActions={['cancel', 'accept']}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <AppDatePicker
+              label="Fecha fin"
+              name="fecha_fin"
+              value={formData.fecha_fin}
+              onChange={updateField}
+              disabled={isViewMode}
+              withTime
+              width="100%"
+              size="small"
+              minDate={formData.fecha_inicio || null}
+              actionBarActions={['cancel', 'accept']}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              type="number"
+              label="Monto mínimo pedido"
+              name="monto_minimo_pedido"
+              value={formData.monto_minimo_pedido}
+              onChange={handleChange}
+              disabled={isViewMode}
+              slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              type="number"
+              label="Uso máximo total"
+              name="uso_maximo"
+              value={formData.uso_maximo}
+              onChange={handleChange}
+              disabled={isViewMode}
+              placeholder="Ilimitado"
+              slotProps={{ htmlInput: { min: 0, step: 1 } }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              type="number"
+              label="Uso máximo por cliente"
+              name="uso_por_cliente"
+              value={formData.uso_por_cliente}
+              onChange={handleChange}
+              disabled={isViewMode}
+              placeholder="Ilimitado"
+              slotProps={{ htmlInput: { min: 0, step: 1 } }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              select
+              label="Aplica a"
+              name="aplica_a"
+              value={formData.aplica_a}
+              disabled={isViewMode}
+              onChange={handleChange}
+            >
+              <MenuItem value="todos">Todo el catálogo</MenuItem>
+              <MenuItem value="categoria">Categorías específicas</MenuItem>
+              <MenuItem value="producto">Productos específicos</MenuItem>
+              <MenuItem value="variante">Variantes específicas</MenuItem>
+            </TextField>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Box
+              sx={(theme) => ({
+                px: 2,
+                py: 1.25,
+                borderRadius: 2,
+                border: `1px solid ${theme.palette.divider}`,
+                bgcolor: theme.palette.background.paper,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+                minHeight: 56,
+              })}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 800, color: 'text.primary' }}>
+                  Estado operativo
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {formData.es_activa ? 'Activa para ser evaluada en tienda.' : 'Inactiva temporalmente.'}
+                </Typography>
+              </Box>
+
+              <Switch
+                checked={Boolean(formData.es_activa)}
+                onChange={(event) => updateField('es_activa', event.target.checked)}
+                color="primary"
+                disabled={isViewMode}
+                slotProps={{
+                  input: {
+                    'aria-label': 'Cambiar estado de la promoción',
+                  },
+                }}
+              />
+            </Box>
+          </Grid>
+
+          {formData.aplica_a !== 'todos' && (
+            <Grid size={{ xs: 12 }}>
+              <Autocomplete
+                multiple
+                disabled={isViewMode}
+                options={applicationOptions}
+                value={selectedApplicationOptions}
+                onChange={handleApplicationsChange}
+                loading={applicationsLoading}
+                getOptionLabel={getApplicationOptionLabel}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Seleccionar aplicaciones"
+                    placeholder="Buscar y seleccionar..."
+                    slotProps={{
+                      ...params.slotProps,
+                      input: {
+                        ...params.slotProps?.input,
+                        endAdornment: (
+                          <>
+                            {applicationsLoading ? <CircularProgress color="inherit" size={18} /> : null}
+                            {params.slotProps?.input?.endAdornment}
+                          </>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+          )}
+        </Grid>
+      </Stack>
+    </AdminDialog>
   );
 };

@@ -2,12 +2,7 @@ import {
   Box,
   Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -18,10 +13,10 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 
+import { AdminDialog } from '../../common/adminDialog/AdminDialog';
 import { formatCurrency, formatDate } from '../../../utils/formatters';
 
 const promotionStatusConfig = {
@@ -94,53 +89,34 @@ export const PromotionDetailDialog = ({ open, onClose, promotion }) => {
   const statusConfig = getPromotionStatusConfig(promotion.estado_calculado);
 
   return (
-    <Dialog
+    <AdminDialog
       open={open}
       onClose={onClose}
-      fullWidth
+      title="Detalle de promoción"
       maxWidth="md"
-      slotProps={{
-        paper: {
-          sx: (theme) => ({
-            borderRadius: `${theme.palette.custom.radius.xxl}px`,
-            bgcolor: theme.palette.background.paper,
-            p: 1,
-          }),
-        },
-      }}
+      actions={
+        <Button onClick={onClose} variant="contained">
+          Cerrar
+        </Button>
+      }
     >
-      <DialogTitle
-        sx={{
-          m: 0,
-          p: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 2,
-        }}
-      >
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', minWidth: 0 }}>
-          <Typography variant="h5" sx={{ fontWeight: 900 }}>
-            Detalle de promoción
-          </Typography>
-
+      <Stack spacing={3}>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
           <Chip
             size="small"
             label={promotion.es_activa ? 'Activa' : 'Inactiva'}
             color={promotion.es_activa ? 'success' : 'error'}
             variant="outlined"
           />
-
-          <Chip size="small" label={statusConfig.label} color={statusConfig.color} variant="outlined" />
+          <Chip
+            size="small"
+            label={statusConfig.label}
+            color={statusConfig.color}
+            variant="outlined"
+          />
         </Stack>
 
-        <IconButton onClick={onClose} sx={{ color: 'text.secondary' }} aria-label="Cerrar">
-          <CloseIcon sx={{ fontSize: 24 }} />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent dividers sx={{ borderColor: 'divider' }}>
-        <Grid container spacing={3} sx={{ mt: 0.5 }}>
+        <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper
               variant="outlined"
@@ -260,22 +236,7 @@ export const PromotionDetailDialog = ({ open, onClose, promotion }) => {
             </TableContainer>
           </Grid>
         </Grid>
-      </DialogContent>
-
-      <DialogActions sx={{ p: 2.5 }}>
-        <Button
-          onClick={onClose}
-          variant="contained"
-          sx={(theme) => ({
-            borderRadius: `${theme.palette.custom.radius.md}px`,
-            fontWeight: 800,
-            px: 4,
-            py: 1.2,
-          })}
-        >
-          Cerrar detalle
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Stack>
+    </AdminDialog>
   );
 };
