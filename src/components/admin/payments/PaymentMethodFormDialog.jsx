@@ -1,16 +1,7 @@
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  MenuItem,
-  Grid,
-  FormControlLabel,
-  Switch,
-} from '@mui/material';
+import { Button, TextField, MenuItem, Grid, FormControlLabel, Switch } from '@mui/material';
+import PaymentRoundedIcon from '@mui/icons-material/PaymentRounded';
+import { AdminDialog } from '../../common/adminDialog/AdminDialog';
 import { FileUploadField } from '../../common/Field/FileUploadField';
 
 const TIPO_OPCIONES = [
@@ -65,7 +56,6 @@ export const PaymentMethodFormDialog = ({
           es_activo: initialData.es_activo !== undefined ? initialData.es_activo : true,
         });
       } else {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData(INITIAL_STATE);
       }
     }
@@ -92,168 +82,158 @@ export const PaymentMethodFormDialog = ({
       imagen_path: formData.imagen_path || null,
       imageFile: formData.imageFile || null,
     };
-    
-    // Si estamos editando, extraemos solo los campos relevantes pero para metodos_pago mandamos
-    // codigo, nombre, tipo, etc. El ID se gestionará en el hook que usa params de id.
     onSubmit(payload);
   };
 
   const isEdit = !!initialData;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>
-          {isEdit ? 'Editar Método de Pago' : 'Nuevo Método de Pago'}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                name="codigo"
-                label="Código"
-                value={formData.codigo}
-                onChange={handleChange}
-                fullWidth
-                required
-                disabled={isEdit} // Normalmente el código interno no debería cambiar si es uniqueness
-                helperText="Código interno."
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                name="nombre"
-                label="Nombre Visible"
-                value={formData.nombre}
-                onChange={handleChange}
-                fullWidth
-                required
-                helperText="Nombre visible para el cliente."
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                select
-                name="tipo"
-                label="Tipo"
-                value={formData.tipo}
-                onChange={handleChange}
-                fullWidth
-                required
-              >
-                {TIPO_OPCIONES.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                name="moneda"
-                label="Moneda"
-                value={formData.moneda}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                name="titular"
-                label="Titular"
-                value={formData.titular}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                name="numero_cuenta"
-                label="Número de Cuenta"
-                value={formData.numero_cuenta}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                name="telefono"
-                label="Teléfono"
-                value={formData.telefono}
-                onChange={handleChange}
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                name="instrucciones"
-                label="Instrucciones"
-                value={formData.instrucciones}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={2}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FileUploadField
-                label="Logotipo del Método de Pago"
-                accept="image/*"
-                value={formData.imageFile}
-                previewUrl={formData.imagen_url}
-                height={160}
-                helperText="Selecciona un logotipo para el método de pago."
-                onChange={(file) => setFormData(prev => ({ ...prev, imageFile: file }))}
-                onRemove={() => setFormData(prev => ({ ...prev, imageFile: null, imagen_url: '', imagen_path: '' }))}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                name="orden_visual"
-                label="Orden Visual"
-                type="number"
-                value={formData.orden_visual}
-                onChange={handleChange}
-                slotProps={{
-                  htmlInput: {
-                    min: 1,
-                    step: 1
-                  }
-                }}
-                fullWidth
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }} sx={{ display: "flex", alignItems: "center" }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    name="es_activo"
-                    checked={formData.es_activo}
-                    onChange={handleChange}
-                    color="primary"
-                  />
-                }
-                label={formData.es_activo ? "Método Activo" : "Método Inactivo"}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={isSubmitting}>
+    <AdminDialog
+      open={open}
+      onClose={onClose}
+      title={isEdit ? 'Editar método de pago' : 'Nuevo método de pago'}
+      icon={<PaymentRoundedIcon />}
+      maxWidth="sm"
+      loading={isSubmitting}
+      onSubmit={handleSubmit}
+      disableBackdropClick={isSubmitting}
+      actions={
+        <>
+          <Button onClick={onClose} disabled={isSubmitting} variant="outlined" color="secondary">
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={isSubmitting}
-          >
+          <Button type="submit" variant="contained" disabled={isSubmitting}>
             {isSubmitting ? 'Guardando...' : 'Guardar'}
           </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+        </>
+      }
+    >
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            name="codigo"
+            label="Código"
+            value={formData.codigo}
+            onChange={handleChange}
+            fullWidth
+            required
+            disabled={isEdit}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            name="nombre"
+            label="Nombre visible"
+            value={formData.nombre}
+            onChange={handleChange}
+            fullWidth
+            required
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            select
+            name="tipo"
+            label="Tipo"
+            value={formData.tipo}
+            onChange={handleChange}
+            fullWidth
+            required
+          >
+            {TIPO_OPCIONES.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            name="moneda"
+            label="Moneda"
+            value={formData.moneda}
+            onChange={handleChange}
+            fullWidth
+            required
+          />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <TextField
+            name="titular"
+            label="Titular"
+            value={formData.titular}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            name="numero_cuenta"
+            label="N° de cuenta"
+            value={formData.numero_cuenta}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            name="telefono"
+            label="Teléfono"
+            value={formData.telefono}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <TextField
+            name="instrucciones"
+            label="Instrucciones"
+            value={formData.instrucciones}
+            onChange={handleChange}
+            fullWidth
+            multiline
+            rows={2}
+          />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <FileUploadField
+            label="Logotipo"
+            accept="image/*"
+            value={formData.imageFile}
+            previewUrl={formData.imagen_url}
+            height={160}
+            onChange={(file) => setFormData((prev) => ({ ...prev, imageFile: file }))}
+            onRemove={() =>
+              setFormData((prev) => ({ ...prev, imageFile: null, imagen_url: '', imagen_path: '' }))
+            }
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            name="orden_visual"
+            label="Orden visual"
+            type="number"
+            value={formData.orden_visual}
+            onChange={handleChange}
+            slotProps={{ htmlInput: { min: 1, step: 1 } }}
+            fullWidth
+            required
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }} sx={{ display: 'flex', alignItems: 'center' }}>
+          <FormControlLabel
+            control={
+              <Switch
+                name="es_activo"
+                checked={formData.es_activo}
+                onChange={handleChange}
+                color="primary"
+              />
+            }
+            label={formData.es_activo ? 'Activo' : 'Inactivo'}
+          />
+        </Grid>
+      </Grid>
+    </AdminDialog>
   );
 };
