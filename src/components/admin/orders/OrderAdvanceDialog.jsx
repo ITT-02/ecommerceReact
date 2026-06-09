@@ -5,12 +5,7 @@ import {
   Box,
   Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
   Paper,
   Stack,
   Step,
@@ -28,6 +23,8 @@ import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+
+import { AdminDialog } from '../../common/adminDialog/AdminDialog';
 
 import { ErrorMessage } from '../../common/ErrorMessage';
 import {
@@ -114,7 +111,11 @@ const getDeliveryMode = (order = {}) => {
     return 'transporte';
   }
 
-  if (order.empresa_envio || order.transportista_id || ACTIVE_SHIPPING_STATES.includes(order.estado_envio)) {
+  if (
+    order.empresa_envio ||
+    order.transportista_id ||
+    ACTIVE_SHIPPING_STATES.includes(order.estado_envio)
+  ) {
     return 'transporte';
   }
 
@@ -166,19 +167,19 @@ const getAvailableActions = ({ order, deliveryMode, paymentApproved }) => {
       buildAction({
         value: 'envio:en_transito',
         title: 'Reanudar en tránsito',
-        description: 'La incidencia fue atendida y el paquete continúa en ruta.',
+        description: 'Continúa en ruta.',
         icon: <LocalShippingOutlinedIcon fontSize="small" />,
       }),
       buildAction({
         value: 'envio:en_destino',
         title: 'Marcar en destino',
-        description: 'El paquete llegó a la zona o agencia de destino.',
+        description: 'Ya llegó a la zona/agencia.',
         icon: <LocalShippingOutlinedIcon fontSize="small" />,
       }),
       buildAction({
         value: 'envio:entregado',
         title: 'Entregado',
-        description: 'El transportista confirmó la entrega final.',
+        description: 'Entrega final confirmada.',
         icon: <DoneRoundedIcon fontSize="small" />,
         severity: 'success',
       }),
@@ -190,7 +191,7 @@ const getAvailableActions = ({ order, deliveryMode, paymentApproved }) => {
       buildAction({
         value: 'pedido:en_preparacion',
         title: 'Preparación',
-        description: 'El equipo empieza a separar, producir o preparar el pedido.',
+        description: 'Se inicia el procesamiento.',
         icon: <Inventory2OutlinedIcon fontSize="small" />,
       }),
     ];
@@ -203,8 +204,8 @@ const getAvailableActions = ({ order, deliveryMode, paymentApproved }) => {
         title: deliveryMode === 'transporte' ? 'Listo despacho' : 'Listo entrega',
         description:
           deliveryMode === 'transporte'
-            ? 'El pedido ya puede entregarse al transportista.'
-            : 'El pedido ya puede entregarse directamente o ser recogido.',
+            ? 'Puede pasar a transportista.'
+            : 'Puede ser entregado o recogido.',
         icon:
           deliveryMode === 'transporte' ? (
             <LocalShippingOutlinedIcon fontSize="small" />
@@ -221,13 +222,13 @@ const getAvailableActions = ({ order, deliveryMode, paymentApproved }) => {
         buildAction({
           value: 'envio:entregado_repartidora',
           title: 'Transportista',
-          description: 'Registra empresa, guía y datos de rastreo.',
+          description: 'Registra empresa/guía y rastreo.',
           icon: <LocalShippingOutlinedIcon fontSize="small" />,
         }),
         buildAction({
           value: 'envio:incidencia',
           title: 'Registrar incidencia',
-          description: 'Usa esta opción si el despacho tiene un problema.',
+          description: 'Hay un problema en el despacho.',
           icon: <WarningAmberRoundedIcon fontSize="small" />,
           severity: 'warning',
         }),
@@ -239,7 +240,7 @@ const getAvailableActions = ({ order, deliveryMode, paymentApproved }) => {
         buildAction({
           value: 'pedido:entregado',
           title: 'Entregado',
-          description: 'Cierra el pedido por recojo, mostrador o entrega interna.',
+          description: 'Cierre por recojo/mostrador/entrega interna.',
           icon: <DoneRoundedIcon fontSize="small" />,
           severity: 'success',
         }),
@@ -257,7 +258,7 @@ const getAvailableActions = ({ order, deliveryMode, paymentApproved }) => {
       buildAction({
         value: 'envio:entregado_repartidora',
         title: 'Transportista',
-        description: 'Enviado por empresa de transporte',
+        description: 'Envío por empresa de transporte.',
         icon: <LocalShippingOutlinedIcon fontSize="small" />,
       }),
     ];
@@ -268,13 +269,13 @@ const getAvailableActions = ({ order, deliveryMode, paymentApproved }) => {
       buildAction({
         value: 'envio:en_transito',
         title: 'Tránsito',
-        description: 'El paquete ya se encuentra en ruta.',
+        description: 'Ya está en ruta.',
         icon: <LocalShippingOutlinedIcon fontSize="small" />,
       }),
       buildAction({
         value: 'envio:incidencia',
         title: 'Registrar incidencia',
-        description: 'Registra un problema de transporte o entrega.',
+        description: 'Problema en transporte/entrega.',
         icon: <WarningAmberRoundedIcon fontSize="small" />,
         severity: 'warning',
       }),
@@ -286,20 +287,20 @@ const getAvailableActions = ({ order, deliveryMode, paymentApproved }) => {
       buildAction({
         value: 'envio:en_destino',
         title: 'Destino',
-        description: 'El paquete llegó a la ciudad, agencia o zona final.',
+        description: 'Llegó a zona/agencia final.',
         icon: <LocalShippingOutlinedIcon fontSize="small" />,
       }),
       buildAction({
         value: 'envio:entregado',
         title: 'Entregado',
-        description: 'El cliente recibió el paquete.',
+        description: 'Cliente recibió el paquete.',
         icon: <DoneRoundedIcon fontSize="small" />,
         severity: 'success',
       }),
       buildAction({
         value: 'envio:incidencia',
         title: 'Registrar incidencia',
-        description: 'Registra un problema de transporte o entrega.',
+        description: 'Problema en transporte/entrega.',
         icon: <WarningAmberRoundedIcon fontSize="small" />,
         severity: 'warning',
       }),
@@ -318,7 +319,7 @@ const getAvailableActions = ({ order, deliveryMode, paymentApproved }) => {
       buildAction({
         value: 'envio:incidencia',
         title: 'Registrar incidencia',
-        description: 'Registra un problema de entrega.',
+        description: 'Problema en la entrega.',
         icon: <WarningAmberRoundedIcon fontSize="small" />,
         severity: 'warning',
       }),
@@ -645,284 +646,285 @@ const SelectableGeneralFlowStepper = ({
     </Box>
   );
 };
-//Diagrama de proceso de envio
-  const DeliveryFlowBranchDiagram = ({
-    actions,
-    selectedAdvance,
-    loading,
-    onSelect,
-  }) => {
-    const theme = useTheme();
 
-    if (!actions.length) return null;
+// Diagrama de proceso de envío
+const DeliveryFlowBranchDiagram = ({
+  actions,
+  selectedAdvance,
+  loading,
+  onSelect,
+}) => {
+  const theme = useTheme();
 
-    return (
-      <Paper
-        variant="outlined"
-        sx={{
-          p: {
-            xs: 1.75,
-            sm: 2.25,
-            md: 2.5,
-          },
-          borderRadius: 2.5,
-          bgcolor: alpha(theme.palette.background.default, 0.72),
-          overflow: 'hidden',
-        }}
-      >
-        <Stack spacing={2}>
-          <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
-              Elige la ruta de entrega
-            </Typography>
+  if (!actions.length) return null;
 
-            <Typography variant="body2" color="text.secondary">
-              Desde “Listo”, el pedido puede cerrarse por entrega directa o pasar a transportista.
-            </Typography>
-          </Box>
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        p: {
+          xs: 1.75,
+          sm: 2.25,
+          md: 2.5,
+        },
+        borderRadius: 2.5,
+        bgcolor: alpha(theme.palette.background.default, 0.72),
+        overflow: 'hidden',
+      }}
+    >
+      <Stack spacing={2}>
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
+            Elige la ruta
+          </Typography>
+
+          <Typography variant="body2" color="text.secondary">
+            Desde “Listo”, cierra por entrega directa o pasa a transportista.
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: '1fr 72px 1fr',
+            },
+            gap: {
+              xs: 2,
+              md: 0,
+            },
+            pt: {
+              xs: 1,
+              md: 4.5,
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: {
+                xs: 'none',
+                md: 'block',
+              },
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              width: 2,
+              height: 28,
+              bgcolor: alpha(theme.palette.text.primary, 0.12),
+              transform: 'translateX(-50%)',
+            }}
+          />
 
           <Box
             sx={{
-              position: 'relative',
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                md: '1fr 72px 1fr',
+              display: {
+                xs: 'none',
+                md: 'block',
               },
-              gap: {
-                xs: 2,
-                md: 0,
-              },
-              pt: {
-                xs: 1,
-                md: 4.5,
-              },
+              position: 'absolute',
+              top: 28,
+              left: '27%',
+              right: '27%',
+              height: 2,
+              bgcolor: alpha(theme.palette.text.primary, 0.12),
             }}
-          >
-            <Box
-              sx={{
-                display: {
-                  xs: 'none',
-                  md: 'block',
-                },
-                position: 'absolute',
-                top: 0,
-                left: '50%',
-                width: 2,
-                height: 28,
-                bgcolor: alpha(theme.palette.text.primary, 0.12),
-                transform: 'translateX(-50%)',
-              }}
-            />
+          />
 
-            <Box
-              sx={{
-                display: {
-                  xs: 'none',
-                  md: 'block',
-                },
-                position: 'absolute',
-                top: 28,
-                left: '27%',
-                right: '27%',
-                height: 2,
-                bgcolor: alpha(theme.palette.text.primary, 0.12),
-              }}
-            />
+          {actions.map((action, index) => {
+            const selected = selectedAdvance === action.value;
+            const color = getActionColor(theme, action.severity);
 
-            {actions.map((action, index) => {
-              const selected = selectedAdvance === action.value;
-              const color = getActionColor(theme, action.severity);
-
-              return (
+            return (
+              <Box
+                key={action.value}
+                sx={{
+                  gridColumn: {
+                    xs: '1',
+                    md: index === 0 ? '1' : '3',
+                  },
+                  position: 'relative',
+                  pt: {
+                    xs: 0,
+                    md: 2.25,
+                  },
+                  pl: {
+                    xs: 2.25,
+                    md: 0,
+                  },
+                  display: 'flex',
+                  justifyContent: 'center',
+                }}
+              >
                 <Box
-                  key={action.value}
                   sx={{
-                    gridColumn: {
-                      xs: '1',
-                      md: index === 0 ? '1' : '3',
+                    display: {
+                      xs: 'block',
+                      md: 'none',
                     },
-                    position: 'relative',
-                    pt: {
-                      xs: 0,
-                      md: 2.25,
+                    position: 'absolute',
+                    left: 7,
+                    top: 0,
+                    bottom: 0,
+                    width: 2,
+                    bgcolor: alpha(theme.palette.text.primary, 0.12),
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    display: {
+                      xs: 'block',
+                      md: 'none',
                     },
-                    pl: {
-                      xs: 2.25,
-                      md: 0,
+                    position: 'absolute',
+                    left: 7,
+                    top: 58,
+                    width: 16,
+                    height: 2,
+                    bgcolor: alpha(theme.palette.text.primary, 0.12),
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    display: {
+                      xs: 'none',
+                      md: 'block',
                     },
-                    display: 'flex',
-                    justifyContent: 'center',
+                    position: 'absolute',
+                    top: 0,
+                    left: '50%',
+                    width: 2,
+                    height: 20,
+                    bgcolor: alpha(theme.palette.text.primary, 0.12),
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+
+                <Button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => onSelect?.(action.value)}
+                  variant="outlined"
+                  sx={{
+                    width: {
+                      xs: '100%',
+                      sm: 360,
+                      md: 340,
+                    },
+                    minHeight: {
+                      xs: 132,
+                      sm: 138,
+                    },
+                    borderRadius: 2.5,
+                    px: 2,
+                    py: 2,
+                    textTransform: 'none',
+                    borderWidth: selected ? 1.5 : 1,
+                    borderColor: selected ? color : 'divider',
+                    bgcolor: selected
+                      ? alpha(color, 0.11)
+                      : 'background.paper',
+                    color: 'text.primary',
+                    boxShadow: selected ? 2 : 0,
+                    '&:hover': {
+                      borderColor: color,
+                      bgcolor: selected
+                        ? alpha(color, 0.14)
+                        : alpha(color, 0.06),
+                      boxShadow: 2,
+                    },
+                    '&.Mui-disabled': {
+                      opacity: 0.6,
+                    },
                   }}
                 >
                   <Box
                     sx={{
-                      display: {
-                        xs: 'block',
-                        md: 'none',
-                      },
-                      position: 'absolute',
-                      left: 7,
-                      top: 0,
-                      bottom: 0,
-                      width: 2,
-                      bgcolor: alpha(theme.palette.text.primary, 0.12),
-                    }}
-                  />
-
-                  <Box
-                    sx={{
-                      display: {
-                        xs: 'block',
-                        md: 'none',
-                      },
-                      position: 'absolute',
-                      left: 7,
-                      top: 58,
-                      width: 16,
-                      height: 2,
-                      bgcolor: alpha(theme.palette.text.primary, 0.12),
-                    }}
-                  />
-
-                  <Box
-                    sx={{
-                      display: {
-                        xs: 'none',
-                        md: 'block',
-                      },
-                      position: 'absolute',
-                      top: 0,
-                      left: '50%',
-                      width: 2,
-                      height: 20,
-                      bgcolor: alpha(theme.palette.text.primary, 0.12),
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
-
-                  <Button
-                    type="button"
-                    disabled={loading}
-                    onClick={() => onSelect?.(action.value)}
-                    variant="outlined"
-                    sx={{
-                      width: {
-                        xs: '100%',
-                        sm: 360,
-                        md: 340,
-                      },
-                      minHeight: {
-                        xs: 132,
-                        sm: 138,
-                      },
-                      borderRadius: 2.5,
-                      px: 2,
-                      py: 2,
-                      textTransform: 'none',
-                      borderWidth: selected ? 1.5 : 1,
-                      borderColor: selected ? color : 'divider',
-                      bgcolor: selected
-                        ? alpha(color, 0.11)
-                        : 'background.paper',
-                      color: 'text.primary',
-                      boxShadow: selected ? 2 : 0,
-                      '&:hover': {
-                        borderColor: color,
-                        bgcolor: selected
-                          ? alpha(color, 0.14)
-                          : alpha(color, 0.06),
-                        boxShadow: 2,
-                      },
-                      '&.Mui-disabled': {
-                        opacity: 0.6,
-                      },
+                      width: '100%',
+                      display: 'grid',
+                      justifyItems: 'center',
+                      textAlign: 'center',
+                      gap: 1,
                     }}
                   >
                     <Box
                       sx={{
-                        width: '100%',
+                        width: 46,
+                        height: 46,
+                        borderRadius: '50%',
                         display: 'grid',
-                        justifyItems: 'center',
-                        textAlign: 'center',
-                        gap: 1,
+                        placeItems: 'center',
+                        color,
+                        bgcolor: alpha(color, selected ? 0.18 : 0.1),
+                        border: '1px solid',
+                        borderColor: alpha(color, selected ? 0.28 : 0.16),
                       }}
                     >
+                      {action.icon}
+                    </Box>
+
+                    <Box sx={{ minWidth: 0 }}>
                       <Box
                         sx={{
-                          width: 46,
-                          height: 46,
-                          borderRadius: '50%',
-                          display: 'grid',
-                          placeItems: 'center',
-                          color,
-                          bgcolor: alpha(color, selected ? 0.18 : 0.1),
-                          border: '1px solid',
-                          borderColor: alpha(color, selected ? 0.28 : 0.16),
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          flexWrap: 'wrap',
                         }}
                       >
-                        {action.icon}
-                      </Box>
-
-                      <Box sx={{ minWidth: 0 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            gap: 0.75,
-                            flexWrap: 'wrap',
-                          }}
-                        >
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontWeight: 900,
-                              color: 'text.primary',
-                            }}
-                          >
-                            {action.title}
-                          </Typography>
-
-                          {selected && (
-                            <Chip
-                              size="small"
-                              label="Seleccionado"
-                              sx={{
-                                height: 22,
-                                fontSize: '0.68rem',
-                                fontWeight: 800,
-                                color,
-                                bgcolor: alpha(color, 0.1),
-                                border: '1px solid',
-                                borderColor: alpha(color, 0.24),
-                              }}
-                            />
-                          )}
-                        </Box>
-
                         <Typography
-                          variant="caption"
+                          variant="body2"
                           sx={{
-                            display: 'block',
-                            mt: 0.45,
-                            color: 'text.secondary',
-                            lineHeight: 1.3,
+                            fontWeight: 900,
+                            color: 'text.primary',
                           }}
                         >
-                          {action.description}
+                          {action.title}
                         </Typography>
+
+                        {selected && (
+                          <Chip
+                            size="small"
+                            label="Seleccionado"
+                            sx={{
+                              height: 22,
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              color,
+                              bgcolor: alpha(color, 0.1),
+                              border: '1px solid',
+                              borderColor: alpha(color, 0.24),
+                            }}
+                          />
+                        )}
                       </Box>
+
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          mt: 0.45,
+                          color: 'text.secondary',
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {action.description}
+                      </Typography>
                     </Box>
-                  </Button>
-                </Box>
-              );
-            })}
-          </Box>
-        </Stack>
-      </Paper>
-    );
-  };
+                  </Box>
+                </Button>
+              </Box>
+            );
+          })}
+        </Box>
+      </Stack>
+    </Paper>
+  );
+};
 
 export const OrderAdvanceDialog = ({
   open,
@@ -939,8 +941,9 @@ export const OrderAdvanceDialog = ({
 
   const showShippingFields = isShippingAdvance(selectedAdvance);
   const mustCompleteTransport = requiresTransportData(selectedAdvance);
-  const mustCompleteTrackingNumber =
-    TRACKING_NUMBER_REQUIRED_STATUSES.includes(selectedShippingStatus);
+  const mustCompleteTrackingNumber = TRACKING_NUMBER_REQUIRED_STATUSES.includes(
+    selectedShippingStatus
+  );
   const mustCompleteIncidentComment = selectedShippingStatus === 'incidencia';
 
   const paymentStatus = order?.estado_pago || form?.estadoPago || '';
@@ -1000,41 +1003,34 @@ export const OrderAdvanceDialog = ({
     onChange?.('avanceNuevo', 'envio:incidencia');
   };
 
+  const actionsNode = (
+    <>
+      <Button variant="outlined" onClick={onClose} disabled={loading}>
+        Cancelar
+      </Button>
+
+      <Button type="submit" variant="contained" disabled={isSaveDisabled}>
+        {loading ? 'Guardando...' : selectedAction?.title || 'Guardar avance'}
+      </Button>
+    </>
+  );
+
   return (
-    <Dialog
+    <AdminDialog
       open={open}
       onClose={loading ? undefined : onClose}
-      fullWidth
-      maxWidth="md"
-      disableRestoreFocus
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: 3,
-            width: {
-              xs: 'calc(100% - 16px)',
-              sm: 760,
-              md: 900,
-            },
-            maxWidth: 'calc(100% - 24px)',
-            height: {
-              xs: 'calc(100dvh - 16px)',
-              sm: 'auto',
-            },
-            maxHeight: {
-              xs: 'calc(100dvh - 16px)',
-              sm: 'calc(100dvh - 48px)',
-            },
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          },
-        },
+      title="Avanzar pedido"
+      maxWidth="lg"
+      actions={actionsNode}
+      onSubmit={onSubmit}
+      loading={loading}
+      stickyActionsOnMobile={true}
+      contentSx={{
+        px: { xs: 1.5, sm: 0 },
+        py: 0,
       }}
     >
       <Box
-        component="form"
-        onSubmit={onSubmit}
         sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -1043,328 +1039,251 @@ export const OrderAdvanceDialog = ({
           overflow: 'hidden',
         }}
       >
-        <DialogTitle
-          sx={{
-            pr: 6,
-            pb: 1.5,
-            flexShrink: 0,
-            bgcolor: 'background.paper',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Stack spacing={0.35}>
-            <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Actualizar avance del pedido
-            </Typography>
-          </Stack>
+        <Stack spacing={2.25}>
+          <ErrorMessage message={error} />
 
-          <IconButton
-            onClick={onClose}
-            disabled={loading}
-            size="small"
-            aria-label="Cerrar"
+          <Paper
+            variant="outlined"
             sx={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
+              p: 2,
+              borderRadius: 2.5,
+              bgcolor: 'background.default',
             }}
           >
-            <CloseRoundedIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
+            <Grid container spacing={1.5}>
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>
+                  Pedido
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 900 }}>
+                  {form?.numeroPedido || order?.numero_pedido || '-'}
+                </Typography>
+              </Grid>
 
-        <DialogContent
-          dividers={false}
-          sx={{
-            px: {
-              xs: 1.5,
-              sm: 2,
-            },
-            py: 2,
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          <Stack spacing={2.25}>
-            <ErrorMessage message={error} />
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>
+                  Estado pedido
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 900 }}>
+                  {getOrderStatusLabel(form?.estadoActual || order?.estado_pedido)}
+                </Typography>
+              </Grid>
 
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>
+                  Estado envío
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 900 }}>
+                  {getShippingStatusLabel(
+                    order?.estado_envio || form?.estadoEnvioActual || 'pendiente'
+                  )}
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 3 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>
+                  Pago
+                </Typography>
+                <Box sx={{ mt: 0.35 }}>
+                  <Chip
+                    size="small"
+                    color={paymentApproved ? 'success' : 'warning'}
+                    variant="outlined"
+                    label={getPaymentStatusLabel(paymentStatus)}
+                    sx={{ fontWeight: 800 }}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          <Paper
+            variant="outlined"
+            sx={{
+              p: {
+                xs: 2,
+                sm: 2.5,
+                md: 3,
+              },
+              borderRadius: 2.5,
+              overflow: 'visible',
+            }}
+          >
+            <Stack spacing={1.75}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: {
+                    xs: 'column',
+                    sm: 'row',
+                  },
+                  gap: 1,
+                  alignItems: {
+                    xs: 'flex-start',
+                    sm: 'center',
+                  },
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
+                    Flujo general
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {getDeliveryLabel(deliveryMode)}
+                  </Typography>
+                </Box>
+
+                <Chip
+                  size="small"
+                  color={paymentApproved ? 'success' : 'warning'}
+                  variant="outlined"
+                  label={paymentApproved ? 'Pago aprobado' : 'Pago pendiente'}
+                  sx={{ fontWeight: 800 }}
+                />
+              </Box>
+
+              <SelectableGeneralFlowStepper
+                steps={flowSteps}
+                currentStepIndex={currentStepIndex}
+                selectedAdvance={selectedAdvance}
+                loading={loading || !paymentApproved}
+                onSelect={handleSelectAdvance}
+              />
+
+              {paymentApproved && branchActions.length > 0 && (
+                <DeliveryFlowBranchDiagram
+                  actions={branchActions}
+                  selectedAdvance={selectedAdvance}
+                  loading={loading}
+                  onSelect={handleSelectAdvance}
+                />
+              )}
+
+              {!paymentApproved && (
+                <Alert severity="warning" variant="outlined">
+                  Pago no aprobado: la preparación y el despacho se habilitan cuando el pago esté validado.
+                </Alert>
+              )}
+
+              {paymentApproved && normalActions.length === 0 && !incidentAction && (
+                <Alert severity="info" variant="outlined">
+                  No hay acciones disponibles para el estado actual.
+                </Alert>
+              )}
+
+              {selectedAction && selectedAdvance !== 'envio:incidencia' && (
+                <Alert severity="success" variant="outlined">
+                  Seleccionaste: <strong>{selectedAction.title}</strong>.{' '}
+                  {selectedAction.description}
+                </Alert>
+              )}
+
+              {incidentAction && (
+                <Alert
+                  severity={selectedAdvance === 'envio:incidencia' ? 'warning' : 'info'}
+                  variant="outlined"
+                  action={
+                    <Button
+                      color="warning"
+                      size="small"
+                      variant={
+                        selectedAdvance === 'envio:incidencia'
+                          ? 'contained'
+                          : 'outlined'
+                      }
+                      onClick={handleSelectIncident}
+                      disabled={loading}
+                      startIcon={<WarningAmberRoundedIcon />}
+                    >
+                      Registrar incidencia
+                    </Button>
+                  }
+                >
+                  {selectedAdvance === 'envio:incidencia'
+                    ? 'Incidencia seleccionada. Agrega el detalle en el comentario.'
+                    : 'Si hay un problema en el envío, registra una incidencia en lugar de avanzar.'}
+                </Alert>
+              )}
+
+              {selectedAdvance === 'envio:incidencia' && (
+                <Alert severity="warning" variant="outlined">
+                  Describe el problema en el comentario. No avanza el flujo normal.
+                </Alert>
+              )}
+            </Stack>
+          </Paper>
+
+          {showShippingFields && selectedAdvance !== 'envio:incidencia' && (
             <Paper
               variant="outlined"
               sx={{
                 p: 2,
                 borderRadius: 2.5,
-                bgcolor: 'background.default',
-              }}
-            >
-              <Grid container spacing={1.5}>
-                <Grid size={{ xs: 12, sm: 3 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>
-                    Pedido
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 900 }}>
-                    {form?.numeroPedido || order?.numero_pedido || '-'}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 3 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>
-                    Estado pedido
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 900 }}>
-                    {getOrderStatusLabel(form?.estadoActual || order?.estado_pedido)}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 3 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>
-                    Estado envío
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 900 }}>
-                    {getShippingStatusLabel(
-                      order?.estado_envio || form?.estadoEnvioActual || 'pendiente'
-                    )}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 3 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800 }}>
-                    Pago
-                  </Typography>
-                  <Box sx={{ mt: 0.35 }}>
-                    <Chip
-                      size="small"
-                      color={paymentApproved ? 'success' : 'warning'}
-                      variant="outlined"
-                      label={getPaymentStatusLabel(paymentStatus)}
-                      sx={{ fontWeight: 800 }}
-                    />
-                  </Box>
-                </Grid>
-              </Grid>
-            </Paper>
-
-            <Paper
-              variant="outlined"
-              sx={{
-                p: {
-                  xs: 2,
-                  sm: 2.5,
-                  md: 3,
-                },
-                borderRadius: 2.5,
-                overflow: 'visible',
               }}
             >
               <Stack spacing={1.75}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: {
-                      xs: 'column',
-                      sm: 'row',
-                    },
-                    gap: 1,
-                    alignItems: {
-                      xs: 'flex-start',
-                      sm: 'center',
-                    },
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
-                      Flujo general
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {getDeliveryLabel(deliveryMode)}
-                    </Typography>
-                  </Box>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
+                    Datos de transporte
+                  </Typography>
 
-                  <Chip
-                    size="small"
-                    color={paymentApproved ? 'success' : 'warning'}
-                    variant="outlined"
-                    label={paymentApproved ? 'Pago aprobado' : 'Pago pendiente'}
-                    sx={{ fontWeight: 800 }}
-                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Completa los datos para el seguimiento del paquete.
+                  </Typography>
                 </Box>
 
-                <SelectableGeneralFlowStepper
-                  steps={flowSteps}
-                  currentStepIndex={currentStepIndex}
-                  selectedAdvance={selectedAdvance}
-                  loading={loading || !paymentApproved}
-                  onSelect={handleSelectAdvance}
+                <CarrierTrackingFields
+                  form={form}
+                  loading={loading}
+                  required={mustCompleteTransport}
+                  requiredTrackingNumber={mustCompleteTrackingNumber}
+                  showRequiredError={mustCompleteTransport && !form?.transportistaId}
+                  showTrackingNumberError={
+                    mustCompleteTrackingNumber && !form?.numeroSeguimiento?.trim()
+                  }
+                  onChange={onChange}
                 />
-
-                {paymentApproved && branchActions.length > 0 && (
-                  <DeliveryFlowBranchDiagram
-                    actions={branchActions}
-                    selectedAdvance={selectedAdvance}
-                    loading={loading}
-                    onSelect={handleSelectAdvance}
-                  />
-                )}
-
-                {!paymentApproved && (
-                  <Alert severity="warning" variant="outlined">
-                    Este pedido aún no tiene pago aprobado. La preparación y el despacho
-                    se habilitan desde Pagos y comprobantes cuando el pago esté validado.
-                  </Alert>
-                )}
-
-                {paymentApproved && normalActions.length === 0 && !incidentAction && (
-                  <Alert severity="info" variant="outlined">
-                    No hay acciones de avance disponibles para el estado actual del pedido.
-                  </Alert>
-                )}
-
-                {selectedAction && selectedAdvance !== 'envio:incidencia' && (
-                  <Alert severity="success" variant="outlined">
-                    Seleccionaste: <strong>{selectedAction.title}</strong>.{' '}
-                    {selectedAction.description}
-                  </Alert>
-                )}
-
-                {incidentAction && (
-                  <Alert
-                    severity={selectedAdvance === 'envio:incidencia' ? 'warning' : 'info'}
-                    variant="outlined"
-                    action={
-                      <Button
-                        color="warning"
-                        size="small"
-                        variant={
-                          selectedAdvance === 'envio:incidencia'
-                            ? 'contained'
-                            : 'outlined'
-                        }
-                        onClick={handleSelectIncident}
-                        disabled={loading}
-                        startIcon={<WarningAmberRoundedIcon />}
-                      >
-                        Registrar incidencia
-                      </Button>
-                    }
-                  >
-                    {selectedAdvance === 'envio:incidencia'
-                      ? 'Incidencia seleccionada. Describe el problema en el comentario antes de guardar.'
-                      : 'Si el envío tiene un problema, registra una incidencia en lugar de avanzar el flujo normal.'}
-                  </Alert>
-                )}
-
-                {selectedAdvance === 'envio:incidencia' && (
-                  <Alert severity="warning" variant="outlined">
-                    Describe la incidencia en el comentario. Esta acción no avanza el flujo normal.
-                  </Alert>
-                )}
               </Stack>
             </Paper>
+          )}
 
-            {showShippingFields && selectedAdvance !== 'envio:incidencia' && (
-              <Paper
-                variant="outlined"
-                sx={{
-                  p: 2,
-                  borderRadius: 2.5,
-                }}
-              >
-                <Stack spacing={1.75}>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
-                      Datos de transporte
-                    </Typography>
+          <TextField
+            multiline
+            minRows={3}
+            required={mustCompleteIncidentComment}
+            label={
+              mustCompleteIncidentComment
+                ? 'Comentario de incidencia'
+                : showShippingFields
+                  ? 'Comentario de envío'
+                  : 'Comentario interno'
+            }
+            placeholder={
+              mustCompleteIncidentComment
+                ? 'Describe brevemente qué ocurrió.'
+                : showShippingFields
+                  ? 'Puedes ingresar un comentario sobre el envío.'
+                  : 'Puedes ingresar un comentario para el historial del pedido.'
+            }
+            value={form?.comentario || ''}
+            disabled={loading}
+            onChange={(event) => onChange?.('comentario', event.target.value)}
+            error={mustCompleteIncidentComment && !form?.comentario?.trim()}
+            helperText={
+              mustCompleteIncidentComment && !form?.comentario?.trim()
+                ? 'El comentario es obligatorio cuando registras una incidencia.'
+                : undefined
+            }
+          />
+        </Stack>
 
-                    <Typography variant="body2" color="text.secondary">
-                      Completa los datos disponibles para que el cliente pueda hacer
-                      seguimiento del paquete.
-                    </Typography>
-                  </Box>
-
-                  <CarrierTrackingFields
-                    form={form}
-                    loading={loading}
-                    required={mustCompleteTransport}
-                    requiredTrackingNumber={mustCompleteTrackingNumber}
-                    showRequiredError={mustCompleteTransport && !form?.transportistaId}
-                    showTrackingNumberError={
-                      mustCompleteTrackingNumber && !form?.numeroSeguimiento?.trim()
-                    }
-                    onChange={onChange}
-                  />
-                </Stack>
-              </Paper>
-            )}
-
-            <TextField
-              multiline
-              minRows={3}
-              required={mustCompleteIncidentComment}
-              label={
-                mustCompleteIncidentComment
-                  ? 'Comentario de incidencia'
-                  : showShippingFields
-                    ? 'Comentario de envío'
-                    : 'Comentario interno'
-              }
-              placeholder={
-                mustCompleteIncidentComment
-                  ? 'Describe brevemente qué ocurrió con el envío.'
-                  : showShippingFields
-                    ? 'Puede ingresar un comentario sobre el envío.'
-                    : 'Puede ingresar un comentario para el historial del pedido.'
-              }
-              value={form?.comentario || ''}
-              disabled={loading}
-              onChange={(event) => onChange?.('comentario', event.target.value)}
-              error={mustCompleteIncidentComment && !form?.comentario?.trim()}
-              helperText={
-                mustCompleteIncidentComment && !form?.comentario?.trim()
-                  ? 'El comentario es obligatorio cuando registras una incidencia.'
-                  : undefined
-              }
-            />
-          </Stack>
-        </DialogContent>
-
-        <DialogActions
-          sx={{
-            px: {
-              xs: 2,
-              sm: 3,
-            },
-            py: 2,
-            gap: 1,
-            flexShrink: 0,
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            display: 'flex',
-            flexDirection: {
-              xs: 'column-reverse',
-              sm: 'row',
-            },
-            '& > button': {
-              width: {
-                xs: '100%',
-                sm: 'auto',
-              },
-            },
-          }}
-        >
-          <Button variant="outlined" onClick={onClose} disabled={loading}>
-            Cancelar
-          </Button>
-
-          <Button type="submit" variant="contained" disabled={isSaveDisabled}>
-            {loading ? 'Guardando...' : selectedAction?.title || 'Guardar avance'}
-          </Button>
-        </DialogActions>
+        {/* Mantener compatibilidad con layouts previos: no se usa DialogTitle/IconButton aquí porque AdminDialog ya incluye cierre */}
+        <Box sx={{ display: 'none' }}>
+          <Button onClick={() => {}} startIcon={<CloseRoundedIcon fontSize="small" />}> </Button>
+        </Box>
       </Box>
-    </Dialog>
+    </AdminDialog>
   );
 };
+

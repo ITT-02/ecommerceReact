@@ -2,10 +2,6 @@ import {
   Box,
   Chip,
   CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -15,6 +11,8 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 import { ErrorMessage } from '../../../../components/common/ErrorMessage';
@@ -31,20 +29,22 @@ const statusLabel = {
 
 export const PurchaseOrderDetailDialog = ({ open, data, loading, error, onClose }) => {
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
-      <DialogTitle sx={{ pr: 6, fontWeight: 900 }}>
-        Detalle de orden de compra
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{ position: 'absolute', right: 8, top: 8 }}
-          aria-label="Cerrar"
-        >
-          <CloseRoundedIcon fontSize="small" />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent dividers>
+    <AdminDialog
+      open={open}
+      onClose={onClose}
+      title="Detalle de compra"
+      maxWidth="lg"
+      loading={loading}
+      actions={
+        <>
+          <Button variant="outlined" onClick={onClose} disabled={loading}>
+            Cerrar
+          </Button>
+        </>
+      }
+      stickyActionsOnMobile={true}
+    >
+      <Stack sx={{ py: 0 }}>
         {loading && (
           <Stack sx={{ py: 4, alignItems: 'center' }}>
             <CircularProgress size={28} />
@@ -122,7 +122,7 @@ export const PurchaseOrderDetailDialog = ({ open, data, loading, error, onClose 
             </Paper>
           </Stack>
         )}
-      </DialogContent>
-    </Dialog>
+      </Stack>
+    </AdminDialog>
   );
 };

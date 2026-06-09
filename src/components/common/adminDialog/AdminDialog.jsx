@@ -37,12 +37,15 @@ export const AdminDialog = ({
   open,
   onClose,
   title,
+  subtitle,
   icon,
   children,
   actions,
   onSubmit,
   loading = false,
   maxWidth = 'sm',
+  contentSx,
+  stickyActionsOnMobile = false,
   disableBackdropClick = false,
   disableEscapeKeyDown = false,
 }) => {
@@ -125,50 +128,72 @@ export const AdminDialog = ({
         }}
       >
         <Stack
-          direction="row"
-          spacing={1.35}
+          direction="column"
+          spacing={0.35}
           sx={{
-            alignItems: 'center',
+            alignItems: 'flex-start',
             minWidth: 0,
+            pr: { xs: 0, sm: 0 },
           }}
         >
-          {icon && (
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                flexShrink: 0,
-                display: 'grid',
-                placeItems: 'center',
-                borderRadius: '50%',
-                color: iconColor,
-                bgcolor: iconBg,
-                border: '1px solid',
-                borderColor: iconBorder,
-
-                '& .MuiSvgIcon-root': {
-                  fontSize: 19,
-                },
-              }}
-            >
-              {icon}
-            </Box>
-          )}
-
-          <Typography
-            variant="h6"
-            noWrap
+          <Stack
+            direction="row"
+            spacing={1.35}
             sx={{
+              alignItems: 'center',
               minWidth: 0,
-              color: titleColor,
-              fontWeight: 700,
-              fontSize: { xs: '1.05rem', sm: '1.15rem' },
-              lineHeight: 1.2,
-              letterSpacing: '0.015em',
             }}
           >
-            {title}
-          </Typography>
+            {icon && (
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  flexShrink: 0,
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: '50%',
+                  color: iconColor,
+                  bgcolor: iconBg,
+                  border: '1px solid',
+                  borderColor: iconBorder,
+
+                  '& .MuiSvgIcon-root': {
+                    fontSize: 19,
+                  },
+                }}
+              >
+                {icon}
+              </Box>
+            )}
+
+            <Typography
+              variant="h6"
+              noWrap
+              sx={{
+                minWidth: 0,
+                color: titleColor,
+                fontWeight: 700,
+                fontSize: { xs: '1.05rem', sm: '1.15rem' },
+                lineHeight: 1.2,
+                letterSpacing: '0.015em',
+              }}
+            >
+              {title}
+            </Typography>
+          </Stack>
+
+          {subtitle && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                lineHeight: 1.2,
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )}
         </Stack>
 
         {/* Cierre ligero sin IconButton para evitar estilos globales pesados */}
@@ -255,6 +280,8 @@ export const AdminDialog = ({
             bgcolor: contentBg,
             backgroundColor: contentBg,
           },
+          ...(contentSx || {}),
+
 
           /**
            * Evita que formularios, grids o inputs largos rompan el ancho del modal.
@@ -282,6 +309,15 @@ export const AdminDialog = ({
               borderColor: separator,
               bgcolor: footerBg,
               backgroundColor: footerBg,
+              position: stickyActionsOnMobile ? { xs: 'sticky', sm: 'static' } : undefined,
+              bottom: stickyActionsOnMobile ? { xs: 0, sm: 'auto' } : undefined,
+              zIndex: stickyActionsOnMobile ? 2 : undefined,
+              boxShadow: stickyActionsOnMobile
+                ? {
+                    xs: `0 -10px 24px ${alpha(theme.palette.common.black, 0.08)}`,
+                    sm: 'none',
+                  }
+                : undefined,
             },
 
             '& > :not(style)': {

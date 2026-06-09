@@ -3,10 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   MenuItem,
   Paper,
@@ -14,12 +10,14 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 
 import { AppDatePicker } from '../../../../components/common/AppDatePicker';
 import { ErrorMessage } from '../../../../components/common/ErrorMessage';
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 import { useSupplierProducts } from '../../../../hooks/procurement/useProcurement';
 import { formatCurrency } from '../../../../utils/formatters';
 
@@ -111,7 +109,10 @@ export const PurchaseOrderDialog = ({
     return (
       supplierProducts.find((item) => item.variante_id === variantId) ||
       supplierProducts.find(
-        (item) => !item.variante_id && selectedVariant?.producto_id && item.producto_id === selectedVariant.producto_id
+        (item) =>
+          !item.variante_id &&
+          selectedVariant?.producto_id &&
+          item.producto_id === selectedVariant.producto_id
       ) ||
       null
     );
@@ -123,7 +124,10 @@ export const PurchaseOrderDialog = ({
   };
 
   const total = useMemo(() => {
-    return items.reduce((sum, item) => sum + Number(item.cantidad || 0) * Number(item.costo_unitario || 0), 0);
+    return items.reduce(
+      (sum, item) => sum + Number(item.cantidad || 0) * Number(item.costo_unitario || 0),
+      0
+    );
   }, [items]);
 
   const updateForm = (field, value) => {
@@ -131,8 +135,6 @@ export const PurchaseOrderDialog = ({
 
     setForm((current) => ({ ...current, [field]: value }));
 
-    // Al cambiar de proveedor se limpian los productos para evitar usar costos o mínimos
-    // configurados para otro proveedor.
     if (field === 'proveedor_id') {
       setItems([buildEmptyItem()]);
     }
@@ -230,211 +232,215 @@ export const PurchaseOrderDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
-      <Box component="form" onSubmit={handleSubmit}>
-        <DialogTitle sx={{ pr: 6, fontWeight: 900 }}>
-          {form.id ? 'Editar orden de compra' : 'Nueva orden de compra'}
-          <IconButton
-            onClick={onClose}
-            size="small"
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-            aria-label="Cerrar"
-          >
-            <CloseRoundedIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent dividers>
-          <Stack spacing={2}>
-            <Alert severity="info">
-              La orden de compra registra lo que pedirás al proveedor. El stock recién aumenta cuando registres la recepción de mercadería.
-            </Alert>
-            <ErrorMessage message={localError || error || supplierProductsError} />
-
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <TextField
-                select
-                required
-                label="Proveedor"
-                value={form.proveedor_id}
-                onChange={(event) => updateForm('proveedor_id', event.target.value)}
-                sx={{ flex: 1 }}
-              >
-                <MenuItem value="">Seleccionar proveedor</MenuItem>
-                {suppliers.map((supplier) => (
-                  <MenuItem key={supplier.id} value={supplier.id}>
-                    {supplier.razon_social}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <TextField
-                select
-                label="Estado inicial"
-                value={form.estado}
-                onChange={(event) => updateForm('estado', event.target.value)}
-                sx={{ width: { xs: '100%', md: 190 } }}
-              >
-                {ORDER_STATES.map((state) => (
-                  <MenuItem key={state.value} value={state.value}>
-                    {state.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <AppDatePicker
-                label="Recepción estimada"
-                value={form.fecha_estimada_recepcion}
-                onChange={(value) => updateForm('fecha_estimada_recepcion', value)}
-                width={190}
-              />
-            </Stack>
-
-            <TextField
-              multiline
-              minRows={2}
-              label="Notas de compra"
-              value={form.notas || ''}
-              onChange={(event) => updateForm('notas', event.target.value)}
-            />
-
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2" fontWeight={900}>
-                Productos solicitados
-              </Typography>
-
-              {items.map((item, index) => {
-                const selectedVariant = variantById[item.variante_id];
-                const supplierRule = getSupplierRuleByVariantId(item.variante_id);
-                const minimumPurchaseQuantity = getMinimumPurchaseQuantity(item.variante_id);
-                const lineTotal = Number(item.cantidad || 0) * Number(item.costo_unitario || 0);
-
-                return (
-                  <Paper key={`${item.id || 'new'}-${index}`} variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
-                    <Stack
-                      direction={{ xs: 'column', md: 'row' }}
-                      spacing={1.25}
-                      sx={{ alignItems: { xs: 'stretch', md: 'center' } }}
-                    >
-                      <TextField
-                        select
-                        size="small"
-                        label="Variante"
-                        value={item.variante_id || ''}
-                        onChange={(event) => updateItem(index, 'variante_id', event.target.value)}
-                        disabled={!form.proveedor_id || supplierProductsLoading}
-                        helperText={!form.proveedor_id ? 'Primero selecciona un proveedor.' : ''}
-                        sx={{ minWidth: { xs: '100%', md: 330 }, flex: 1 }}
-                      >
-                        <MenuItem value="">Seleccionar</MenuItem>
-                        {variants.map((variant) => (
-                          <MenuItem key={variant.id} value={variant.id}>
-                            {variant.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-
-                      <TextField
-                        size="small"
-                        label="Cantidad"
-                        type="number"
-                        value={item.cantidad}
-                        onChange={(event) => updateItem(index, 'cantidad', event.target.value)}
-                        helperText={item.variante_id && minimumPurchaseQuantity > 1 ? `Mín. compra: ${minimumPurchaseQuantity}` : ''}
-                        slotProps={{
-                          htmlInput: {
-                            min: minimumPurchaseQuantity,
-                            step: 1,
-                          },
-                        }}
-                        sx={{ width: { xs: '100%', md: 135 } }}
-                      />
-
-                      <TextField
-                        size="small"
-                        label="Costo unitario"
-                        type="number"
-                        value={item.costo_unitario}
-                        onChange={(event) => updateItem(index, 'costo_unitario', event.target.value)}
-                        slotProps={{
-                          htmlInput: {
-                            min: 0,
-                            step: '0.01',
-                          },
-                        }}
-                        sx={{ width: { xs: '100%', md: 145 } }}
-                      />
-
-                      <Box sx={{ minWidth: { xs: '100%', md: 120 } }}>
-                        <Typography variant="caption" color="text.secondary">
-                          Total línea
-                        </Typography>
-                        <Typography variant="body2" fontWeight={900}>
-                          {formatCurrency(lineTotal)}
-                        </Typography>
-                      </Box>
-
-                      <IconButton
-                        color="error"
-                        onClick={() => removeItem(index)}
-                        disabled={items.length === 1}
-                        aria-label="Quitar producto"
-                      >
-                        <DeleteOutlineRoundedIcon />
-                      </IconButton>
-                    </Stack>
-
-                    {selectedVariant && (
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                        {Number(selectedVariant.stock_total_actual || 0) > 0
-                          ? `Stock actual: ${selectedVariant.stock_total_actual} unidades · Costo promedio actual: ${formatCurrency(selectedVariant.costo_actual)}`
-                          : 'Sin stock actual · Costo promedio actual: no aplica'}{' '}
-                        · Costo proveedor: {formatCurrency(supplierRule?.costo_compra ?? selectedVariant.costo_compra_sugerido)} · Mín. compra:{' '}
-                        {minimumPurchaseQuantity} unidades
-                      </Typography>
-                    )}
-                  </Paper>
-                );
-              })}
-            </Stack>
-
-            <Stack
-              direction={{ xs: 'column', md: 'row' }}
-              spacing={2}
-              sx={{
-                justifyContent: 'space-between',
-                alignItems: { xs: 'stretch', md: 'center' },
-              }}
-            >
-              <Button
-                variant="outlined"
-                startIcon={<AddRoundedIcon />}
-                onClick={() => setItems((current) => [...current, buildEmptyItem()])}
-              >
-                Agregar producto
-              </Button>
-
-              <Box sx={{ textAlign: { xs: 'left', md: 'right' } }}>
-                <Typography variant="caption" color="text.secondary">
-                  Total estimado de compra
-                </Typography>
-                <Typography variant="h6" fontWeight={900}>
-                  {formatCurrency(total)}
-                </Typography>
-              </Box>
-            </Stack>
-          </Stack>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, py: 2 }}>
+    <AdminDialog
+      open={open}
+      onClose={onClose}
+      title="Orden de compra"
+      maxWidth="lg"
+      loading={Boolean(saving)}
+      onSubmit={handleSubmit}
+      actions={
+        <>
           <Button variant="outlined" onClick={onClose}>
             Cancelar
           </Button>
           <Button type="submit" variant="contained" disabled={saving}>
             Guardar orden
           </Button>
-        </DialogActions>
+        </>
+      }
+      stickyActionsOnMobile={true}
+    >
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack spacing={2}>
+          <Alert severity="info">
+            La orden de compra registra lo que pedirás al proveedor. El stock recién aumenta cuando registres la recepción de mercadería.
+          </Alert>
+          <ErrorMessage message={localError || error || supplierProductsError} />
+
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            <TextField
+              select
+              required
+              label="Proveedor"
+              value={form.proveedor_id}
+              onChange={(event) => updateForm('proveedor_id', event.target.value)}
+              sx={{ flex: 1 }}
+            >
+              <MenuItem value="">Seleccionar proveedor</MenuItem>
+              {suppliers.map((supplier) => (
+                <MenuItem key={supplier.id} value={supplier.id}>
+                  {supplier.razon_social}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              select
+              label="Estado inicial"
+              value={form.estado}
+              onChange={(event) => updateForm('estado', event.target.value)}
+              sx={{ width: { xs: '100%', md: 190 } }}
+            >
+              {ORDER_STATES.map((state) => (
+                <MenuItem key={state.value} value={state.value}>
+                  {state.label}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <AppDatePicker
+              label="Recepción estimada"
+              value={form.fecha_estimada_recepcion}
+              onChange={(value) => updateForm('fecha_estimada_recepcion', value)}
+              width={190}
+            />
+          </Stack>
+
+          <TextField
+            multiline
+            minRows={2}
+            label="Notas de compra"
+            value={form.notas || ''}
+            onChange={(event) => updateForm('notas', event.target.value)}
+          />
+
+          <Stack spacing={1.5}>
+            <Typography variant="subtitle2" fontWeight={900}>
+              Productos solicitados
+            </Typography>
+
+            {items.map((item, index) => {
+              const selectedVariant = variantById[item.variante_id];
+              const supplierRule = getSupplierRuleByVariantId(item.variante_id);
+              const minimumPurchaseQuantity = getMinimumPurchaseQuantity(item.variante_id);
+              const lineTotal = Number(item.cantidad || 0) * Number(item.costo_unitario || 0);
+
+              return (
+                <Paper
+                  key={`${item.id || 'new'}-${index}`}
+                  variant="outlined"
+                  sx={{ p: 1.5, borderRadius: 2 }}
+                >
+                  <Stack
+                    direction={{ xs: 'column', md: 'row' }}
+                    spacing={1.25}
+                    sx={{ alignItems: { xs: 'stretch', md: 'center' } }}
+                  >
+                    <TextField
+                      select
+                      size="small"
+                      label="Variante"
+                      value={item.variante_id || ''}
+                      onChange={(event) => updateItem(index, 'variante_id', event.target.value)}
+                      disabled={!form.proveedor_id || supplierProductsLoading}
+                      helperText={!form.proveedor_id ? 'Primero selecciona un proveedor.' : ''}
+                      sx={{ minWidth: { xs: '100%', md: 330 }, flex: 1 }}
+                    >
+                      <MenuItem value="">Seleccionar</MenuItem>
+                      {variants.map((variant) => (
+                        <MenuItem key={variant.id} value={variant.id}>
+                          {variant.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+
+                    <TextField
+                      size="small"
+                      label="Cantidad"
+                      type="number"
+                      value={item.cantidad}
+                      onChange={(event) => updateItem(index, 'cantidad', event.target.value)}
+                      helperText={
+                        item.variante_id && minimumPurchaseQuantity > 1
+                          ? `Mín. compra: ${minimumPurchaseQuantity}`
+                          : ''
+                      }
+                      slotProps={{
+                        htmlInput: {
+                          min: minimumPurchaseQuantity,
+                          step: 1,
+                        },
+                      }}
+                      sx={{ width: { xs: '100%', md: 135 } }}
+                    />
+
+                    <TextField
+                      size="small"
+                      label="Costo unitario"
+                      type="number"
+                      value={item.costo_unitario}
+                      onChange={(event) => updateItem(index, 'costo_unitario', event.target.value)}
+                      slotProps={{
+                        htmlInput: {
+                          min: 0,
+                          step: '0.01',
+                        },
+                      }}
+                      sx={{ width: { xs: '100%', md: 145 } }}
+                    />
+
+                    <Box sx={{ minWidth: { xs: '100%', md: 120 } }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Total línea
+                      </Typography>
+                      <Typography variant="body2" fontWeight={900}>
+                        {formatCurrency(lineTotal)}
+                      </Typography>
+                    </Box>
+
+                    <IconButton
+                      color="error"
+                      onClick={() => removeItem(index)}
+                      disabled={items.length === 1}
+                      aria-label="Quitar producto"
+                    >
+                      <DeleteOutlineRoundedIcon />
+                    </IconButton>
+                  </Stack>
+
+                  {selectedVariant && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                      {Number(selectedVariant.stock_total_actual || 0) > 0
+                        ? `Stock actual: ${selectedVariant.stock_total_actual} unidades · Costo promedio actual: ${formatCurrency(selectedVariant.costo_actual)}`
+                        : 'Sin stock actual · Costo promedio actual: no aplica'}{' '}
+                      · Costo proveedor: {formatCurrency(supplierRule?.costo_compra ?? selectedVariant.costo_compra_sugerido)} · Mín. compra:{' '}
+                      {minimumPurchaseQuantity} unidades
+                    </Typography>
+                  )}
+                </Paper>
+              );
+            })}
+          </Stack>
+
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={2}
+            sx={{
+              justifyContent: 'space-between',
+              alignItems: { xs: 'stretch', md: 'center' },
+            }}
+          >
+            <Button
+              variant="outlined"
+              startIcon={<AddRoundedIcon />}
+              onClick={() => setItems((current) => [...current, buildEmptyItem()])}
+            >
+              Agregar producto
+            </Button>
+
+            <Box sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+              <Typography variant="caption" color="text.secondary">
+                Total estimado de compra
+              </Typography>
+              <Typography variant="h6" fontWeight={900}>
+                {formatCurrency(total)}
+              </Typography>
+            </Box>
+          </Stack>
+        </Stack>
       </Box>
-    </Dialog>
+    </AdminDialog>
   );
 };
+
