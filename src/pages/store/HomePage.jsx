@@ -3,6 +3,8 @@
 // El primer banner activo se usa como fondo horizontal del hero;
 // si no hay uno vigente o no tiene imagen, se muestra contenido por defecto con fondo de marca.
 
+import { useEffect, useMemo, useState } from 'react';
+
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 
@@ -23,6 +25,8 @@ import { Link as RouterLink } from 'react-router-dom';
 import { StoreFeatureCard } from '../../components/store/marketing/StoreFeatureCard';
 import { StoreSectionHeader } from '../../components/store/marketing/StoreSectionHeader';
 import { useStoreMarketing } from '../../hooks/store/useStoreMarketing';
+
+const HERO_ROTATION_MS = 5200;
 
 const highlights = [
   {
@@ -215,7 +219,24 @@ const HomeSecondaryBanners = ({ banners = [] }) => {
   );
 };
 
-const HomeHero = ({ banner, promotions = [] }) => {
+const HomeHero = ({ banners = [], promotions = [] }) => {
+  const safeHeroBanners = useMemo(() => (Array.isArray(banners) ? banners.filter(Boolean) : []), [banners]);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (safeHeroBanners.length <= 1) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % safeHeroBanners.length);
+    }, HERO_ROTATION_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [safeHeroBanners.length]);
+
+  const normalizedActiveIndex = safeHeroBanners.length
+    ? Math.min(activeIndex, safeHeroBanners.length - 1)
+    : 0;
+  const banner = safeHeroBanners[normalizedActiveIndex] || null;
   const { url: heroCtaUrl, isExternal: heroCtaIsExternal } = getBannerUrlConfig(banner);
   const hasBannerImage = Boolean(banner?.imagen_url);
 
@@ -409,6 +430,38 @@ const HomeHero = ({ banner, promotions = [] }) => {
               Programa mayorista
             </Button>
           </Stack>
+
+          {safeHeroBanners.length > 1 && (
+            <Stack direction="row" spacing={1} sx={{ pt: 0.75, alignItems: 'center' }}>
+              {safeHeroBanners.map((item, index) => {
+                const isActive = index === normalizedActiveIndex;
+
+                return (
+                  <Box
+                    key={item.id || index}
+                    component="button"
+                    type="button"
+                    aria-label={`Mostrar banner ${index + 1}`}
+                    onClick={() => setActiveIndex(index)}
+                    sx={(theme) => ({
+                      width: isActive ? 28 : 9,
+                      height: 9,
+                      border: 0,
+                      p: 0,
+                      borderRadius: 999,
+                      cursor: 'pointer',
+                      bgcolor: hasBannerImage
+                        ? alpha(theme.palette.common.white, isActive ? 0.92 : 0.44)
+                        : alpha(theme.palette.custom.semantic.storeMarketing.lightAccent, isActive ? 0.9 : 0.28),
+                      transition: theme.transitions.create(['width', 'background-color', 'opacity'], {
+                        duration: theme.transitions.duration.shortest,
+                      }),
+                    })}
+                  />
+                );
+              })}
+            </Stack>
+          )}
         </Stack>
       </Container>
     </Box>
@@ -421,12 +474,22 @@ export const HomePage = () => {
   const safeBanners = Array.isArray(banners) ? banners : [];
   const safePromotions = Array.isArray(promotions) ? promotions : [];
 
-  const heroBanner = safeBanners[0] || null;
-  const secondaryBanners = safeBanners.slice(1, 4);
+  const explicitHeroBanners = safeBanners.filter(
+    (banner) => banner.ubicacion_home === 'carrusel_principal'
+  );
+  const heroBanners = explicitHeroBanners.length ? explicitHeroBanners : safeBanners.slice(0, 1);
+  const heroIds = new Set(heroBanners.map((banner) => banner.id));
+  const explicitSecondaryBanners = safeBanners.filter(
+    (banner) => banner.ubicacion_home === 'tarjeta_secundaria'
+  );
+  const secondaryBanners = (explicitSecondaryBanners.length
+    ? explicitSecondaryBanners
+    : safeBanners.filter((banner) => !heroIds.has(banner.id))
+  ).slice(0, 4);
 
   return (
     <Box sx={(theme) => ({ bgcolor: theme.palette.custom.semantic.storeMarketing.lightBg })}>
-      <HomeHero banner={heroBanner} promotions={safePromotions} />
+      <HomeHero banners={heroBanners} promotions={safePromotions} />
 
       <HomeSecondaryBanners banners={secondaryBanners} />
 

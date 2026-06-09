@@ -6,8 +6,8 @@
  * centralizado en el theme de Aliqora.
  */
 
-import { useMemo, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 
 import {
   Badge,
@@ -53,9 +53,24 @@ const getMenuItemSx = (theme, collapsed = false) => {
 };
 
 export const AdminMenuList = ({ groups = [], collapsed = false, onItemClick }) => {
+  const location = useLocation();
   const [openGroupTitle, setOpenGroupTitle] = useState(() => groups[0]?.title ?? null);
 
   const flatItems = useMemo(() => groups.flatMap((group) => group.items), [groups]);
+
+  const activeGroupTitle = useMemo(() => {
+    const pathname = location.pathname;
+
+    return groups.find((group) => group.items.some((item) => (
+      pathname === item.path || pathname.startsWith(`${item.path}/`)
+    )))?.title ?? groups[0]?.title ?? null;
+  }, [groups, location.pathname]);
+
+  useEffect(() => {
+    if (activeGroupTitle) {
+      setOpenGroupTitle(activeGroupTitle);
+    }
+  }, [activeGroupTitle]);
 
   const toggleGroup = (groupTitle) => {
     setOpenGroupTitle((prev) => (prev === groupTitle ? null : groupTitle));
@@ -98,6 +113,7 @@ export const AdminMenuList = ({ groups = [], collapsed = false, onItemClick }) =
       {groups.map((group) => {
         const isOpen = openGroupTitle === group.title;
         const GroupIcon = group.icon;
+        const groupBadgeCount = group.items.reduce((total, item) => total + Number(item.badgeCount || 0), 0);
 
         return (
           <Box key={group.title} sx={{ mb: 1.25 }}>
@@ -156,6 +172,16 @@ export const AdminMenuList = ({ groups = [], collapsed = false, onItemClick }) =
               >
                 {group.title}
               </Typography>
+
+              <Badge
+                badgeContent={groupBadgeCount}
+                color="warning"
+                invisible={!groupBadgeCount}
+                max={99}
+                sx={{ mr: 0.75 }}
+              >
+                <Box component="span" sx={{ width: 8, height: 8 }} />
+              </Badge>
 
               {isOpen ? (
                 <ExpandLessIcon

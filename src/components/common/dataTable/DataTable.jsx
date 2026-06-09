@@ -119,6 +119,7 @@ const TableActionButton = ({ action, row }) => {
     receipt: <ReceiptLongOutlinedIcon sx={{ fontSize: 17 }} />,
     add: <AddCircleOutlineRoundedIcon sx={{ fontSize: 17 }} />,
     assign_roles: <ManageAccountsOutlinedIcon sx={{ fontSize: 17 }} />,
+    review: <ManageAccountsOutlinedIcon sx={{ fontSize: 17 }} />,
   };
 
   const colorMap = {
@@ -132,6 +133,7 @@ const TableActionButton = ({ action, row }) => {
     receipt: theme.palette.text.secondary,
     add: theme.palette.primary.main,
     assign_roles: theme.palette.secondary.main,
+    review: theme.palette.primary.main,
   };
 
   const actionColor =
@@ -275,7 +277,9 @@ const DataTablePaginationBar = ({
     Math.max(pagination?.pageNumber ?? 1, 1),
     totalPages
   );
-  const pageSize = pagination?.pageSize ?? 10;
+  const pageSizeOptions = [5, 10, 20, 50];
+  const rawPageSize = Number(pagination?.pageSize ?? 10);
+  const pageSize = pageSizeOptions.includes(rawPageSize) ? rawPageSize : 10;
 
   const pageItems = getPaginationItems(pageNumber, totalPages);
 
@@ -436,7 +440,7 @@ const DataTablePaginationBar = ({
                 },
               }}
             >
-              {[5, 10, 20, 50].map((size) => (
+              {pageSizeOptions.map((size) => (
                 <MenuItem key={size} value={size}>
                   {size}
                 </MenuItem>

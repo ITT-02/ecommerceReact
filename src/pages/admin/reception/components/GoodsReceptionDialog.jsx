@@ -1,13 +1,10 @@
 import { useMemo, useState } from 'react';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   MenuItem,
   Paper,
@@ -16,9 +13,11 @@ import {
   Typography,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 
+import { ConfirmDialog } from '../../../../components/common/ConfirmDialog';
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 import { ErrorMessage } from '../../../../components/common/ErrorMessage';
 import { getPurchaseOrderDetail } from '../../../../services/procurement/procurementService';
 import { normalizeApiError } from '../../../../utils/api/normalizeApiError';
@@ -64,16 +63,19 @@ export const GoodsReceptionDialog = ({
   suppliers = [],
   warehouses = [],
   variants = [],
+  variantsLoading = false,
   saving,
   error,
   onClose,
   onSubmit,
+  onVariantSearchChange,
 }) => {
   const [form, setForm] = useState(initialForm);
   const [items, setItems] = useState([buildEmptyItem()]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [removeItemIndex, setRemoveItemIndex] = useState(null);
 
   const variantById = useMemo(() => {
     return variants.reduce((acc, variant) => {
@@ -88,6 +90,26 @@ export const GoodsReceptionDialog = ({
     }, 0);
   }, [items]);
 
+  const getVariantLabel = (variant) => {
+    if (!variant) return '';
+
+    return variant.label || [
+      variant.producto_nombre,
+      variant.nombre_variante,
+      variant.etiqueta_medida,
+      variant.codigoproducto,
+    ].filter(Boolean).join(' · ') || 'Variante';
+  };
+
+  const getSelectedVariantOption = (item) => {
+    if (!item?.variante_id) return null;
+
+    return variantById[item.variante_id] || {
+      id: item.variante_id,
+      producto_id: item.producto_id,
+      label: item.variante_label || 'Variante seleccionada',
+    };
+  };
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -131,7 +153,7 @@ export const GoodsReceptionDialog = ({
             ...item,
             variante_id: value,
             producto_id: selectedVariant?.producto_id || '',
-            variante_label: selectedVariant?.label || '',
+            variante_label: getVariantLabel(selectedVariant),
             costo_unitario: item.costo_unitario || selectedVariant?.costo_compra_sugerido || selectedVariant?.costo_actual || 0,
           };
         }
@@ -141,8 +163,15 @@ export const GoodsReceptionDialog = ({
     );
   };
 
-  const removeItem = (index) => {
-    setItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  const requestRemoveItem = (index) => {
+    setRemoveItemIndex(index);
+  };
+
+  const handleConfirmRemoveItem = () => {
+    if (removeItemIndex === null) return;
+
+    setItems((current) => current.filter((_, itemIndex) => itemIndex !== removeItemIndex));
+    setRemoveItemIndex(null);
   };
 
   const handleSubmit = (event) => {
@@ -197,16 +226,26 @@ export const GoodsReceptionDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
-      <Box component="form" onSubmit={handleSubmit}>
-        <DialogTitle sx={{ pr: 6, fontWeight: 900 }}>
-          Nueva recepción de mercadería
-          <IconButton onClick={onClose} size="small" sx={{ position: 'absolute', right: 8, top: 8 }} aria-label="Cerrar">
-            <CloseRoundedIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent dividers>
+    <>
+      <AdminDialog
+        open={open}
+        onClose={onClose}
+        title="Nueva recepción de mercadería"
+        icon={<Inventory2OutlinedIcon />}
+        maxWidth="lg"
+        loading={saving || loadingOrder}
+        onSubmit={handleSubmit}
+        actions={(
+          <>
+            <Button variant="outlined" onClick={onClose} disabled={saving || loadingOrder}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="contained" disabled={saving || loadingOrder}>
+              Registrar recepción
+            </Button>
+          </>
+        )}
+      >
           <Stack spacing={2}>
             <Alert severity="success">
               Al guardar, el sistema crea el movimiento de entrada, aumenta stock, actualiza cantidades recibidas y recalcula el costo promedio de la variante.
@@ -287,7 +326,7 @@ export const GoodsReceptionDialog = ({
             )}
 
             {selectedOrder && (
-              <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+              <Paper variant="outlined" sx={{ p: 1.5, borderRadius: (theme) => theme.palette.custom.radius.xs }}>
                 <Typography variant="subtitle2" fontWeight={900}>
                   {selectedOrder.numero_orden} · {selectedOrder.proveedor_nombre}
                 </Typography>
@@ -306,7 +345,7 @@ export const GoodsReceptionDialog = ({
                 const lineTotal = Number(item.cantidad_recibida || 0) * Number(item.costo_unitario || 0);
 
                 return (
-                  <Paper key={`${item.orden_compra_item_id || item.variante_id || 'new'}-${index}`} variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+                  <Paper key={`${item.orden_compra_item_id || item.variante_id || 'new'}-${index}`} variant="outlined" sx={{ p: 1.5, borderRadius: (theme) => theme.palette.custom.radius.xs }}>
                     <Stack
                     direction={{ xs: 'column', md: 'row' }}
                     spacing={1.25}
@@ -320,21 +359,51 @@ export const GoodsReceptionDialog = ({
                           </Typography>
                         </Box>
                       ) : (
-                        <TextField
-                          select
+                        <Autocomplete
                           size="small"
-                          label="Variante"
-                          value={item.variante_id || ''}
-                          onChange={(event) => updateItem(index, 'variante_id', event.target.value)}
-                          sx={{ minWidth: { xs: '100%', md: 340 }, flex: 1 }}
-                        >
-                          <MenuItem value="">Seleccionar</MenuItem>
-                          {variants.map((variant) => (
-                            <MenuItem key={variant.id} value={variant.id}>
-                              {variant.label}
-                            </MenuItem>
-                          ))}
-                        </TextField>
+                          options={variants}
+                          loading={variantsLoading}
+                          value={getSelectedVariantOption(item)}
+                          inputValue={item.variante_label || ''}
+                          getOptionLabel={getVariantLabel}
+                          isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
+                          filterOptions={(options) => options}
+                          noOptionsText="Escribe para buscar una variante"
+                          loadingText="Buscando variantes..."
+                          onInputChange={(_, value, reason) => {
+                            if (reason === 'input' || reason === 'clear') {
+                              setItems((current) =>
+                                current.map((currentItem, itemIndex) =>
+                                  itemIndex === index
+                                    ? {
+                                        ...currentItem,
+                                        variante_id: '',
+                                        producto_id: '',
+                                        variante_label: value,
+                                      }
+                                    : currentItem
+                                )
+                              );
+                              onVariantSearchChange?.(value);
+                            }
+                          }}
+                          onChange={(_, selectedVariant) => {
+                            updateItem(index, 'variante_id', selectedVariant?.id || '');
+                            if (!selectedVariant) {
+                              updateItem(index, 'variante_label', '');
+                              onVariantSearchChange?.('');
+                            }
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Variante"
+                              placeholder="Buscar por producto, código o medida"
+                              helperText="Escribe y selecciona una recomendación."
+                            />
+                          )}
+                          sx={{ minWidth: { xs: '100%', md: 360 }, flex: 1 }}
+                        />
                       )}
 
                       <TextField
@@ -362,7 +431,7 @@ export const GoodsReceptionDialog = ({
 
                       <IconButton
                         color="error"
-                        onClick={() => removeItem(index)}
+                        onClick={() => requestRemoveItem(index)}
                         disabled={items.length === 1 && Boolean(form.orden_compra_id)}
                         aria-label="Quitar producto"
                       >
@@ -390,13 +459,17 @@ export const GoodsReceptionDialog = ({
               <Typography variant="h6" fontWeight={900}>{formatCurrency(total)}</Typography>
             </Box>
           </Stack>
-        </DialogContent>
+      </AdminDialog>
 
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button variant="outlined" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" variant="contained" disabled={saving || loadingOrder}>Registrar recepción</Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
+      <ConfirmDialog
+        open={removeItemIndex !== null}
+        action="delete"
+        title="Quitar producto"
+        message="¿Deseas quitar este producto de la recepción?"
+        confirmText="Quitar"
+        onCancel={() => setRemoveItemIndex(null)}
+        onConfirm={handleConfirmRemoveItem}
+      />
+    </>
   );
 };

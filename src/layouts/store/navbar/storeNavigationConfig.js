@@ -26,5 +26,6 @@ export const storeCustomerMenuItems = [
   { label: 'Mi perfil', to: '/perfil' },
   { label: 'Mis pedidos', to: '/mis-pedidos' },
   { label: 'Mis cotizaciones', to: '/mis-cotizaciones' },
+  { label: 'Mis solicitudes', to: '/mis-solicitudes' },
   { label: 'Mis direcciones', to: '/direcciones' },
 ];

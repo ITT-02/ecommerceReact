@@ -18,7 +18,7 @@ import { useAuth } from '../../../hooks/auth/useAuth';
 import { useAdminAttentionCounters } from '../../../hooks/admin/useAdminAttentionCounters';
 import { useThemeMode } from '../../../providers/AppThemeProvider';
 import { getMainRole } from '../../../utils/access/menuByRole';
-import { SALES_ROLES } from '../../../utils/access/accessControl';
+import { PARTNER_REVIEW_ROLES, SALES_ROLES } from '../../../utils/access/accessControl';
 
 import {
   adminMenuGroups,
@@ -30,7 +30,9 @@ export const useAdminLayout = () => {
 
   const { mode, toggleColorMode } = useThemeMode();
   const { user, profile, roles, logout } = useAuth();
-  const canLoadAttentionCounters = roles.some((role) => SALES_ROLES.includes(role));
+  const canLoadAttentionCounters = roles.some((role) => (
+    SALES_ROLES.includes(role) || PARTNER_REVIEW_ROLES.includes(role)
+  ));
   const { counters } = useAdminAttentionCounters({ enabled: canLoadAttentionCounters });
 
   const [collapsed, setCollapsed] = useState(false);

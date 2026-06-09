@@ -1,5 +1,5 @@
 // Módulo administrativo: Finanzas / Ganancias.
-// Permite revisar ventas, costos, utilidad y margen.
+// Permite revisar ventas, costos, utilidad, margen y liquidaciones de socios.
 
 import { useMemo, useState } from 'react';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
@@ -24,10 +24,10 @@ const getInitialFilters = () =>
   });
 
 const KpiCard = ({ title, value, description, icon, color = 'primary.main' }) => (
-  <Card sx={{ height: '100%' }}>
+  <Card sx={(theme) => ({ height: '100%', borderRadius: theme.palette.custom.radius.xs })}>
     <CardContent>
       <Stack spacing={1.5}>
-        <Box sx={{ width: 42, height: 42, borderRadius: 2, display: 'grid', placeItems: 'center', bgcolor: 'action.selected', color }}>
+        <Box sx={(theme) => ({ width: 42, height: 42, borderRadius: theme.palette.custom.radius.xs, display: 'grid', placeItems: 'center', bgcolor: 'action.selected', color })}>
           {icon}
         </Box>
         <Typography variant="caption" sx={{ textTransform: 'uppercase', letterSpacing: '.16em', fontWeight: 800 }}>
@@ -80,10 +80,19 @@ export const FinancePage = () => {
       ), },
     { field: 'created_at', headerName: 'Fecha', width: 120, renderCell: (row) => formatDate(row.created_at) },
     { field: 'canal_venta', headerName: 'Canal', width: 120, type: 'chip' },
+    {
+      field: 'cliente_mayorista_aprobado',
+      headerName: 'Cliente',
+      width: 130,
+      renderCell: (row) => (row.cliente_mayorista_aprobado ? 'Mayorista' : 'Minorista'),
+    },
     { field: 'nombre_cliente', headerName: 'Cliente', width: 200, emptyText: 'Cliente general' },
     { field: 'total', headerName: 'Venta', type: 'currency', width: 100 },
     { field: 'costo_total', headerName: 'Costo', type: 'currency', width: 100 },
-    { field: 'utilidad_total', headerName: 'Utilidad', type: 'currency', width: 100 },
+    { field: 'venta_socio_total', headerName: 'Venta socio', type: 'currency', width: 120 },
+    { field: 'comision_aliqora_socios_total', headerName: 'Comisión Aliqora', type: 'currency', width: 150 },
+    { field: 'liquidacion_socio_total', headerName: 'Liquidación socio', type: 'currency', width: 150 },
+    { field: 'utilidad_aliqora_total', headerName: 'Utilidad Aliqora', type: 'currency', width: 150 },
     { field: 'margen_porcentaje', headerName: 'Margen', width: 110, renderCell: (row) => `${Number(row.margen_porcentaje || 0).toFixed(2)}%` },
     { field: 'estado_pago', headerName: 'Pago', type: 'chip', width: 120 },
   ];
@@ -109,7 +118,7 @@ export const FinancePage = () => {
   );
 
   return (
-    <PlaceholderPage title="Finanzas" description="Controla ventas pagadas, costos, utilidad, margen y ventas manuales.">
+    <PlaceholderPage title="Finanzas" description="Controla ventas pagadas, utilidad Aliqora, liquidaciones de socios y ventas mayoristas aprobadas por periodo.">
       <Stack spacing={2.5}>
         <ErrorMessage message={error} />
 
@@ -127,10 +136,28 @@ export const FinancePage = () => {
             <KpiCard title="Costo total" value={formatCurrency(summary.costo_total)} description="Costo estimado de los productos vendidos." icon={<PointOfSaleOutlinedIcon />} color="warning.main" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-            <KpiCard title="Utilidad" value={formatCurrency(summary.utilidad_total)} description="Venta menos costo registrado." icon={<TrendingUpOutlinedIcon />} color="success.main" />
+            <KpiCard title="Utilidad Aliqora" value={formatCurrency(summary.utilidad_aliqora_total ?? summary.utilidad_total)} description="Venta menos costo propio y liquidación a socios." icon={<TrendingUpOutlinedIcon />} color="success.main" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
             <KpiCard title="Margen" value={`${Number(summary.margen_porcentaje || 0).toFixed(2)}%`} description="Porcentaje de utilidad sobre ventas." icon={<ShowChartOutlinedIcon />} color="secondary.main" />
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <KpiCard title="Ventas mayoristas" value={formatCurrency(summary.ventas_mayoristas)} description="Solo clientes aprobados como mayoristas." icon={<AttachMoneyOutlinedIcon />} color="secondary.main" />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <KpiCard title="Ventas minoristas" value={formatCurrency(summary.ventas_minoristas)} description="Clientes normales y compras sin aprobación mayorista." icon={<PointOfSaleOutlinedIcon />} color="info.main" />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <KpiCard title="Ventas de socios" value={formatCurrency(summary.venta_socio_total)} description="Importe cobrado por productos de socios en el periodo." icon={<TrendingUpOutlinedIcon />} color="warning.main" />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <KpiCard title="Liquidación socios" value={formatCurrency(summary.liquidacion_socio_total ?? summary.comision_socio_total ?? 0)} description="Monto estimado a devolver o pagar a socios por ventas pagadas." icon={<PointOfSaleOutlinedIcon />} color="info.main" />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <KpiCard title="Comisión Aliqora socios" value={formatCurrency(summary.comision_aliqora_socios_total ?? 0)} description="Ganancia que Aliqora retiene por ventas de socios." icon={<ShowChartOutlinedIcon />} color="success.main" />
           </Grid>
         </Grid>
 

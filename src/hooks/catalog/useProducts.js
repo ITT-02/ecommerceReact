@@ -22,6 +22,7 @@ export const useProducts = ({
   destacado = null,
   requiereCotizacion = null,
   venderSinStock = null,
+  origen = null,
 } = {}) => {
   const queryClient = useQueryClient();
 
@@ -36,6 +37,7 @@ export const useProducts = ({
       destacado,
       requiereCotizacion,
       venderSinStock,
+      origen,
     ],
     queryFn: () =>
       getProducts({
@@ -47,6 +49,7 @@ export const useProducts = ({
         destacado,
         requiereCotizacion,
         venderSinStock,
+        origen,
       }),
   });
 
@@ -104,7 +107,7 @@ export const useProducts = ({
       return createMutation.mutateAsync(product);
     },
     removeProduct: async (product) => {
-      await deleteMutation.mutateAsync(product);
+      await deactivateMutation.mutateAsync(product);
       return true;
     },
     deactivateProduct: async (product) => {

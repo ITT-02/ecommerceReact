@@ -1,28 +1,24 @@
 // Pagina administrativa para gestionar banners de la tienda.
 
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Typography,
-} from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { Chip, Typography } from '@mui/material';
+import ViewCarouselOutlinedIcon from '@mui/icons-material/ViewCarouselOutlined';
 
 import { BannerForm } from '../../../components/admin/banners/BannerForm';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
+import { AdminDialog } from '../../../components/common/adminDialog/AdminDialog';
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 
 import { useBanners } from '../../../hooks/marketing/useBanners';
 import {
   initialBannerFormData,
+  BANNER_HOME_PLACEMENT_OPTIONS,
+  getBannerPlacementLabel,
   mapBannerToFormData,
   mapFormDataToBanner,
 } from '../../../adapters/bannersMapper';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
-import { SystemMessageGrid } from '../../../components/common/SystemMessageCard';
 
 export const BannersPage = () => {
   const [formData, setFormData] = useState(initialBannerFormData);
@@ -32,7 +28,7 @@ export const BannersPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ esActivo: '' });
+  const [filters, setFilters] = useState({ esActivo: '', ubicacionHome: '' });
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
 
@@ -52,6 +48,7 @@ export const BannersPage = () => {
     pageSize,
     search,
     esActivo: filters.esActivo === '' ? null : filters.esActivo === 'true',
+    ubicacionHome: filters.ubicacionHome || null,
   });
 
   const actionLoading = saving || deleting;
@@ -167,7 +164,7 @@ export const BannersPage = () => {
 
   const handleResetFilters = () => {
     setSearch('');
-    setFilters({ esActivo: '' });
+    setFilters({ esActivo: '', ubicacionHome: '' });
     setPageNumber(1);
   };
 
@@ -205,6 +202,18 @@ export const BannersPage = () => {
       emptyText: 'Sin boton',
     },
     {
+      field: 'ubicacion_home',
+      headerName: 'Sección inicio',
+      width: 190,
+      renderCell: (banner) => (
+        <Chip
+          size="small"
+          variant="outlined"
+          label={getBannerPlacementLabel(banner.ubicacion_home)}
+        />
+      ),
+    },
+    {
       field: 'orden_visual',
       headerName: 'Orden',
       width: 95,
@@ -234,6 +243,16 @@ export const BannersPage = () => {
         { label: 'Activos', value: 'true' },
         { label: 'Inactivos', value: 'false' },
       ],
+    },
+    {
+      name: 'ubicacionHome',
+      label: 'Sección inicio',
+      type: 'select',
+      width: 220,
+      options: BANNER_HOME_PLACEMENT_OPTIONS.map((option) => ({
+        label: option.label,
+        value: option.value,
+      })),
     },
   ];
 
@@ -277,61 +296,31 @@ export const BannersPage = () => {
         maxHeight={520}
       />
 
-      <Dialog
+      <AdminDialog
         open={isFormOpen}
         onClose={handleCloseForm}
-        fullWidth
+        title={editingId ? 'Editar banner' : 'Nuevo banner'}
+        icon={<ViewCarouselOutlinedIcon />}
         maxWidth="md"
-        scroll="paper"
-        disableRestoreFocus
-        slotProps={{
-          paper: {
-            sx: {
-              position: 'relative',
-              bgcolor: 'background.paper',
-              backgroundImage: 'none',
-            },
-          },
-        }}
+        loading={saving || formLoading}
       >
-        <IconButton
-          onClick={handleCloseForm}
-          disabled={saving}
-          size="small"
-          aria-label="Cerrar formulario"
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            zIndex: 1,
-            color: 'text.secondary',
-          }}
-        >
-          <CloseRoundedIcon fontSize="small" />
-        </IconButton>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Configura si el banner rota en el carrusel principal o si aparece como tarjeta secundaria.
+        </Typography>
 
-        <DialogTitle sx={{ pr: 6 }}>
-          {editingId ? 'Editar banner' : 'Nuevo banner'}
-          <Typography variant="body2" color="text.secondary">
-            Completa la informacion del banner que se mostrara en la tienda.
-          </Typography>
-        </DialogTitle>
+        <ErrorMessage message={formError || error} />
 
-        <DialogContent dividers>
-          <ErrorMessage message={formError || error} />
-
-          <BannerForm
-            editingId={editingId}
-            formData={formData}
-            loading={saving || formLoading}
-            onCancel={handleCloseForm}
-            onChange={changeInput}
-            onFileChange={changeFileInput}
-            onFileRemove={removeFileInput}
-            onSubmit={handleSubmit}
-          />
-        </DialogContent>
-      </Dialog>
+        <BannerForm
+          editingId={editingId}
+          formData={formData}
+          loading={saving || formLoading}
+          onCancel={handleCloseForm}
+          onChange={changeInput}
+          onFileChange={changeFileInput}
+          onFileRemove={removeFileInput}
+          onSubmit={handleSubmit}
+        />
+      </AdminDialog>
 
       <ConfirmDialog
         open={Boolean(confirm)}

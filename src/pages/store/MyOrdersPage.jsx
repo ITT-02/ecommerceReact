@@ -96,7 +96,7 @@ const STATUS_META = {
     Icon: SettingsOutlinedIcon,
   },
   bajo_pedido: {
-    label: 'Bajo pedido',
+    label: 'Preparación bajo pedido',
     tone: 'warning',
     Icon: Inventory2OutlinedIcon,
   },

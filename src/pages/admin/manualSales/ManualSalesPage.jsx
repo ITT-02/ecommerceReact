@@ -34,6 +34,7 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
+import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { FileUploadField } from '../../../components/common/Field/FileUploadField';
 import { PageHeader } from '../../../components/common/PageHeader';
@@ -74,6 +75,17 @@ const CATALOG_PAGE_SIZE = 4;
 const deliveryTypes = ['envio_domicilio', 'agencia'];
 const contactDeliveryTypes = ['envio_domicilio', 'agencia', 'por_coordinar'];
 
+const directSaleDeliveryOptions = [
+  { value: 'recojo', label: 'Recojo en tienda' },
+  { value: 'envio_domicilio', label: 'Envío a domicilio' },
+  { value: 'agencia', label: 'Agencia o transportista' },
+];
+
+const quoteDeliveryOptions = [
+  ...directSaleDeliveryOptions,
+  { value: 'por_coordinar', label: 'Por coordinar' },
+];
+
 const getOptions = (product) => {
   if (Array.isArray(product?.personalizacion_opciones)) return product.personalizacion_opciones;
 
@@ -103,12 +115,19 @@ const getAvailableStock = (item) => numberValue(
 
 const getStockMinimum = (item) => numberValue(item?.stock_minimo);
 
+const getOperationalStockType = (item) => item?.tipo_stock_operativo || item?.disponibilidad_tipo || 'inventario_aliqora';
+
+const isPartnerLimitedStock = (item) => getOperationalStockType(item) === 'stock_socio_limitado'
+  || (Boolean(item?.socio_comercial_id) && Number.isFinite(Number(item?.stock_externo_disponible)));
+
+const isOpenBackorder = (item) => Boolean(item?.vender_sin_stock) && !isPartnerLimitedStock(item);
+
 const getStockStatus = (item) => {
   const available = getAvailableStock(item);
   const minimum = getStockMinimum(item);
 
   if (available <= 0) return 'sin_stock';
-  if (minimum > 0 && available <= minimum) return 'stock_bajo';
+  if (minimum > 0 && available <= minimum && !isPartnerLimitedStock(item)) return 'stock_bajo';
   return 'normal';
 };
 
@@ -150,6 +169,12 @@ const makeDraftFromProduct = (product) => {
     requiere_cotizacion: Boolean(product.requiere_cotizacion),
     es_personalizable: Boolean(product.es_personalizable),
     vender_sin_stock: Boolean(product.vender_sin_stock),
+    tipo_stock_operativo: product.tipo_stock_operativo || product.disponibilidad_tipo || 'inventario_aliqora',
+    socio_comercial_id: product.socio_comercial_id || null,
+    stock_externo_disponible: numberValue(product.stock_externo_disponible),
+    stock_externo_reservado: numberValue(product.stock_externo_reservado),
+    stock_externo_restante: numberValue(product.stock_externo_restante),
+    permite_bajo_pedido_abierto: Boolean(product.permite_bajo_pedido_abierto),
     stock_total: availableStock,
     stock_actual: availableStock,
     stock_disponible: availableStock,
@@ -187,7 +212,7 @@ function calculateItem(item) {
     precio_personalizacion_unitario: personalizationPrice,
     precio_unitario: base + personalizationPrice,
     total_linea: lineTotal,
-    requiere_abastecimiento: insufficientStock && Boolean(item.vender_sin_stock),
+    requiere_abastecimiento: insufficientStock && isOpenBackorder(item),
   };
 }
 
@@ -331,11 +356,12 @@ const ProductResultCard = ({ product, selected, onSelect }) => {
                 <Chip
                   size="small"
                   icon={<Inventory2OutlinedIcon />}
-                  label={stockStatus === 'sin_stock' ? 'Sin stock' : `Stock ${availableStock}`}
+                  label={stockStatus === 'sin_stock' ? 'Sin disponibilidad' : `Disponible ${availableStock}`}
                   color={stockChipColor}
                   variant={stockStatus === 'normal' ? 'outlined' : 'filled'}
                 />
-                {product.vender_sin_stock && <Chip size="small" color="info" label="Bajo pedido" variant="outlined" />}
+                {isPartnerLimitedStock(product) && <Chip size="small" color="info" label="Socio comercial" variant="outlined" />}
+                {isOpenBackorder(product) && <Chip size="small" color="info" label="Bajo pedido" variant="outlined" />}
                 {product.es_personalizable && <Chip size="small" color="secondary" label="Personalizable" variant="outlined" />}
               </Stack>
             </Box>
@@ -352,7 +378,7 @@ const requiresContactForSale = ({ operationType, items, pago, entrega }) => {
   if (operationType === 'cotizacion_manual') return true;
   if (pago.estadoPago !== 'pagado') return true;
   if (contactDeliveryTypes.includes(entrega.tipo_entrega)) return true;
-  return items.some((item) => item.tipo_item === 'personalizado' || item.requiere_abastecimiento || item.requiere_cotizacion);
+  return items.some((item) => item.tipo_item === 'personalizado' || item.requiere_abastecimiento || item.requiere_cotizacion || isPartnerLimitedStock(item));
 };
 
 const validateCustomizationDraft = (item) => {
@@ -379,7 +405,7 @@ const requiresPriceReason = (item, operationType) => {
   const basePrice = numberValue(item.precio_base_unitario);
   const basePriceChanged = listPrice > 0 && basePrice !== listPrice;
   const basePriceCreated = listPrice <= 0 && basePrice > 0;
-  const forcedManualPrice = Boolean(item.requiere_cotizacion) || !Boolean(item.mostrar_precio);
+  const forcedManualPrice = Boolean(item.requiere_cotizacion) || !item.mostrar_precio;
   const hasDiscount = numberValue(item.descuento_linea) > 0;
 
   return basePriceChanged || basePriceCreated || forcedManualPrice || hasDiscount;
@@ -401,8 +427,10 @@ const validateItemForOperation = (item, operationType) => {
     }
   }
 
-  if (numberValue(item.cantidad) > getAvailableStock(item) && !item.vender_sin_stock) {
-    return `La cantidad supera el stock disponible para ${item.nombre_producto}.`;
+  if (numberValue(item.cantidad) > getAvailableStock(item) && !isOpenBackorder(item)) {
+    return isPartnerLimitedStock(item)
+      ? `Solo hay ${getAvailableStock(item)} unidad(es) disponibles para ${item.nombre_producto}.`
+      : `La cantidad supera el stock disponible para ${item.nombre_producto}.`;
   }
 
   return null;
@@ -415,14 +443,21 @@ const getStockAlert = (item) => {
   const minimum = getStockMinimum(item);
   const quantity = numberValue(item.cantidad);
 
-  if (quantity > available && item.vender_sin_stock) {
+  if (quantity > available && isPartnerLimitedStock(item)) {
     return {
-      severity: 'warning',
-      message: 'La cantidad supera el stock disponible. Se registrará como bajo pedido.',
+      severity: 'error',
+      message: `Máximo disponible: ${available} unidad(es).`,
     };
   }
 
-  if (quantity > available && !item.vender_sin_stock) {
+  if (quantity > available && isOpenBackorder(item)) {
+    return {
+      severity: 'warning',
+      message: 'Se atenderá bajo pedido.',
+    };
+  }
+
+  if (quantity > available) {
     return {
       severity: 'error',
       message: 'La cantidad supera el stock disponible.',
@@ -634,8 +669,10 @@ export const ManualSalesPage = () => {
   const [draftItem, setDraftItem] = useState(null);
   const [notasInternas, setNotasInternas] = useState('');
   const [notice, setNotice] = useState(null);
+  const [itemToRemove, setItemToRemove] = useState(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCatalogPage(1);
   }, [debouncedSearch]);
 
@@ -653,6 +690,9 @@ export const ManualSalesPage = () => {
   const { createSale, createQuote, creating, error: saleError } = useManualSale();
 
   const total = useMemo(() => items.reduce((acc, item) => acc + numberValue(item.total_linea), 0), [items]);
+  const deliveryOptions = operationType === 'venta_directa'
+    ? directSaleDeliveryOptions
+    : quoteDeliveryOptions;
   const needsContact = requiresContactForSale({ operationType, items, pago, entrega });
   const needsAddress = deliveryTypes.includes(entrega.tipo_entrega);
   const draftRequiresPriceReason = requiresPriceReason(draftItem, operationType);
@@ -696,7 +736,13 @@ export const ManualSalesPage = () => {
   const handleAddItem = () => {
     if (!draftItem) return;
 
-    const itemError = validateItemForOperation(draftItem, operationType);
+    const currentQuantity = items
+      .filter((item) => item.variante_id === draftItem.variante_id)
+      .reduce((acc, item) => acc + numberValue(item.cantidad), 0);
+    const totalQuantity = currentQuantity + numberValue(draftItem.cantidad);
+    const draftForValidation = calculateItem({ ...draftItem, cantidad: totalQuantity });
+    const itemError = validateItemForOperation(draftForValidation, operationType);
+
     if (itemError) {
       setNotice({ severity: 'warning', message: itemError });
       return;
@@ -716,8 +762,15 @@ export const ManualSalesPage = () => {
     setNotice({ severity: 'info', message: 'Producto listo para editar.' });
   };
 
-  const handleRemoveItem = (uid) => {
-    setItems((current) => current.filter((item) => item.uid !== uid));
+  const requestRemoveItem = (item) => {
+    setItemToRemove(item);
+  };
+
+  const handleConfirmRemoveItem = () => {
+    if (!itemToRemove?.uid) return;
+
+    setItems((current) => current.filter((item) => item.uid !== itemToRemove.uid));
+    setItemToRemove(null);
   };
 
   const validateSubmit = () => {
@@ -733,8 +786,14 @@ export const ManualSalesPage = () => {
       if (missingAddress) return 'Completa los datos de entrega.';
     }
 
-    const invalidItem = items.find((item) => validateItemForOperation(item, operationType));
-    if (invalidItem) return validateItemForOperation(invalidItem, operationType);
+    const groupedItems = items.reduce((acc, item) => {
+      const current = acc.get(item.variante_id) || { ...item, cantidad: 0 };
+      acc.set(item.variante_id, { ...current, cantidad: numberValue(current.cantidad) + numberValue(item.cantidad) });
+      return acc;
+    }, new Map());
+
+    const invalidItem = Array.from(groupedItems.values()).find((item) => validateItemForOperation(calculateItem(item), operationType));
+    if (invalidItem) return validateItemForOperation(calculateItem(invalidItem), operationType);
 
     if (operationType === 'venta_directa' && pago.estadoPago === 'validando' && !pago.comprobanteFile) {
       return 'Adjunta el comprobante recibido.';
@@ -923,9 +982,10 @@ export const ManualSalesPage = () => {
                       <ProductDetailSummary item={draftItem} />
 
                       <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                        <Chip label={`Stock disponible: ${getAvailableStock(draftItem)}`} color={getStockStatus(draftItem) === 'stock_bajo' ? 'warning' : 'default'} />
-                        {draftItem.stock_minimo > 0 && <Chip label={`Stock mínimo: ${draftItem.stock_minimo}`} />}
-                        {draftItem.vender_sin_stock && <Chip color="info" label="Permite bajo pedido" />}
+                        <Chip label={`Disponible: ${getAvailableStock(draftItem)}`} color={getStockStatus(draftItem) === 'stock_bajo' ? 'warning' : 'default'} />
+                        {draftItem.stock_minimo > 0 && !isPartnerLimitedStock(draftItem) && <Chip label={`Stock mínimo: ${draftItem.stock_minimo}`} />}
+                        {isPartnerLimitedStock(draftItem) && <Chip color="info" label="Producto de socio" />}
+                        {isOpenBackorder(draftItem) && <Chip color="info" label="Permite bajo pedido" />}
                         {draftItem.es_personalizable && <Chip color="secondary" label="Permite personalización" />}
                         {draftItem.requiere_cotizacion && <Chip color="warning" label="Precio acordado" />}
                       </Stack>
@@ -1135,6 +1195,10 @@ export const ManualSalesPage = () => {
                       const nextOperationType = event.target.value;
                       setOperationType(nextOperationType);
 
+                      if (nextOperationType === 'venta_directa' && entrega.tipo_entrega === 'por_coordinar') {
+                        setEntrega((current) => ({ ...current, tipo_entrega: 'recojo' }));
+                      }
+
                       const invalidItem = items.find((item) => validateItemForOperation(item, nextOperationType));
                       if (invalidItem) {
                         setNotice({
@@ -1188,12 +1252,18 @@ export const ManualSalesPage = () => {
                   <Grid container spacing={1.5}>
                     <Grid size={{ xs: 12 }}>
                       <TextField fullWidth select label="Tipo de entrega" name="tipo_entrega" value={entrega.tipo_entrega} onChange={handleDeliveryChange}>
-                        <MenuItem value="recojo">Recojo en tienda</MenuItem>
-                        <MenuItem value="envio_domicilio">Envío a domicilio</MenuItem>
-                        <MenuItem value="agencia">Agencia o transportista</MenuItem>
-                        <MenuItem value="por_coordinar">Por coordinar</MenuItem>
+                        {deliveryOptions.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
                       </TextField>
                     </Grid>
+                    {operationType === 'cotizacion_manual' && entrega.tipo_entrega === 'por_coordinar' && (
+                      <Grid size={{ xs: 12 }}>
+                        <Alert severity="info">Define la entrega al convertir la cotización.</Alert>
+                      </Grid>
+                    )}
                     {needsAddress && (
                       <>
                         <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth required label="Receptor" name="nombre_receptor" value={entrega.nombre_receptor} onChange={handleDeliveryChange} /></Grid>
@@ -1260,7 +1330,8 @@ export const ManualSalesPage = () => {
                                 <Typography variant="body2" color="text.secondary">{item.cantidad} x {formatCurrency(item.precio_unitario)}</Typography>
                                 <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75, mt: 0.75 }}>
                                   {item.tipo_item === 'personalizado' && <Chip size="small" color="secondary" label="Personalizado" />}
-                                  {item.requiere_abastecimiento && <Chip size="small" color="info" label="Abastecimiento" />}
+                                  {isPartnerLimitedStock(item) && <Chip size="small" color="info" label="Socio" />}
+                                  {item.requiere_abastecimiento && !isPartnerLimitedStock(item) && <Chip size="small" color="info" label="Bajo pedido" />}
                                   {itemValidation && <Chip size="small" color="warning" label="Revisar" />}
                                 </Stack>
                                 {itemValidation && (
@@ -1276,7 +1347,7 @@ export const ManualSalesPage = () => {
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="Quitar">
-                                <IconButton color="error" size="small" onClick={() => handleRemoveItem(item.uid)}>
+                                <IconButton color="error" size="small" onClick={() => requestRemoveItem(item)}>
                                   <DeleteOutlineOutlinedIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
@@ -1321,6 +1392,18 @@ export const ManualSalesPage = () => {
           </Grid>
         </Grid>
       </Stack>
+
+      <ConfirmDialog
+        open={Boolean(itemToRemove)}
+        action="delete"
+        title="Quitar producto"
+        message={itemToRemove
+          ? `¿Deseas quitar ${itemToRemove.nombre_producto || 'este producto'} de la venta manual?`
+          : '¿Deseas quitar este producto?'}
+        confirmText="Quitar"
+        onCancel={() => setItemToRemove(null)}
+        onConfirm={handleConfirmRemoveItem}
+      />
     </Box>
   );
 };

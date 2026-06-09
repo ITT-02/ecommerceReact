@@ -23,8 +23,23 @@ import {
   isOptionAvailableForSelection,
 } from '../../utils/store/variantSelection';
 
+const getVariantTotalAvailable = (variant) => {
+  const stock = Number(variant?.stock_total ?? variant?.stock_actual ?? 0);
+  const external = Math.max(
+    0,
+    Number(variant?.stock_externo_restante ?? 0)
+      || (Number(variant?.stock_externo_disponible ?? 0) - Number(variant?.stock_externo_reservado ?? 0))
+      || 0
+  );
+  return stock + external;
+};
+
 const getStockLabel = (variant, product) => {
   if (!variant) return 'Selecciona una combinación';
+  if ((variant.tipo_stock_operativo || '') === 'stock_socio_limitado') {
+    const total = getVariantTotalAvailable(variant);
+    return total > 0 ? `Disponible hasta ${total}` : 'Sin disponibilidad';
+  }
   if ((variant.stock_total ?? variant.stock_actual ?? 0) > 0) return 'Disponible';
   if (product?.vender_sin_stock) return 'Bajo pedido';
   return 'Sin stock';
@@ -32,6 +47,7 @@ const getStockLabel = (variant, product) => {
 
 const getStockColor = (variant, product) => {
   if (!variant) return 'default';
+  if ((variant.tipo_stock_operativo || '') === 'stock_socio_limitado') return getVariantTotalAvailable(variant) > 0 ? 'success' : 'default';
   if ((variant.stock_total ?? variant.stock_actual ?? 0) > 0) return 'success';
   if (product?.vender_sin_stock) return 'warning';
   return 'default';

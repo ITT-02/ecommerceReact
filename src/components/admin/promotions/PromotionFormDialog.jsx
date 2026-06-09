@@ -4,22 +4,18 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
   MenuItem,
   Stack,
   Switch,
   TextField,
   Typography,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 
 import { mapFormDataToPayload, mapPromotionToFormData } from '../../../adapters/promotionsMapper';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
+import { AdminDialog } from '../../common/adminDialog/AdminDialog';
 import { getCategoriesForPromotion } from '../../../services/catalog/categoryService';
 import { getProductsForPromotion } from '../../../services/catalog/productService';
 import { getVariantsForPromotion } from '../../../services/catalog/variantService';
@@ -250,49 +246,39 @@ export const PromotionFormDialog = ({
   };
 
   return (
-    <Dialog
+    <AdminDialog
       open={open}
       onClose={handleDialogClose}
-      fullWidth
+      onSubmit={handleSubmit}
+      title={isViewMode ? 'Detalle de promoción' : isEditMode ? 'Editar promoción' : 'Nueva promoción'}
+      icon={<LocalOfferOutlinedIcon />}
       maxWidth="md"
-      disableRestoreFocus
-      slotProps={{
-        paper: {
-          sx: (theme) => ({
-            borderRadius: `${theme.palette.custom.radius.xxl}px`,
-            bgcolor: theme.palette.background.paper,
-            p: 1,
-          }),
-        },
-      }}
-    >
-      <Box component="form" onSubmit={handleSubmit} noValidate>
-        <DialogTitle
-          sx={{
-            m: 0,
-            p: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-          }}
-        >
-          <Box component="span" sx={{ typography: 'h5', fontWeight: 800, color: 'text.primary' }}>
-            {isViewMode ? 'Detalle de promoción' : isEditMode ? 'Editar promoción' : 'Crear promoción'}
-          </Box>
-
-          <IconButton
+      loading={loading}
+      actions={
+        <>
+          <Button
             onMouseDown={(event) => event.preventDefault()}
             onClick={handleDialogClose}
-            sx={{ color: 'text.secondary' }}
-            aria-label="Cerrar"
+            variant={isViewMode ? 'contained' : 'outlined'}
+            disabled={loading}
           >
-            <CloseIcon sx={{ fontSize: 24 }} />
-          </IconButton>
-        </DialogTitle>
+            {isViewMode ? 'Cerrar' : 'Cancelar'}
+          </Button>
 
-        <DialogContent dividers sx={{ borderColor: 'divider', bgcolor: 'background.paper' }}>
-          <Stack spacing={2}>
+          {!isViewMode && (
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+              onMouseDown={(event) => event.preventDefault()}
+            >
+              {loading ? 'Guardando...' : 'Guardar'}
+            </Button>
+          )}
+        </>
+      }
+    >
+      <Stack spacing={2}>
             <ErrorMessage message={localError || error} />
 
             <Grid container spacing={2} sx={{ mt: 0.5 }}>
@@ -543,44 +529,7 @@ export const PromotionFormDialog = ({
                 </Grid>
               )}
             </Grid>
-          </Stack>
-        </DialogContent>
-
-        <DialogActions sx={{ p: 2.5, gap: 1 }}>
-         <Button
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={handleDialogClose}
-            variant={isViewMode ? 'contained' : 'outlined'}
-            color={isViewMode ? 'primary' : 'secondary'}
-            disabled={loading}
-            sx={(theme) => ({
-              borderRadius: `${theme.palette.custom.radius.md}px`,
-              px: 4,
-              py: 1.2,
-            })}
-          >
-            {isViewMode ? 'Cerrar' : 'Cancelar'}
-          </Button>
-
-          {!isViewMode && (
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              disabled={loading}
-              onMouseDown={(event) => event.preventDefault()}
-              sx={(theme) => ({
-                borderRadius: `${theme.palette.custom.radius.md}px`,
-                px: 4,
-                py: 1.2,
-                fontWeight: 800,
-              })}
-            >
-              {loading ? 'Guardando...' : isEditMode ? 'Guardar cambios' : 'Crear promoción'}
-            </Button>
-          )}
-        </DialogActions>
-      </Box>
-    </Dialog>
+      </Stack>
+    </AdminDialog>
   );
 };

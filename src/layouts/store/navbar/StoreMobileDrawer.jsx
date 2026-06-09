@@ -130,12 +130,13 @@ export const StoreMobileDrawer = ({
               {renderNavButton({ label: 'Mi perfil', to: '/perfil' })}
               {renderNavButton({ label: 'Mis pedidos', to: '/mis-pedidos' })}
               {renderNavButton({ label: 'Mis cotizaciones', to: '/mis-cotizaciones' })}
+              {renderNavButton({ label: 'Mis solicitudes', to: '/mis-solicitudes' })}
               {renderNavButton({ label: 'Mis direcciones', to: '/direcciones' })}
 
               {isInternalUser && (
                 <>
                   <Divider sx={(theme) => ({ my: 1, borderColor: theme.palette.custom.semantic.storeNavigation.divider })} />
-                  {renderNavButton({ label: 'Panel administrativo', to: '/admin/dashboard' })}
+                  {renderNavButton({ label: 'Panel administrativo', to: '/admin' })}
                 </>
               )}
             </>

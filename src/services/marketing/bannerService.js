@@ -30,12 +30,14 @@ export const getBanners = async ({
   pageSize = 10,
   search = '',
   esActivo = null,
+  ubicacionHome = null,
 } = {}) => {
   const response = await restApi.post('/rpc/listar_banners_paginado', {
     p_page_number: pageNumber,
     p_page_size: pageSize,
     p_search: search || null,
     p_es_activo: esActivo,
+    p_ubicacion_home: ubicacionHome,
   });
 
   return normalizePaginatedResponse(response.data, pageNumber, pageSize);

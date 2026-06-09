@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   TextField,
   MenuItem,
@@ -11,6 +7,9 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+
+import { AdminDialog } from '../../common/adminDialog/AdminDialog';
 import { FileUploadField } from '../../common/Field/FileUploadField';
 
 const TIPO_OPCIONES = [
@@ -65,7 +64,7 @@ export const PaymentMethodFormDialog = ({
           es_activo: initialData.es_activo !== undefined ? initialData.es_activo : true,
         });
       } else {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+         
         setFormData(INITIAL_STATE);
       }
     }
@@ -101,13 +100,26 @@ export const PaymentMethodFormDialog = ({
   const isEdit = !!initialData;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>
-          {isEdit ? 'Editar Método de Pago' : 'Nuevo Método de Pago'}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2}>
+    <AdminDialog
+      open={open}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      title={isEdit ? 'Editar método' : 'Nuevo método'}
+      icon={<PaymentsOutlinedIcon />}
+      maxWidth="sm"
+      loading={isSubmitting}
+      actions={
+        <>
+          <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSubmitting}>
+            {isSubmitting ? 'Guardando...' : 'Guardar'}
+          </Button>
+        </>
+      }
+    >
+      <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="codigo"
@@ -238,22 +250,7 @@ export const PaymentMethodFormDialog = ({
                 label={formData.es_activo ? "Método Activo" : "Método Inactivo"}
               />
             </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={isSubmitting}>
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Guardando...' : 'Guardar'}
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+      </Grid>
+    </AdminDialog>
   );
 };

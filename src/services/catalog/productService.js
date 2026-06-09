@@ -49,19 +49,38 @@ export const getProducts = async ({
   destacado = null,
   requiereCotizacion = null,
   venderSinStock = null,
+  origen = null,
 } = {}) => {
-  const response = await restApi.post('/rpc/listar_productos_paginado', {
+  const payload = {
     p_page_number: pageNumber,
     p_page_size: pageSize,
-    p_search: search,
-    p_categoria_id: categoriaId,
+    p_search: search || null,
+    p_categoria_id: categoriaId || null,
     p_es_activo: esActivo,
     p_destacado: destacado,
     p_requiere_cotizacion: requiereCotizacion,
     p_vender_sin_stock: venderSinStock,
-  });
+    p_origen: origen || null,
+  };
 
-  return normalizeProductPaginatedResponse(response.data, pageNumber, pageSize);
+  try {
+    const response = await restApi.post('/rpc/listar_productos_admin_ext_paginado', payload);
+    return normalizeProductPaginatedResponse(response.data, pageNumber, pageSize);
+  } catch (error) {
+    const message = error?.response?.data?.message || error?.message || '';
+    const isExtendedRpcMissing =
+      message.includes('listar_productos_admin_ext_paginado') ||
+      message.includes('Could not find the function') ||
+      message.includes('schema cache');
+
+    if (!isExtendedRpcMissing) {
+      throw error;
+    }
+
+    const { p_origen: _unused, ...legacyPayload } = payload;
+    const response = await restApi.post('/rpc/listar_productos_paginado', legacyPayload);
+    return normalizeProductPaginatedResponse(response.data, pageNumber, pageSize);
+  }
 };
 
 export const getProductById = async (id) => {
@@ -142,11 +161,9 @@ export const deactivateProduct = async (product) => {
 };
 
 export const deleteProduct = async (product) => {
-  const response = await restApi.delete('/productos', {
-    params: { id: `eq.${product.id}` },
-  });
-
-  return response.data;
+  // En producción no se elimina físicamente un producto, porque puede tener pedidos,
+  // movimientos de inventario o trazabilidad de socio comercial. Se retira de tienda.
+  return deactivateProduct(product);
 };
 
 export const getProductsForPromotion = async () => {

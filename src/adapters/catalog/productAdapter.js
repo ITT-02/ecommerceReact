@@ -1,5 +1,4 @@
 // Adapta datos entre el formulario de producto y el servicio.
-// Mantiene el formulario desacoplado del modelo físico de Supabase.
 
 export const initialProductFormData = {
   categoria_id: '',
@@ -90,7 +89,7 @@ export const formDataToProductPayload = (formData) => ({
   removedMediaIds: formData.removedMediaIds || [],
   removedMedia: formData.removedMedia || [],
 
-  // Se envía al RPC para editar metadata de multimedia ya guardada:
+  // Se envía para editar metadata de multimedia ya guardada:
   // texto alternativo, portada, visibilidad, orden y asociación a variante.
   updatedMedia: mapExistingMediaToUpdatePayload(formData.newMediaFiles || []),
   personalizacion_opciones: formData.personalizacion_opciones || [],
@@ -98,8 +97,18 @@ export const formDataToProductPayload = (formData) => ({
 
 export const normalizeProductPaginatedResponse = (data, pageNumber, pageSize) => {
   const value = Array.isArray(data) ? data[0] : data;
-  const items = value?.items ?? value?.data ?? value?.registros ?? [];
-  const totalCount = value?.totalCount ?? value?.total_count ?? value?.total ?? items.length;
+  const isDirectRowsResponse = Array.isArray(data) && !(
+    value?.items ||
+    value?.data ||
+    value?.registros ||
+    value?.totalCount ||
+    value?.total_count ||
+    value?.total
+  );
+  const items = isDirectRowsResponse ? data : value?.items ?? value?.data ?? value?.registros ?? [];
+  const totalCount = isDirectRowsResponse
+    ? items.length
+    : value?.totalCount ?? value?.total_count ?? value?.total ?? items.length;
   const currentPage = value?.pageNumber ?? value?.page_number ?? value?.pagina_actual ?? pageNumber;
   const currentPageSize = value?.pageSize ?? value?.page_size ?? value?.tamano_pagina ?? pageSize;
   const totalPages = value?.totalPages ?? value?.total_pages ?? Math.max(Math.ceil(totalCount / currentPageSize), 1);

@@ -185,7 +185,7 @@ const getAvailableActions = ({ order, deliveryMode, paymentApproved }) => {
     ];
   }
 
-  if (orderStatus === 'confirmado' || orderStatus === 'pagado') {
+  if (['pendiente_pago', 'pendiente', 'confirmado', 'pagado'].includes(orderStatus)) {
     return [
       buildAction({
         value: 'pedido:en_preparacion',

@@ -44,6 +44,8 @@ import {
   FINANCE_ROLES,
   INVENTORY_ROLES,
   MARKETING_ROLES,
+  PARTNER_REVIEW_ROLES,
+  PARTNER_ROLES,
   SALES_ROLES,
 } from '../../../utils/access/accessControl';
 
@@ -56,28 +58,40 @@ export const adminMenuGroups = [
     ],
   },
   {
-    title: 'Configuración base',
-    icon: TuneRoundedIcon,
+    title: 'Ventas y atención',
+    icon: SupportAgentRoundedIcon,
     items: [
-      { label: 'Métodos de pago', path: '/admin/metodos-pago', icon: PaymentsIcon, roles: SALES_ROLES },
-      { label: 'Almacenes', path: '/admin/almacenes', icon: StoreIcon, roles: INVENTORY_ROLES },
-      { label: 'Transportistas', path: '/admin/transportistas', icon: LocalShippingOutlinedIcon, roles: SALES_ROLES },
-      { label: 'Personalización de tienda', path: '/admin/personalizacion-tienda', icon: StorefrontOutlinedIcon, roles: ADMIN_ROLES },
+      { label: 'Pedidos', path: '/admin/pedidos', icon: ReceiptLongIcon, roles: SALES_ROLES },
+      { label: 'Cotizaciones', path: '/admin/cotizaciones', icon: RequestQuoteIcon, roles: SALES_ROLES, counterKey: 'cotizaciones_pendientes' },
+      { label: 'Venta manual', path: '/admin/venta-manual', icon: PointOfSaleIcon, roles: SALES_ROLES },
+      { label: 'Envíos', path: '/admin/envios', icon: LocalShippingOutlinedIcon, roles: SALES_ROLES },
+      { label: 'Seguimiento vendedor', path: '/admin/seguimiento-vendedor', icon: PersonSearchOutlinedIcon, roles: SALES_ROLES },
+      { label: 'Mensajes de contacto', path: '/admin/mensajes-contacto', icon: SupportAgentRoundedIcon, roles: SALES_ROLES, counterKey: 'mensajes_contacto_nuevos' },
+    ],
+  },
+  {
+    title: 'Clientes y alianzas',
+    icon: PeopleIcon,
+    items: [
+      { label: 'Mayoristas', path: '/admin/mayoristas', icon: PeopleIcon, roles: ADMIN_ROLES, counterKey: 'mayoristas_pendientes' },
+      { label: 'Solicitudes de socios', path: '/admin/solicitudes-socios', icon: PersonSearchOutlinedIcon, roles: ADMIN_ROLES, counterKey: 'socios_comerciales_pendientes' },
+      { label: 'Productos de socios', path: '/admin/revision-socios', icon: Inventory2Icon, roles: PARTNER_REVIEW_ROLES, counterKey: 'productos_socios_pendientes' },
+      { label: 'Mis propuestas de producto', path: '/admin/mis-productos-socio', icon: Inventory2Icon, roles: PARTNER_ROLES },
     ],
   },
   {
     title: 'Catálogo comercial',
     icon: CategoryRoundedIcon,
     items: [
-      { label: 'Categorías', path: '/admin/categorias', icon: CategoryIcon, roles: CATALOG_ROLES },
-      { label: 'Atributos y valores', path: '/admin/atributos', icon: TuneIcon, roles: CATALOG_ROLES },
       { label: 'Productos y multimedia', path: '/admin/productos', icon: Inventory2Icon, roles: CATALOG_ROLES },
       { label: 'Variantes y precios', path: '/admin/variantes', icon: InventoryIcon, roles: CATALOG_ROLES },
+      { label: 'Categorías', path: '/admin/categorias', icon: CategoryIcon, roles: CATALOG_ROLES },
+      { label: 'Atributos y valores', path: '/admin/atributos', icon: TuneIcon, roles: CATALOG_ROLES },
       { label: 'Opciones de personalización', path: '/admin/personalizacion-productos', icon: SettingsSuggestOutlinedIcon, roles: CATALOG_ROLES },
     ],
   },
   {
-    title: 'Inventario',
+    title: 'Inventario y abastecimiento',
     icon: Inventory2OutlinedIcon,
     items: [
       { label: 'Inventario', path: '/admin/inventario', icon: InventoryIcon, roles: INVENTORY_ROLES },
@@ -96,20 +110,8 @@ export const adminMenuGroups = [
     ],
   },
   {
-    title: 'Ventas y atención',
-    icon: SupportAgentRoundedIcon,
-    items: [
-      { label: 'Pedidos', path: '/admin/pedidos', icon: ReceiptLongIcon, roles: SALES_ROLES },
-      { label: 'Cotizaciones', path: '/admin/cotizaciones', icon: RequestQuoteIcon, roles: SALES_ROLES, counterKey: 'cotizaciones_pendientes' },
-      { label: 'Mensajes de contacto', path: '/admin/mensajes-contacto', icon: SupportAgentRoundedIcon, roles: SALES_ROLES, counterKey: 'mensajes_contacto_nuevos' },
-      { label: 'Envíos', path: '/admin/envios', icon: LocalShippingOutlinedIcon, roles: SALES_ROLES },
-      { label: 'Venta manual', path: '/admin/venta-manual', icon: PointOfSaleIcon, roles: SALES_ROLES },
-      { label: 'Seguimiento vendedor', path: '/admin/seguimiento-vendedor', icon: PersonSearchOutlinedIcon, roles: SALES_ROLES },
-    ],
-  },
-  {
     title: 'Finanzas',
-     icon: AccountBalanceWalletOutlinedIcon,
+    icon: AccountBalanceWalletOutlinedIcon,
     items: [
       { label: 'Pagos y comprobantes', path: '/admin/pagos', icon: PaymentsIcon, roles: SALES_ROLES },
       { label: 'Reembolsos', path: '/admin/reembolsos', icon: PaidOutlinedIcon, roles: FINANCE_ROLES },
@@ -117,8 +119,18 @@ export const adminMenuGroups = [
     ],
   },
   {
+    title: 'Configuración base',
+    icon: TuneRoundedIcon,
+    items: [
+      { label: 'Métodos de pago', path: '/admin/metodos-pago', icon: PaymentsIcon, roles: SALES_ROLES },
+      { label: 'Almacenes', path: '/admin/almacenes', icon: StoreIcon, roles: INVENTORY_ROLES },
+      { label: 'Transportistas', path: '/admin/transportistas', icon: LocalShippingOutlinedIcon, roles: SALES_ROLES },
+      { label: 'Personalización de tienda', path: '/admin/personalizacion-tienda', icon: StorefrontOutlinedIcon, roles: ADMIN_ROLES },
+    ],
+  },
+  {
     title: 'Seguridad',
-     icon: SecurityRoundedIcon,
+    icon: SecurityRoundedIcon,
     items: [
       { label: 'Usuarios', path: '/admin/usuarios', icon: PeopleIcon, roles: ADMIN_ROLES },
       { label: 'Roles', path: '/admin/roles', icon: AdminPanelSettingsIcon, roles: ADMIN_ROLES },

@@ -4,16 +4,13 @@ import { useState } from 'react';
 import {
   Alert,
   Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
+  Chip,
   Stack,
-  Typography,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 
 import { ProductForm } from '../../../components/admin/products/ProductForm';
+import { AdminDialog } from '../../../components/common/adminDialog/AdminDialog';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
@@ -45,6 +42,7 @@ export const ProductsPage = () => {
     destacado: '',
     requiereCotizacion: '',
     venderSinStock: '',
+    origen: '',
   });
   const [confirm, setConfirm] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
@@ -71,7 +69,7 @@ export const ProductsPage = () => {
     deleting,
     getProductById,
     saveProduct,
-    removeProduct,
+    deactivateProduct,
   } = useProducts({
     pageNumber,
     pageSize,
@@ -81,6 +79,7 @@ export const ProductsPage = () => {
     destacado: toBooleanFilter(filters.destacado),
     requiereCotizacion: toBooleanFilter(filters.requiereCotizacion),
     venderSinStock: toBooleanFilter(filters.venderSinStock),
+    origen: filters.origen || null,
   });
 
   
@@ -104,6 +103,7 @@ export const ProductsPage = () => {
       destacado: '',
       requiereCotizacion: '',
       venderSinStock: '',
+      origen: '',
     });
     setPageNotice('');
     setPageNumber(1);
@@ -216,7 +216,7 @@ export const ProductsPage = () => {
     if (!confirm) return;
 
     try {
-      await removeProduct(confirm.product);
+      await deactivateProduct(confirm.product);
     } finally {
       setConfirm(null);
     }
@@ -247,6 +247,25 @@ export const ProductsPage = () => {
       headerName: 'Categoria',
       width: 190,
       emptyText: 'Sin categoria',
+    },
+    {
+      field: 'origen_producto',
+      headerName: 'Origen',
+      width: 160,
+      renderCell: (row) => (
+        <Chip
+          size="small"
+          label={row.origen_producto === 'socio' ? 'Socio comercial' : 'Aliqora'}
+          color={row.origen_producto === 'socio' ? 'secondary' : 'default'}
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      field: 'socio_nombre',
+      headerName: 'Socio',
+      width: 190,
+      emptyText: '-',
     },
     {
       field: 'descripcion_corta',
@@ -320,6 +339,16 @@ export const ProductsPage = () => {
       ],
     },
     {
+      name: 'origen',
+      label: 'Origen',
+      type: 'select',
+      width: 170,
+      options: [
+        { label: 'Aliqora', value: 'aliqora' },
+        { label: 'Socio comercial', value: 'socio' },
+      ],
+    },
+    {
       name: 'destacado',
       label: 'Destacado',
       type: 'select',
@@ -358,9 +387,10 @@ export const ProductsPage = () => {
       onClick: handleEdit,
     },
     {
-      type: 'delete',
-      label: 'Eliminar',
+      type: 'deactivate',
+      label: 'Retirar de tienda',
       onClick: (product) => setConfirm({ product }),
+      visible: (product) => product.es_activo !== false,
     },
   ];
 
@@ -400,68 +430,35 @@ export const ProductsPage = () => {
         </Box>
       </Stack>
 
-      <Dialog
+      <AdminDialog
         open={isFormOpen}
         onClose={handleCloseForm}
-        fullWidth
+        title={editingId ? 'Editar producto' : 'Nuevo producto'}
+        icon={<Inventory2OutlinedIcon />}
         maxWidth="md"
-        scroll="paper"
-        disableRestoreFocus
-        slotProps={{
-          paper: {
-            sx: {
-              position: 'relative',
-              bgcolor: 'background.paper',
-              backgroundImage: 'none',
-            },
-          },
-        }}
+        loading={saving || formLoading}
       >
-        <IconButton
-          onClick={handleCloseForm}
-          disabled={saving}
-          size="small"
-          aria-label="Cerrar formulario"
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            zIndex: 1,
-            color: 'text.secondary',
-          }}
-        >
-          <CloseRoundedIcon fontSize="small" />
-        </IconButton>
-
-        <DialogTitle sx={{ pr: 6 }}>
-          {editingId ? 'Editar producto' : 'Nuevo producto'}
-          <Typography variant="body2" color="text.secondary">
-            Completa la informacion base, configuracion comercial y multimedia del producto.
-          </Typography>
-        </DialogTitle>
-
-        <DialogContent dividers>
-          <ProductForm
-            editingId={editingId}
-            formData={formData}
-            categories={categories}
-            loading={saving || formLoading}
-            error={formError}
-            customizationOptions={customizationOptions}
-            loadingCustomizationOptions={loadingCustomizationOptions}
-            onCancel={handleCloseForm}
-            onChange={handleInputChange}
-            onMediaChange={handleFormFieldChange}
-            onSubmit={handleSubmit}
-          />
-        </DialogContent>
-      </Dialog>
+        <ProductForm
+          editingId={editingId}
+          formData={formData}
+          categories={categories}
+          loading={saving || formLoading}
+          error={formError}
+          customizationOptions={customizationOptions}
+          loadingCustomizationOptions={loadingCustomizationOptions}
+          onCancel={handleCloseForm}
+          onChange={handleInputChange}
+          onMediaChange={handleFormFieldChange}
+          onSubmit={handleSubmit}
+        />
+      </AdminDialog>
 
       <ConfirmDialog
         open={Boolean(confirm)}
         action="delete"
-        title="Eliminar producto"
-        message={`Esta accion eliminara el producto "${confirm?.product?.nombre || ''}" de forma permanente.`}
+        title="Retirar producto de tienda"
+        message={`El producto "${confirm?.product?.nombre || ''}" dejará de mostrarse en la tienda, pero se conservará su historial, pedidos y trazabilidad del socio comercial.`}
+        confirmText="Retirar"
         loading={deleting}
         onCancel={() => setConfirm(null)}
         onConfirm={handleConfirm}

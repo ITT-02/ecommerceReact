@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   Box,
   Typography,
@@ -11,14 +7,14 @@ import {
   FormControlLabel,
   CircularProgress,
   Divider,
-  useTheme,
-  alpha,
 } from '@mui/material';
 
+import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
+
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 import { useRoleOptions } from '../../../../hooks/users/useAdminUsers';
 
 export const AssignRolesDialog = ({ open, usuario, isSaving, onClose, onConfirm }) => {
-  const theme = useTheme();
   const { data: roleOptions = [], isLoading: isLoadingRoles } = useRoleOptions();
   const [selectedCodigos, setSelectedCodigos] = useState([]);
   const [error, setError] = useState('');
@@ -50,11 +46,25 @@ export const AssignRolesDialog = ({ open, usuario, isSaving, onClose, onConfirm 
   };
 
   return (
-    <Dialog open={open} onClose={isSaving ? undefined : onClose} maxWidth="xs" fullWidth>
-      <Box component="form" onSubmit={handleSubmit}>
-        <DialogTitle sx={{ fontWeight: 800 }}>Asignar Roles</DialogTitle>
-
-        <DialogContent dividers>
+    <AdminDialog
+      open={open}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      title="Asignar roles"
+      icon={<ManageAccountsOutlinedIcon />}
+      maxWidth="xs"
+      loading={isSaving}
+      actions={
+        <>
+          <Button variant="outlined" onClick={onClose} disabled={isSaving}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSaving || isLoadingRoles}>
+            {isSaving ? 'Guardando...' : 'Guardar'}
+          </Button>
+        </>
+      }
+    >
           {error && (
             <Typography color="error" variant="body2" fontWeight={600} sx={{ mb: 2 }}>
               • {error}
@@ -104,17 +114,6 @@ export const AssignRolesDialog = ({ open, usuario, isSaving, onClose, onConfirm 
               ))}
             </Box>
           )}
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={onClose} disabled={isSaving} color="inherit">
-            Cancelar
-          </Button>
-          <Button type="submit" variant="contained" disabled={isSaving || isLoadingRoles} disableElevation>
-            {isSaving ? 'Guardando...' : 'Guardar roles'}
-          </Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
+    </AdminDialog>
   );
 };

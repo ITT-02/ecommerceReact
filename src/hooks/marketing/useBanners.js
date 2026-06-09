@@ -16,12 +16,13 @@ export const useBanners = ({
   pageSize = 10,
   search = '',
   esActivo = null,
+  ubicacionHome = null,
 } = {}) => {
   const queryClient = useQueryClient();
 
   const bannersQuery = useQuery({
-    queryKey: [...bannersQueryKey, pageNumber, pageSize, search, esActivo],
-    queryFn: () => getBanners({ pageNumber, pageSize, search, esActivo }),
+    queryKey: [...bannersQueryKey, pageNumber, pageSize, search, esActivo, ubicacionHome],
+    queryFn: () => getBanners({ pageNumber, pageSize, search, esActivo, ubicacionHome }),
   });
 
   const saveMutation = useMutation({

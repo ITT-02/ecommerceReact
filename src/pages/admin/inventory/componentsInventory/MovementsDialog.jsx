@@ -1,9 +1,5 @@
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   Typography,
   Chip,
@@ -16,9 +12,10 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 
 // Hook personalizado
 import { useInventoryStockMovements } from '../../../../hooks/inventory/useInventory/useInventoryStockMovements';
@@ -57,25 +54,18 @@ export const MovementsDialog = ({ open, onClose, data }) => {
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={handleClose} 
-      maxWidth="lg" 
-      fullWidth
+    <AdminDialog
+      open={open}
+      onClose={handleClose}
+      title="Movimientos"
+      icon={<HistoryOutlinedIcon />}
+      maxWidth="lg"
+      actions={
+        <Button onClick={handleClose} variant="outlined">
+          Cerrar
+        </Button>
+      }
     >
-      <DialogTitle sx={{ pr: 6 }}>
-        Movimientos de inventario
-        <IconButton
-          onClick={handleClose}
-          size="small"
-          aria-label="Cerrar diálogo de movimientos"
-          sx={{ position: 'absolute', right: 8, top: 8 }}
-        >
-          <CloseRoundedIcon fontSize="small" />
-        </IconButton>
-      </DialogTitle>
-      
-      <DialogContent dividers>
         <Box
           sx={{
             mb: 3,
@@ -165,21 +155,6 @@ export const MovementsDialog = ({ open, onClose, data }) => {
             </Table>
           </TableContainer>
         )}
-      </DialogContent>
-      
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button
-          onClick={handleClose}
-          variant="contained"
-          color="primary"
-          sx={{
-            textTransform: 'none',
-            fontWeight: 700,
-          }}
-        >
-          Cerrar
-        </Button>
-      </DialogActions>
-    </Dialog>
+    </AdminDialog>
   );
 };

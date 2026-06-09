@@ -4,16 +4,76 @@
 
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
-import { Box, Button, Card, CardContent, Container, Grid, Stack, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Grid,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
+import { AdminDialog } from '../../components/common/adminDialog/AdminDialog';
 import { StoreFeatureCard } from '../../components/store/marketing/StoreFeatureCard';
 import { StoreSectionHeader } from '../../components/store/marketing/StoreSectionHeader';
 import { WholesaleStepsSection } from '../../components/store/marketing/WholesaleStepsSection';
 import { wholesalePageContent } from '../../data/storePageContent';
+import { useAuth } from '../../hooks/auth/useAuth';
+import { requestWholesaleAccount } from '../../services/store/storeCatalogService';
 
 export const WholesalePage = () => {
   const { hero, benefits, steps, cta } = wholesalePageContent;
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const requestMutation = useMutation({ mutationFn: requestWholesaleAccount });
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [form, setForm] = useState({
+    negocioNombre: '',
+    ruc: '',
+    giroNegocio: '',
+    volumenEstimado: '',
+    telefono: '',
+    mensaje: '',
+  });
+  const [formError, setFormError] = useState('');
+
+  const openWholesaleRequest = () => {
+    if (!user) {
+      navigate('/login', { state: { from: '/mayoristas' } });
+      return;
+    }
+
+    setRequestOpen(true);
+  };
+
+  const updateField = (field, value) => {
+    setFormError('');
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleWholesaleRequest = async (event) => {
+    event.preventDefault();
+
+    if (!form.negocioNombre.trim()) {
+      setFormError('Ingresa el nombre comercial o razón social.');
+      return;
+    }
+
+    if (!form.mensaje.trim()) {
+      setFormError('Cuéntanos qué tipo de compra recurrente deseas coordinar.');
+      return;
+    }
+
+    await requestMutation.mutateAsync(form);
+    setRequestOpen(false);
+  };
 
   return (
     <Box sx={(theme) => ({ bgcolor: theme.palette.custom.semantic.storeMarketing.lightBg })}>
@@ -64,7 +124,7 @@ export const WholesalePage = () => {
                 </Typography>
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ pt: 1 }}>
-                  <Button component={RouterLink} to={hero.primaryAction.to} variant="contained" size="large" endIcon={<ArrowForwardRoundedIcon />}>
+                  <Button variant="contained" size="large" endIcon={<ArrowForwardRoundedIcon />} onClick={openWholesaleRequest} disabled={requestMutation.isPending}>
                     {hero.primaryAction.label}
                   </Button>
                   <Button
@@ -131,7 +191,7 @@ export const WholesalePage = () => {
                     </Box>
                   </Box>
 
-                  {hero.metrics.map((metric, index) => (
+                  {hero.metrics.map((metric) => (
                     <Box
                       key={metric.label}
                       sx={(theme) => ({
@@ -205,12 +265,59 @@ export const WholesalePage = () => {
         <Container maxWidth="md">
           <Stack spacing={2.5} sx={{ textAlign: 'center', alignItems: 'center' }}>
             <StoreSectionHeader eyebrow={cta.eyebrow} title={cta.title} description={cta.description} tone="dark" />
-            <Button component={RouterLink} to={cta.action.to} variant="contained" size="large" endIcon={<ArrowForwardRoundedIcon />}>
+            {requestMutation.isSuccess && (
+              <Alert
+                severity="success"
+                sx={{ width: '100%' }}
+                action={(
+                  <Button component={RouterLink} to="/mis-solicitudes" color="inherit" size="small">
+                    Ver estado
+                  </Button>
+                )}
+              >
+                Solicitud enviada. Aliqora revisará tu cuenta antes de activar precios mayoristas.
+              </Alert>
+            )}
+            {requestMutation.error && (
+              <Alert severity="error" sx={{ width: '100%' }}>
+                {requestMutation.error?.response?.data?.message || requestMutation.error?.message || 'No se pudo enviar la solicitud.'}
+              </Alert>
+            )}
+            <Button variant="contained" size="large" endIcon={<ArrowForwardRoundedIcon />} onClick={openWholesaleRequest} disabled={requestMutation.isPending}>
               {cta.action.label}
             </Button>
           </Stack>
         </Container>
       </Box>
+
+      <AdminDialog
+        open={requestOpen}
+        onClose={() => setRequestOpen(false)}
+        title="Solicitar cuenta mayorista"
+        maxWidth="sm"
+        loading={requestMutation.isPending}
+        onSubmit={handleWholesaleRequest}
+        actions={(
+          <>
+            <Button type="button" onClick={() => setRequestOpen(false)} disabled={requestMutation.isPending}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="contained" disabled={requestMutation.isPending}>
+              Enviar solicitud
+            </Button>
+          </>
+        )}
+      >
+        <Stack spacing={2}>
+          {formError && <Alert severity="error">{formError}</Alert>}
+          <TextField label="Negocio o razón social" value={form.negocioNombre} onChange={(event) => updateField('negocioNombre', event.target.value)} fullWidth required />
+          <TextField label="RUC o documento" value={form.ruc} onChange={(event) => updateField('ruc', event.target.value)} fullWidth />
+          <TextField label="Giro del negocio" value={form.giroNegocio} onChange={(event) => updateField('giroNegocio', event.target.value)} fullWidth />
+          <TextField label="Volumen estimado" value={form.volumenEstimado} onChange={(event) => updateField('volumenEstimado', event.target.value)} fullWidth />
+          <TextField label="Teléfono / WhatsApp" value={form.telefono} onChange={(event) => updateField('telefono', event.target.value)} fullWidth />
+          <TextField label="Mensaje" value={form.mensaje} onChange={(event) => updateField('mensaje', event.target.value)} fullWidth multiline minRows={3} required />
+        </Stack>
+      </AdminDialog>
     </Box>
   );
 };

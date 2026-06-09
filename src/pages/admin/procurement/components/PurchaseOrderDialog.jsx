@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Dialog,
@@ -19,6 +20,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 
 import { AppDatePicker } from '../../../../components/common/AppDatePicker';
+import { ConfirmDialog } from '../../../../components/common/ConfirmDialog';
 import { ErrorMessage } from '../../../../components/common/ErrorMessage';
 import { useSupplierProducts } from '../../../../hooks/procurement/useProcurement';
 import { formatCurrency } from '../../../../utils/formatters';
@@ -89,6 +91,7 @@ export const PurchaseOrderDialog = ({
   }));
   const [items, setItems] = useState(() => normalizeItems(initialData?.items));
   const [localError, setLocalError] = useState('');
+  const [removeItemIndex, setRemoveItemIndex] = useState(null);
 
   const {
     items: supplierProducts,
@@ -125,6 +128,10 @@ export const PurchaseOrderDialog = ({
   const total = useMemo(() => {
     return items.reduce((sum, item) => sum + Number(item.cantidad || 0) * Number(item.costo_unitario || 0), 0);
   }, [items]);
+  const selectedSupplier = useMemo(
+    () => suppliers.find((supplier) => supplier.id === form.proveedor_id) || null,
+    [form.proveedor_id, suppliers]
+  );
 
   const updateForm = (field, value) => {
     setLocalError('');
@@ -172,8 +179,15 @@ export const PurchaseOrderDialog = ({
     );
   };
 
-  const removeItem = (index) => {
-    setItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  const requestRemoveItem = (index) => {
+    setRemoveItemIndex(index);
+  };
+
+  const handleConfirmRemoveItem = () => {
+    if (removeItemIndex === null) return;
+
+    setItems((current) => current.filter((_, itemIndex) => itemIndex !== removeItemIndex));
+    setRemoveItemIndex(null);
   };
 
   const handleSubmit = (event) => {
@@ -230,7 +244,8 @@ export const PurchaseOrderDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+    <>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <Box component="form" onSubmit={handleSubmit}>
         <DialogTitle sx={{ pr: 6, fontWeight: 900 }}>
           {form.id ? 'Editar orden de compra' : 'Nueva orden de compra'}
@@ -252,21 +267,18 @@ export const PurchaseOrderDialog = ({
             <ErrorMessage message={localError || error || supplierProductsError} />
 
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <TextField
-                select
-                required
-                label="Proveedor"
-                value={form.proveedor_id}
-                onChange={(event) => updateForm('proveedor_id', event.target.value)}
+              <Autocomplete
+                options={suppliers}
+                value={selectedSupplier}
+                onChange={(_event, value) => updateForm('proveedor_id', value?.id || '')}
+                getOptionLabel={(option) => option?.razon_social || option?.nombre_comercial || ''}
+                isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                noOptionsText="No se encontraron proveedores"
                 sx={{ flex: 1 }}
-              >
-                <MenuItem value="">Seleccionar proveedor</MenuItem>
-                {suppliers.map((supplier) => (
-                  <MenuItem key={supplier.id} value={supplier.id}>
-                    {supplier.razon_social}
-                  </MenuItem>
-                ))}
-              </TextField>
+                renderInput={(params) => (
+                  <TextField {...params} required label="Proveedor" placeholder="Busca proveedor" />
+                )}
+              />
 
               <TextField
                 select
@@ -316,23 +328,25 @@ export const PurchaseOrderDialog = ({
                       spacing={1.25}
                       sx={{ alignItems: { xs: 'stretch', md: 'center' } }}
                     >
-                      <TextField
-                        select
+                      <Autocomplete
                         size="small"
-                        label="Variante"
-                        value={item.variante_id || ''}
-                        onChange={(event) => updateItem(index, 'variante_id', event.target.value)}
+                        options={variants}
+                        value={selectedVariant || null}
+                        onChange={(_event, value) => updateItem(index, 'variante_id', value?.id || '')}
+                        getOptionLabel={(option) => option?.label || ''}
+                        isOptionEqualToValue={(option, value) => option?.id === value?.id}
                         disabled={!form.proveedor_id || supplierProductsLoading}
-                        helperText={!form.proveedor_id ? 'Primero selecciona un proveedor.' : ''}
+                        noOptionsText="No se encontraron variantes"
                         sx={{ minWidth: { xs: '100%', md: 330 }, flex: 1 }}
-                      >
-                        <MenuItem value="">Seleccionar</MenuItem>
-                        {variants.map((variant) => (
-                          <MenuItem key={variant.id} value={variant.id}>
-                            {variant.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Variante"
+                            placeholder="Busca producto, codigo o variante"
+                            helperText={!form.proveedor_id ? 'Primero selecciona un proveedor.' : ''}
+                          />
+                        )}
+                      />
 
                       <TextField
                         size="small"
@@ -376,7 +390,7 @@ export const PurchaseOrderDialog = ({
 
                       <IconButton
                         color="error"
-                        onClick={() => removeItem(index)}
+                        onClick={() => requestRemoveItem(index)}
                         disabled={items.length === 1}
                         aria-label="Quitar producto"
                       >
@@ -435,6 +449,17 @@ export const PurchaseOrderDialog = ({
           </Button>
         </DialogActions>
       </Box>
-    </Dialog>
+      </Dialog>
+
+      <ConfirmDialog
+        open={removeItemIndex !== null}
+        action="delete"
+        title="Quitar producto"
+        message="¿Deseas quitar este producto de la orden de compra?"
+        confirmText="Quitar"
+        onCancel={() => setRemoveItemIndex(null)}
+        onConfirm={handleConfirmRemoveItem}
+      />
+    </>
   );
 };

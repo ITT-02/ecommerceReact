@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
 import HomeWorkOutlinedIcon from '@mui/icons-material/HomeWorkOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -240,6 +241,13 @@ export const StoreUserMenu = () => {
           Mis cotizaciones
         </MenuItem>
 
+        <MenuItem onClick={() => handleGoTo('/mis-solicitudes')}>
+          <ListItemIcon>
+            <AssignmentTurnedInOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          Mis solicitudes
+        </MenuItem>
+
         <MenuItem onClick={() => handleGoTo('/direcciones')}>
           <ListItemIcon>
             <HomeWorkOutlinedIcon fontSize="small" />
@@ -251,7 +259,7 @@ export const StoreUserMenu = () => {
           <Divider key="admin-divider" />,
           <MenuItem
             key="admin-panel"
-            onClick={() => handleGoTo('/admin/dashboard')}
+            onClick={() => handleGoTo('/admin')}
           >
             <ListItemIcon>
               <AdminPanelSettingsOutlinedIcon fontSize="small" />

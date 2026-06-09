@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   TextField,
   MenuItem,
@@ -15,6 +11,9 @@ import {
   useTheme,
   alpha,
 } from '@mui/material';
+import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 
 const TIPO_DOCUMENTO_OPTIONS = [
   { value: 'DNI', label: 'DNI' },
@@ -132,11 +131,25 @@ export const EditUserDialog = ({ open, usuario, isSaving, onClose, onConfirm }) 
   }[colorKey] || theme.palette.text.secondary);
 
   return (
-    <Dialog open={open} onClose={isSaving ? undefined : onClose} maxWidth="sm" fullWidth>
-      <Box component="form" onSubmit={handleSubmit}>
-        <DialogTitle sx={{ fontWeight: 800 }}>Editar Perfil de Usuario</DialogTitle>
-
-        <DialogContent dividers>
+    <AdminDialog
+      open={open}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      title="Editar usuario"
+      icon={<PersonOutlineOutlinedIcon />}
+      maxWidth="sm"
+      loading={isSaving}
+      actions={
+        <>
+          <Button variant="outlined" onClick={onClose} disabled={isSaving}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSaving}>
+            {isSaving ? 'Guardando...' : 'Guardar'}
+          </Button>
+        </>
+      }
+    >
           {error && (
             <Typography color="error" variant="body2" fontWeight={600} sx={{ mb: 2 }}>
               • {error}
@@ -258,17 +271,6 @@ export const EditUserDialog = ({ open, usuario, isSaving, onClose, onConfirm }) 
               />
             </Grid>
           </Grid>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={onClose} disabled={isSaving} color="inherit">
-            Cancelar
-          </Button>
-          <Button type="submit" variant="contained" disabled={isSaving} disableElevation>
-            {isSaving ? 'Guardando...' : 'Guardar cambios'}
-          </Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
+    </AdminDialog>
   );
 };

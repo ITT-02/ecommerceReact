@@ -9,16 +9,36 @@ import { Link as RouterLink } from 'react-router-dom';
 import { PLACEHOLDER_IMAGE } from '../../utils/constants';
 import { formatCurrency } from '../../utils/formatters';
 
+const getPreparationStock = (product) => Number(product.stock_preparacion_total || product.stock_externo_total || 0);
+
+const hasImmediateOrLimitedStock = (product) => Number(product.stock_total || 0) > 0 || getPreparationStock(product) > 0;
+
 const getAvailabilityLabel = (product) => {
-  if (Number(product.stock_total || 0) > 0) return 'Disponible';
+  if (hasImmediateOrLimitedStock(product)) return 'Disponible';
   if (product.vender_sin_stock) return 'Bajo pedido';
   return 'Sin stock';
 };
 
 const getAvailabilityColor = (product) => {
-  if (Number(product.stock_total || 0) > 0) return 'success';
+  if (hasImmediateOrLimitedStock(product)) return 'success';
   if (product.vender_sin_stock) return 'warning';
   return 'default';
+};
+
+
+const getComparisonPrice = (product) => {
+  const values = [
+    product.precio_comparacion_min,
+    product.precio_comparacion_desde,
+    product.precio_comparacion,
+  ];
+
+  const comparison = values
+    .map((value) => Number(value))
+    .find((value) => Number.isFinite(value) && value > 0);
+  const current = Number(product.precio_min || 0);
+
+  return comparison && comparison > current ? comparison : null;
 };
 
 const getPriceLabel = (product) => {
@@ -33,7 +53,7 @@ const getPrimaryAction = (product) => {
     Number(product.total_variantes || 0) === 1 &&
     product.variante_predeterminada_id &&
     !product.requiere_cotizacion &&
-    (Number(product.stock_total || 0) > 0 || product.vender_sin_stock);
+    (hasImmediateOrLimitedStock(product) || product.vender_sin_stock);
 
   if (canDirectAdd) {
     return { type: 'add', label: 'Agregar', icon: <ShoppingCartOutlinedIcon fontSize="small" /> };
@@ -58,6 +78,7 @@ const getPrimaryAction = (product) => {
 
 export const StoreProductCard = ({ product, adding = false, onAdd }) => {
   const primaryAction = getPrimaryAction(product);
+  const comparisonPrice = getComparisonPrice(product);
 
   return (
     <Card
@@ -111,19 +132,33 @@ export const StoreProductCard = ({ product, adding = false, onAdd }) => {
 
           <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap' }}>
             {product.es_personalizable && <Chip size="small" label="Personalizable" variant="outlined" color="secondary" />}
-            {product.vender_sin_stock && <Chip size="small" label="Bajo pedido" variant="outlined" color="warning" />}
+            {product.vender_sin_stock && getPreparationStock(product) <= 0 && <Chip size="small" label="Bajo pedido" variant="outlined" color="warning" />}
             {Number(product.total_variantes || 0) > 1 && <Chip size="small" label={`${product.total_variantes} variantes`} variant="outlined" />}
           </Stack>
 
-          <Typography
-            variant="subtitle1"
-            sx={(theme) => ({
-              fontWeight: 900,
-              color: theme.palette.custom.semantic.storeMarketing.lightAccent,
-            })}
-          >
-            {getPriceLabel(product)}
-          </Typography>
+          <Box>
+            {comparisonPrice && product.mostrar_precio && (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'text.secondary',
+                  textDecoration: 'line-through',
+                  fontWeight: 700,
+                }}
+              >
+                {formatCurrency(comparisonPrice)}
+              </Typography>
+            )}
+            <Typography
+              variant="subtitle1"
+              sx={(theme) => ({
+                fontWeight: 900,
+                color: theme.palette.custom.semantic.storeMarketing.lightAccent,
+              })}
+            >
+              {getPriceLabel(product)}
+            </Typography>
+          </Box>
 
           {primaryAction.type === 'options' ? (
             <Button

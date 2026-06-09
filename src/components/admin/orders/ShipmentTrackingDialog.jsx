@@ -6,12 +6,7 @@ import {
   Box,
   Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
   Paper,
   Stack,
   Step,
@@ -23,7 +18,7 @@ import {
   useTheme,
 } from '@mui/material';
 
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 
 import {
@@ -32,6 +27,7 @@ import {
   getShippingStatusLabel,
 } from '../../../adapters/orderAdapter';
 import { ErrorMessage } from '../../common/ErrorMessage';
+import { AdminDialog } from '../../common/adminDialog/AdminDialog';
 import { CarrierTrackingFields } from './CarrierTrackingFields';
 
 const TRACKING_NUMBER_REQUIRED_STATUSES = [
@@ -231,55 +227,26 @@ export const ShipmentTrackingDialog = ({
   };
 
   return (
-    <Dialog
+    <AdminDialog
       open={open}
-      onClose={loading ? undefined : onClose}
-      fullWidth
+      onClose={onClose}
+      onSubmit={onSubmit}
+      title="Actualizar envío"
+      icon={<LocalShippingOutlinedIcon />}
       maxWidth="lg"
-      disableRestoreFocus
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: 3,
-            width: {
-              xs: 'calc(100% - 24px)',
-              md: 980,
-              lg: 1080,
-            },
-            maxWidth: 'none',
-          },
-        },
-      }}
+      loading={loading}
+      actions={
+        <>
+          <Button variant="outlined" onClick={onClose} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSaveDisabled}>
+            {getSaveButtonLabel(selectedAction, loading)}
+          </Button>
+        </>
+      }
     >
-      <Box component="form" onSubmit={onSubmit}>
-        <DialogTitle sx={{ pr: 6 }}>
-          <Stack spacing={0.35}>
-            <Typography variant="h6" sx={{ fontWeight: 900 }}>
-              Actualizar envío
-            </Typography>
-
-            <Typography variant="body2" color="text.secondary">
-              Selecciona en el flujo el siguiente estado real del paquete.
-            </Typography>
-          </Stack>
-
-          <IconButton
-            onClick={onClose}
-            disabled={loading}
-            size="small"
-            aria-label="Cerrar"
-            sx={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
-            }}
-          >
-            <CloseRoundedIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent dividers>
-          <Stack spacing={2.5}>
+      <Stack spacing={2.5}>
             <ErrorMessage message={error} />
 
             <Paper
@@ -549,27 +516,7 @@ export const ShipmentTrackingDialog = ({
                   : undefined
               }
             />
-          </Stack>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={onClose}
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
-
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isSaveDisabled}
-          >
-            {getSaveButtonLabel(selectedAction, loading)}
-          </Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
+      </Stack>
+    </AdminDialog>
   );
 };

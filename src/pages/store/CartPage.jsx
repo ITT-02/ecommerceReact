@@ -1,8 +1,23 @@
 // Carrito de compras del cliente.
 
+import { useState } from 'react';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import { Box, Button, Card, CardContent, Container, Divider, Grid, IconButton, Stack, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Divider,
+  Grid,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+
+import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { LoadingScreen } from '../../components/common/LoadingScreen';
@@ -11,8 +26,16 @@ import { formatCurrency } from '../../utils/formatters';
 
 export const CartPage = () => {
   const { cart, items, loading, saving, error, updateItem, removeItem } = useCart();
+  const [itemToRemove, setItemToRemove] = useState(null);
 
   if (loading) return <LoadingScreen message="Cargando carrito..." />;
+
+  const handleConfirmRemove = async () => {
+    if (!itemToRemove?.id) return;
+
+    await removeItem(itemToRemove.id);
+    setItemToRemove(null);
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
@@ -38,20 +61,22 @@ export const CartPage = () => {
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography variant="subtitle1">{item.nombre_producto}</Typography>
                           <Typography variant="body2" color="text.secondary">{item.nombre_variante || item.codigoproducto}</Typography>
-                          {item.requiere_abastecimiento && <Typography variant="caption" color="warning.main">Compra bajo pedido</Typography>}
+                          {item.requiere_abastecimiento && <Typography variant="caption" color="warning.main">Preparación bajo pedido</Typography>}
                         </Box>
                         <TextField
                           label="Cant."
                           type="number"
                           size="small"
                           value={item.cantidad}
-                          onChange={(event) => updateItem(item.id, Math.max(1, Number(event.target.value || 1)))}
+                          onChange={(event) => {
+                            void updateItem(item.id, Math.max(1, Number(event.target.value || 1))).catch(() => {});
+                          }}
                           disabled={saving}
                           sx={{ width: 96 }}
                           slotProps={{ htmlInput: { min: 1 } }}
                         />
                         <Typography variant="subtitle1" sx={{ minWidth: 100, textAlign: { sm: 'right' } }}>{formatCurrency(item.total_linea)}</Typography>
-                        <IconButton color="error" onClick={() => removeItem(item.id)} disabled={saving} aria-label="Eliminar item">
+                        <IconButton color="error" onClick={() => setItemToRemove(item)} disabled={saving} aria-label="Eliminar item">
                           <DeleteOutlineOutlinedIcon />
                         </IconButton>
                       </Stack>
@@ -85,6 +110,19 @@ export const CartPage = () => {
           </Grid>
         )}
       </Stack>
+
+      <ConfirmDialog
+        open={Boolean(itemToRemove)}
+        action="delete"
+        title="Eliminar del carrito"
+        message={itemToRemove
+          ? `¿Deseas quitar ${itemToRemove.nombre_producto || 'este producto'} del carrito?`
+          : '¿Deseas quitar este producto del carrito?'}
+        confirmText="Quitar"
+        loading={saving}
+        onCancel={() => setItemToRemove(null)}
+        onConfirm={handleConfirmRemove}
+      />
     </Container>
   );
 };

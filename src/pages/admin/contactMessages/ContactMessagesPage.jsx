@@ -1,11 +1,11 @@
 // Página administrativa: mensajes recibidos desde formulario público de contacto.
-// Incluye filtros por fecha y eliminación restringida a super_admin.
 
 import { useMemo, useState } from 'react';
 import MarkEmailReadOutlinedIcon from '@mui/icons-material/MarkEmailReadOutlined';
-import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Stack, Typography } from '@mui/material';
 
 import { AdminResourceTable } from '../../../components/common/dataTable/AdminResourceTable';
+import { AdminDialog } from '../../../components/common/adminDialog/AdminDialog';
 import { ConfirmDialog } from '../../../components/common/ConfirmDialog';
 import { ErrorMessage } from '../../../components/common/ErrorMessage';
 import { PageHeader } from '../../../components/common/PageHeader';
@@ -218,11 +218,20 @@ export const ContactMessagesPage = () => {
         emptyDescription="Aún no llegaron consultas desde el formulario público."
       />
 
-      <Dialog open={Boolean(selectedMessage)} onClose={() => setSelectedMessage(null)} fullWidth maxWidth="sm">
-        <DialogTitle>Detalle del mensaje</DialogTitle>
-        <DialogContent dividers>
-          {selectedMessage && (
-            <Stack spacing={2}>
+      <AdminDialog
+        open={Boolean(selectedMessage)}
+        onClose={() => setSelectedMessage(null)}
+        title="Detalle del mensaje"
+        icon={<MarkEmailReadOutlinedIcon />}
+        maxWidth="sm"
+        actions={
+          <Button variant="outlined" onClick={() => setSelectedMessage(null)}>
+            Cerrar
+          </Button>
+        }
+      >
+        {selectedMessage && (
+          <Stack spacing={2}>
               <Box>
                 <Typography variant="caption" color="text.secondary">Cliente</Typography>
                 <Typography variant="subtitle1" fontWeight={900}>{selectedMessage.nombre}</Typography>
@@ -244,13 +253,9 @@ export const ContactMessagesPage = () => {
                 <Typography variant="caption" color="text.secondary">Fecha de recepción</Typography>
                 <Typography variant="body2">{formatDateTime(selectedMessage.created_at)}</Typography>
               </Box>
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSelectedMessage(null)}>Cerrar</Button>
-        </DialogActions>
-      </Dialog>
+          </Stack>
+        )}
+      </AdminDialog>
 
       <ConfirmDialog
         open={Boolean(messageToDelete)}

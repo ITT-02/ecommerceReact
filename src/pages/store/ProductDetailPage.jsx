@@ -43,17 +43,53 @@ import {
 } from '../../utils/store/variantSelection';
 
 
+const getOperationalAvailability = ({ variant, product, requestedQuantity = 1 }) => {
+  const stock = Number(variant?.stock_total ?? variant?.stock_actual ?? 0);
+  const quantity = Math.max(1, Number(requestedQuantity) || 1);
+  const stockMode = variant?.tipo_stock_operativo || 'inventario_aliqora';
+  const externalAvailable = Math.max(
+    0,
+    Number(variant?.stock_externo_restante ?? 0)
+      || (Number(variant?.stock_externo_disponible ?? 0) - Number(variant?.stock_externo_reservado ?? 0))
+      || 0
+  );
+  const isExternalLimited = stockMode === 'stock_socio_limitado';
+  const unlimitedBackorder = Boolean(product?.vender_sin_stock) && !isExternalLimited;
+  const totalAvailable = isExternalLimited ? stock + externalAvailable : stock;
+
+  return {
+    stock,
+    quantity,
+    stockMode,
+    externalAvailable,
+    isExternalLimited,
+    unlimitedBackorder,
+    totalAvailable,
+    hasEnoughStock: stock >= quantity,
+    canPrepareLimited: isExternalLimited && totalAvailable >= quantity && totalAvailable > 0,
+    canBuy: stock >= quantity || unlimitedBackorder || (isExternalLimited && totalAvailable >= quantity && totalAvailable > 0),
+  };
+};
+
 const getAvailabilityLabel = ({ variant, product, requiresQuote, requestedQuantity = 1 }) => {
   if (!variant) return 'Selecciona una opción';
   if (requiresQuote) return 'Requiere cotización';
 
-  const stock = Number(variant.stock_total ?? variant.stock_actual ?? 0);
-  const quantity = Math.max(1, Number(requestedQuantity) || 1);
+  const availability = getOperationalAvailability({ variant, product, requestedQuantity });
 
-  if (stock >= quantity) return 'Disponible';
-  if (product?.vender_sin_stock) {
-    return stock > 0 ? `Stock parcial: ${stock}. Resto bajo pedido` : 'Bajo pedido';
+  if (availability.hasEnoughStock) return 'Disponible';
+
+  if (availability.isExternalLimited) {
+    if (availability.totalAvailable > 0 && availability.canPrepareLimited) {
+      return `Disponible hasta ${availability.totalAvailable} unidad(es)`;
+    }
+
+    return availability.totalAvailable > 0
+      ? `Disponible hasta ${availability.totalAvailable}`
+      : 'Sin disponibilidad';
   }
+
+  if (availability.unlimitedBackorder) return 'Disponible bajo pedido';
 
   return 'Sin stock suficiente';
 };
@@ -62,11 +98,10 @@ const getAvailabilityColor = ({ variant, product, requiresQuote, requestedQuanti
   if (!variant) return 'default';
   if (requiresQuote) return 'info';
 
-  const stock = Number(variant.stock_total ?? variant.stock_actual ?? 0);
-  const quantity = Math.max(1, Number(requestedQuantity) || 1);
+  const availability = getOperationalAvailability({ variant, product, requestedQuantity });
 
-  if (stock >= quantity) return 'success';
-  if (product?.vender_sin_stock) return 'warning';
+  if (availability.hasEnoughStock) return 'success';
+  if (availability.canPrepareLimited || availability.unlimitedBackorder) return 'warning';
   return 'default';
 };
 
@@ -99,6 +134,17 @@ const getMediaSource = (media) =>
   media?.url ??
   media?.src ??
   '';
+
+const getWholesaleTierForQuantity = (variant, quantity) => {
+  const tiers = Array.isArray(variant?.precio_mayorista_tramos)
+    ? variant.precio_mayorista_tramos
+    : [];
+  const requestedQuantity = Math.max(1, Number(quantity) || 1);
+
+  return tiers
+    .filter((tier) => Number(tier.cantidad_minima) <= requestedQuantity)
+    .sort((a, b) => Number(b.cantidad_minima) - Number(a.cantidad_minima))[0] || null;
+};
 
 /**
  * Ordena la multimedia priorizando portada y luego orden visual.
@@ -140,6 +186,7 @@ export const ProductDetailPage = () => {
   const [fallbackVariantId, setFallbackVariantId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState('');
+  const [actionError, setActionError] = useState('');
 
   const { product, loading, error, adding, addToCart } = useStoreProductDetail(slug);
 
@@ -160,10 +207,12 @@ export const ProductDetailPage = () => {
   }, [activeVariants]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedOptions(clearSelection());
     setFallbackVariantId('');
     setQuantity(1);
     setNotice('');
+    setActionError('');
   }, [product?.id]);
 
   const selectedVariant = useMemo(() => {
@@ -217,30 +266,48 @@ export const ProductDetailPage = () => {
       sortMediaItems(generalProductMedia),
       sortMediaItems(productMedia),
     );
-  }, [product?.multimedia, previewVariant]);
+  }, [product, previewVariant]);
 
   const selectedStock = Number(selectedVariant?.stock_total ?? selectedVariant?.stock_actual ?? 0);
   const selectedPrice = Number(selectedVariant?.precio ?? 0);
   const requestedQuantity = Math.max(1, Number(quantity) || 1);
+  const wholesaleTier = product?.es_cliente_mayorista
+    ? getWholesaleTierForQuantity(selectedVariant, requestedQuantity)
+    : null;
+  const effectiveUnitPrice = wholesaleTier
+    ? Number(wholesaleTier.precio_unitario)
+    : selectedPrice;
 
-  const hasVisiblePrice = Boolean(product?.mostrar_precio) && selectedPrice > 0;
+  const comparisonPrice = Number(selectedVariant?.precio_comparacion || 0);
+  const showComparisonPrice = comparisonPrice > effectiveUnitPrice && effectiveUnitPrice > 0;
+  const hasVisiblePrice = Boolean(product?.mostrar_precio) && effectiveUnitPrice > 0;
 
   const requiresQuote =
     Boolean(product?.requiere_cotizacion) ||
     !hasVisiblePrice;
 
-  const hasEnoughStock = selectedStock >= requestedQuantity;
+  const availability = useMemo(() => {
+    if (!selectedVariant) return null;
+    return getOperationalAvailability({ variant: selectedVariant, product, requestedQuantity });
+  }, [selectedVariant, product, requestedQuantity]);
 
+  const hasEnoughStock = Boolean(availability?.hasEnoughStock);
   const isBackorder =
     Boolean(selectedVariant) &&
     !requiresQuote &&
     !hasEnoughStock &&
-    Boolean(product?.vender_sin_stock);
+    Boolean(availability?.canBuy);
+
+  const quantityLimitMessage = availability?.isExternalLimited && !availability.canBuy
+    ? (availability.totalAvailable > 0
+      ? `Solo puedes comprar hasta ${availability.totalAvailable} unidad(es) en este momento.`
+      : 'Este producto no tiene disponibilidad para compra en este momento.')
+    : '';
 
   const canAddToCart =
     Boolean(selectedVariant) &&
     !requiresQuote &&
-    (hasEnoughStock || Boolean(product?.vender_sin_stock));
+    Boolean(availability?.canBuy);
 
   const canRequestQuote = Boolean(selectedVariant) && requiresQuote;
 
@@ -283,16 +350,31 @@ export const ProductDetailPage = () => {
   const handleAdd = async () => {
     if (!selectedVariant) return;
 
-    await addToCart({
-      varianteId: getVariantId(selectedVariant),
-      cantidad: Number(quantity) || 1,
-    });
+    if (quantityLimitMessage) {
+      setActionError(quantityLimitMessage);
+      return;
+    }
 
-    setNotice(
-      isBackorder
-        ? 'Producto agregado como compra bajo pedido.'
-        : 'Producto agregado al carrito.'
-    );
+    try {
+      setActionError('');
+      await addToCart({
+        varianteId: getVariantId(selectedVariant),
+        cantidad: Number(quantity) || 1,
+      });
+
+      setNotice(
+        isBackorder
+          ? 'Producto agregado. Lo prepararemos bajo pedido.'
+          : 'Producto agregado al carrito.'
+      );
+    } catch (error) {
+      setActionError(
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'No se pudo agregar el producto al carrito.'
+      );
+    }
   };
 
   const handleRequestQuote = (tipoSolicitud = 'cotizacion') => {
@@ -343,6 +425,12 @@ export const ProductDetailPage = () => {
           </Alert>
         )}
 
+        {actionError && (
+          <Alert severity="error" onClose={() => setActionError('')}>
+            {actionError}
+          </Alert>
+        )}
+
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, md: 6 }}>
             <Box
@@ -373,7 +461,9 @@ export const ProductDetailPage = () => {
                   <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
                     <Chip label={product.categoria_nombre || 'Producto'} variant="outlined" />
                     {product.destacado && <Chip label="Destacado" color="primary" variant="outlined" />}
-                    {product.vender_sin_stock && <Chip label="Venta bajo pedido" color="warning" variant="outlined" />}
+                    {product.vender_sin_stock && Number(product?.resumen_variantes?.stock_preparacion_total || 0) <= 0 && (
+                      <Chip label="Disponible bajo pedido" color="warning" variant="outlined" />
+                    )}
                     {product.requiere_cotizacion && <Chip label="Cotización" color="info" variant="outlined" />}
                     {personalizationOptions.length > 0 && <Chip label="Opciones de personalización" color="secondary" variant="outlined" />}
                   </Stack>
@@ -420,9 +510,29 @@ export const ProductDetailPage = () => {
                             Código: {selectedVariant.codigoproducto || 'Sin código'}
                           </Typography>
 
-                          <Typography variant="h5" color="secondary.main">
-                            {hasVisiblePrice ? formatCurrency(selectedVariant.precio) : 'Precio a cotizar'}
-                          </Typography>
+                          <Box>
+                            {hasVisiblePrice && showComparisonPrice && (
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: 'text.secondary',
+                                  textDecoration: 'line-through',
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {formatCurrency(comparisonPrice)}
+                              </Typography>
+                            )}
+                            <Typography variant="h5" color="secondary.main">
+                              {hasVisiblePrice ? formatCurrency(effectiveUnitPrice) : 'Precio a cotizar'}
+                            </Typography>
+                          </Box>
+
+                          {wholesaleTier && (
+                            <Typography variant="body2" color="success.main" fontWeight={700}>
+                              Precio mayorista activo desde {wholesaleTier.cantidad_minima} unidades.
+                            </Typography>
+                          )}
 
                           <Chip
                             size="small"
@@ -454,9 +564,17 @@ export const ProductDetailPage = () => {
                     </Alert>
                   )}
 
-                  {isBackorder && (
+                  {quantityLimitMessage && (
+                    <Alert severity="error">
+                      {quantityLimitMessage}
+                    </Alert>
+                  )}
+
+                  {isBackorder && !quantityLimitMessage && (
                     <Alert severity="warning">
-                      La cantidad solicitada supera el stock disponible. Puedes comprarlo como bajo pedido; al aprobarse el pago, el pedido pasará a abastecimiento y no debe intentar reservar inventario inexistente.
+                      {availability?.isExternalLimited
+                        ? `Disponible hasta ${availability.totalAvailable} unidad(es).`
+                        : 'La cantidad solicitada supera la disponibilidad inmediata. Puedes continuar con la compra; prepararemos el pedido y te avisaremos el avance.'}
                     </Alert>
                   )}
 
@@ -465,7 +583,10 @@ export const ProductDetailPage = () => {
                       label="Cantidad"
                       type="number"
                       value={quantity}
-                      onChange={(event) => setQuantity(Math.max(1, Number(event.target.value || 1)))}
+                      onChange={(event) => {
+                        setQuantity(Math.max(1, Number(event.target.value || 1)));
+                        setActionError('');
+                      }}
                       sx={{ maxWidth: { sm: 150 } }}
                       slotProps={{ htmlInput: { min: 1 } }}
                     />
@@ -486,7 +607,9 @@ export const ProductDetailPage = () => {
                           ? isBackorder
                             ? 'Agregar bajo pedido'
                             : 'Agregar al carrito'
-                          : 'Selecciona una opción'}
+                          : quantityLimitMessage
+                            ? 'Cantidad no disponible'
+                            : 'Selecciona una opción'}
                     </Button>
 
                     {!requiresQuote && personalizationOptions.length > 0 && (

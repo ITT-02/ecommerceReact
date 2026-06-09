@@ -1,17 +1,16 @@
 import { useEffect, useState } from 'react';
 import {
   Button,
-  Switch, 
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
+  Switch,
   FormControlLabel,
   TextField,
   Stack,
   Box,
-  Typography 
+  Typography,
 } from '@mui/material';
+import FormatListBulletedOutlinedIcon from '@mui/icons-material/FormatListBulletedOutlined';
+
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 
 export const ValorForm = ({ open, isEdit, valorInicial, tipoDatoPadre, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -38,96 +37,86 @@ export const ValorForm = ({ open, isEdit, valorInicial, tipoDatoPadre, onClose, 
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
-    
-    let processValue;
-    if (type === 'checkbox') {
-      processValue = checked;
-    } else if (type === 'number') {
-      processValue = Math.max(0, Number(value));
-    } else {
-      processValue = value;
-    }
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: processValue,
-    }));
+    const processValue = type === 'checkbox'
+      ? checked
+      : type === 'number'
+        ? Math.max(0, Number(value))
+        : value;
+
+    setFormData((prev) => ({ ...prev, [name]: processValue }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = {
+    onSave({
       valor: formData.valor,
       orden_visual: formData.orden_visual,
       es_activo: formData.es_activo,
       color_hex: isColor ? formData.color_hex : null,
-    };
-    onSave(payload);
+    });
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>{isEdit ? 'Editar Valor' : 'Nuevo Valor'}</DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={3}>
+    <AdminDialog
+      open={open}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      title={isEdit ? 'Editar valor' : 'Nuevo valor'}
+      icon={<FormatListBulletedOutlinedIcon />}
+      maxWidth="xs"
+      actions={
+        <>
+          <Button variant="outlined" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained">
+            Guardar
+          </Button>
+        </>
+      }
+    >
+      <Stack spacing={3}>
+        <TextField
+          label="Valor"
+          name="valor"
+          value={formData.valor}
+          onChange={handleChange}
+          fullWidth
+          required
+        />
+        {isColor && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <input
+              type="color"
+              name="color_hex"
+              value={formData.color_hex}
+              onChange={handleChange}
+              style={{ width: 56, height: 56, padding: 0, cursor: 'pointer' }}
+            />
             <TextField
-              label="Valor"
-              name="valor"
-              value={formData.valor}
+              label="Color hexadecimal"
+              name="color_hex"
+              value={formData.color_hex}
               onChange={handleChange}
               fullWidth
-              required
             />
-            {isColor && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <input
-                  type="color"
-                  name="color_hex"
-                  value={formData.color_hex}
-                  onChange={handleChange}
-                  style={{ width: 56, height: 56, padding: 0, cursor: 'pointer', borderRadius: '4px', border: '1px solid currentColor' }}
-                />
-                <TextField
-                  label="Color Hexagonal"
-                  name="color_hex"
-                  value={formData.color_hex}
-                  onChange={handleChange}
-                  fullWidth
-                />
-              </Box>
-            )}
-            <TextField
-              type="number"
-              label="Orden visual"
-              name="orden_visual"
-              value={formData.orden_visual}
-              onChange={handleChange}
-              fullWidth
-              slotProps={{
-                htmlInput: { min: 0 }
-              }}
-            />
-            {/* AQUÍ APLICAMOS EL SWITCH ESCALADO */}
-            <FormControlLabel
-              control={
-                <Switch 
-                  color="success"
-                  name="es_activo" 
-                  checked={formData.es_activo} 
-                  onChange={handleChange}
-                  sx={{ transform: 'scale(1.2)', ml: 1, mr: 1 }} // Escala para hacerlo más "grandesito"
-                />
-              }
-              label={<Typography sx={{ fontWeight: 500 }}>Está activo</Typography>}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} color="inherit">Cancelar</Button>
-          <Button type="submit" variant="contained">Guardar</Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+          </Box>
+        )}
+        <TextField
+          type="number"
+          label="Orden visual"
+          name="orden_visual"
+          value={formData.orden_visual}
+          onChange={handleChange}
+          fullWidth
+          slotProps={{ htmlInput: { min: 0 } }}
+        />
+        <FormControlLabel
+          control={<Switch color="success" name="es_activo" checked={formData.es_activo} onChange={handleChange} />}
+          label={<Typography sx={{ fontWeight: 500 }}>Activo</Typography>}
+        />
+      </Stack>
+    </AdminDialog>
   );
 };

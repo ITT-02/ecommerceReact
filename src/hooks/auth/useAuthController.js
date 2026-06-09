@@ -46,12 +46,28 @@ const normalizeUserContext = (data) => ({
  * Obtiene un mensaje de error legible desde Axios o errores comunes.
  */
 const getErrorMessage = (error, fallbackMessage) => {
-  return (
+  const rawMessage = (
     error?.response?.data?.msg ||
     error?.response?.data?.message ||
     error?.message ||
     fallbackMessage
   );
+
+  const normalizedMessage = String(rawMessage || '').toLowerCase();
+
+  if (normalizedMessage.includes('email not confirmed')) {
+    return 'Tu cuenta fue creada, pero falta confirmar tu correo antes de iniciar sesion.';
+  }
+
+  if (normalizedMessage.includes('invalid login credentials')) {
+    return 'Correo o contrasena incorrectos. Verifica tus datos e intenta nuevamente.';
+  }
+
+  if (normalizedMessage.includes('user already registered') || normalizedMessage.includes('already registered')) {
+    return 'Este correo ya esta registrado. Inicia sesion o recupera tu contrasena.';
+  }
+
+  return rawMessage;
 };
 
 export const useAuthController = () => {
@@ -152,6 +168,7 @@ export const useAuthController = () => {
    * Si expiró y hay refreshToken, pide un nuevo accessToken.
    * Si no se puede refrescar, limpia la sesión.
    */
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isSessionPending || !session) return;
 

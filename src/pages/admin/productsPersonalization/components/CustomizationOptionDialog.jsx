@@ -3,10 +3,6 @@ import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRou
 import {
   Alert,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControlLabel,
   Grid,
   MenuItem,
@@ -14,6 +10,8 @@ import {
   Switch,
   TextField,
 } from '@mui/material';
+
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 
 /**
  * Modal reutilizable para crear y editar opciones de personalización.
@@ -39,24 +37,26 @@ export const CustomizationOptionDialog = ({
     : '';
 
   return (
-    <Dialog
+    <AdminDialog
       open={open}
       onClose={onClose}
-      fullWidth
+      onSubmit={onSubmit}
+      title={isEditing ? 'Editar opción' : 'Nueva opción'}
+      icon={<AddCircleOutlineRoundedIcon />}
       maxWidth="md"
+      loading={saving}
+      actions={
+        <>
+          <Button variant="outlined" onClick={onClose} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained" disabled={saving}>
+            {saving ? 'Guardando...' : 'Guardar'}
+          </Button>
+        </>
+      }
     >
-      <DialogTitle>
-        {isEditing ? 'Editar opción' : 'Nueva opción de personalización'}
-      </DialogTitle>
-
-      <DialogContent dividers>
-        <Stack
-          component="form"
-          id="customization-option-form"
-          spacing={2}
-          onSubmit={onSubmit}
-          sx={{ pt: 1 }}
-        >
+      <Stack spacing={2}>
           {formError && (
             <Alert severity="error">
               {formError}
@@ -191,24 +191,7 @@ export const CustomizationOptionDialog = ({
               />
             </Grid>
           </Grid>
-        </Stack>
-      </DialogContent>
-
-      <DialogActions>
-        <Button onClick={onClose} disabled={saving}>
-          Cancelar
-        </Button>
-
-        <Button
-          type="submit"
-          form="customization-option-form"
-          variant="contained"
-          startIcon={<AddCircleOutlineRoundedIcon />}
-          disabled={saving}
-        >
-          {saving ? 'Guardando...' : 'Guardar opción'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Stack>
+    </AdminDialog>
   );
 };

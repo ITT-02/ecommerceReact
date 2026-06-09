@@ -40,11 +40,27 @@ export const CarrierTrackingFields = ({
     error,
   } = useCarrierOptions();
 
+  const carrierOptions = useMemo(() => {
+    const options = [...carriers];
+    const selectedId = form?.transportistaId ? String(form.transportistaId) : '';
+
+    if (selectedId && !options.some((carrier) => String(carrier.id) === selectedId)) {
+      options.unshift({
+        id: form.transportistaId,
+        nombre: form?.empresaEnvio || 'Transportista asignado',
+        es_activo: false,
+        asignado_previamente: true,
+      });
+    }
+
+    return options;
+  }, [carriers, form?.empresaEnvio, form?.transportistaId]);
+
   const selectedCarrier = useMemo(() => {
-    return carriers.find(
+    return carrierOptions.find(
       (carrier) => String(carrier.id) === String(form?.transportistaId)
     );
-  }, [carriers, form?.transportistaId]);
+  }, [carrierOptions, form?.transportistaId]);
 
   const carrierRequiredError =
     Boolean(showRequiredError) && Boolean(required) && !form?.transportistaId;
@@ -54,7 +70,7 @@ export const CarrierTrackingFields = ({
     Boolean(requiredTrackingNumber) &&
     !form?.numeroSeguimiento?.trim();
 
-  const hasCarriers = carriers.length > 0;
+  const hasCarriers = carrierOptions.length > 0;
   const hasSelectedCarrier = Boolean(form?.transportistaId);
 
   const shouldShowCarrierLoadError =
@@ -66,7 +82,7 @@ export const CarrierTrackingFields = ({
   const handleCarrierChange = (event) => {
     const transportistaId = event.target.value;
 
-    const carrier = carriers.find(
+    const carrier = carrierOptions.find(
       (item) => String(item.id) === String(transportistaId)
     );
 
@@ -137,9 +153,9 @@ export const CarrierTrackingFields = ({
             Seleccionar transportista
           </MenuItem>
 
-          {carriers.map((carrier) => (
+          {carrierOptions.map((carrier) => (
             <MenuItem key={carrier.id} value={carrier.id}>
-              {carrier.nombre}
+              {carrier.nombre}{carrier.asignado_previamente ? ' (asignado previamente)' : ''}
             </MenuItem>
           ))}
         </TextField>

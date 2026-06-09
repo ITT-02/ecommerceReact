@@ -1,5 +1,4 @@
 // Campo numérico reutilizable para formularios controlados.
-// Usa slotProps.htmlInput para mantener compatibilidad con MUI v9.
 
 import { TextField } from '@mui/material';
 
@@ -31,6 +30,7 @@ export const NumberFieldController = ({
         htmlInput: {
           min,
           step,
+          inputMode: step === '1' ? 'numeric' : 'decimal',
           ...(slotProps?.htmlInput || {}),
         },
       }}

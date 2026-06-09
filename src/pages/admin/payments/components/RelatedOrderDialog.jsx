@@ -1,14 +1,14 @@
 import React from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Typography, Grid, Divider, Box, useTheme, Chip, CircularProgress, 
-  Table, TableBody, TableCell, TableHead, TableRow, alpha, Paper, Avatar
+  Table, TableBody, TableCell, TableHead, TableRow, alpha, Paper
 } from '@mui/material';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import PersonIcon from '@mui/icons-material/Person';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import { useAdminRelatedOrder } from '../../../../hooks/sales/useAdminPayments';
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 
 // Reutilizamos el concepto de SectionCard para consistencia visual
 const SectionCard = ({ title, icon, children, sx }) => {
@@ -48,33 +48,18 @@ export const RelatedOrderDialog = ({ open, pedidoId, onClose }) => {
   }).format(new Date(fechaStr)) : '-';
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="sm" 
-      fullWidth 
-      sx={{ 
-    '& .MuiDialog-paper': { 
-      borderRadius: 4, 
-      backgroundImage: 'none',
-      // 2. Definimos un ancho máximo personalizado para cerrar la brecha
-      maxWidth: '720px', 
-    } 
-  }}
+    <AdminDialog
+      open={open}
+      onClose={onClose}
+      title="Pedido relacionado"
+      icon={<ShoppingBagIcon />}
+      maxWidth="md"
+      actions={
+        <Button onClick={onClose} variant="outlined">
+          Cerrar
+        </Button>
+      }
     >
-      <DialogTitle sx={{ p: 3, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar sx={{ bgcolor: theme.palette.secondary.main }}>
-            <ShoppingBagIcon />
-          </Avatar>
-          <Box>
-            <Typography variant="h6" fontWeight={800} sx={{ lineHeight: 1.2 }}>Pedido Relacionado</Typography>
-            <Typography variant="caption" color="text.secondary">Gestión de orden y pagos asociados</Typography>
-          </Box>
-        </Box>
-      </DialogTitle>
-
-      <DialogContent sx={{ p: 3, bgcolor: alpha(theme.palette.background.default, 0.3) }}>
         {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}><CircularProgress /></Box>
         ) : !order ? (
@@ -204,13 +189,6 @@ export const RelatedOrderDialog = ({ open, pedidoId, onClose }) => {
             )}
           </Box>
         )}
-      </DialogContent>
-
-      <DialogActions sx={{ p: 2.5, bgcolor: alpha(theme.palette.background.default, 0.3) }}>
-        <Button onClick={onClose} variant="contained" color="inherit" sx={{ borderRadius: 2, px: 4, fontWeight: 700 }}>
-          Cerrar
-        </Button>
-      </DialogActions>
-    </Dialog>
+    </AdminDialog>
   );
 };

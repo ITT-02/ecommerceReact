@@ -22,6 +22,10 @@ import {
   useVariantActions,
 } from '../../../hooks/catalog/useVariants';
 import { getVariantById } from '../../../services/catalog/variantService';
+import {
+  listWholesaleTiers,
+  replaceWholesaleTiersForVariant,
+} from '../../../services/partners/wholesaleService';
 import { formatCurrency } from '../../../utils/formatters';
 
 const parseBooleanFilter = (value) => {
@@ -106,6 +110,25 @@ const buildSimilarVariantDraft = (fullVariant, variantRow) => {
   };
 };
 
+const getSavedVariantId = (savedVariant, fallbackId = null) => {
+  if (fallbackId) return fallbackId;
+  if (!savedVariant) return null;
+
+  if (Array.isArray(savedVariant)) {
+    return getSavedVariantId(savedVariant[0], fallbackId);
+  }
+
+  return (
+    savedVariant.id ||
+    savedVariant.variante_id ||
+    savedVariant.variant?.id ||
+    savedVariant.variante?.id ||
+    savedVariant.data?.id ||
+    savedVariant.data?.variante_id ||
+    null
+  );
+};
+
 const renderAttributeChips = (summary) => {
   if (!summary || summary === 'Sin atributos') {
     return (
@@ -169,12 +192,14 @@ export const ProductVariantsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [variantDraft, setVariantDraft] = useState(null);
+  const [wholesaleTierDraft, setWholesaleTierDraft] = useState([]);
   const [defaultProduct, setDefaultProduct] = useState(null);
   const [modalMode, setModalMode] = useState('create');
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [variantToDelete, setVariantToDelete] = useState(null);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -217,6 +242,7 @@ export const ProductVariantsPage = () => {
       )
     );
   }, [debouncedSearch, products]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleToggleExpand = (product) => {
     if (Number(product.total_variantes ?? 0) <= 0) return;
@@ -274,9 +300,11 @@ export const ProductVariantsPage = () => {
         const fullVariant = await getVariantById(
           variantRow.variante_id || variantRow.id
         );
+        const tiers = await listWholesaleTiers(variantRow.variante_id || variantRow.id);
 
         setModalMode('edit');
         setSelectedVariant(fullVariant);
+        setWholesaleTierDraft(tiers);
         setDefaultProduct(null);
       } catch (err) {
         console.error('Error al obtener la variante completa:', err);
@@ -285,6 +313,7 @@ export const ProductVariantsPage = () => {
     } else {
       setModalMode('create');
       setSelectedVariant(null);
+      setWholesaleTierDraft([]);
       setDefaultProduct(getDefaultProductFromRow(productRow));
     }
 
@@ -298,11 +327,13 @@ export const ProductVariantsPage = () => {
       const fullVariant = await getVariantById(
         variantRow.variante_id || variantRow.id
       );
+      const tiers = await listWholesaleTiers(variantRow.variante_id || variantRow.id);
       const draft = buildSimilarVariantDraft(fullVariant, variantRow);
 
       setModalMode('duplicate');
       setSelectedVariant(null);
       setVariantDraft(draft);
+      setWholesaleTierDraft(tiers);
       setDefaultProduct(getDefaultProductFromVariant(fullVariant, variantRow));
       setIsModalOpen(true);
     } catch (err) {
@@ -315,18 +346,26 @@ export const ProductVariantsPage = () => {
     setIsModalOpen(false);
     setSelectedVariant(null);
     setVariantDraft(null);
+    setWholesaleTierDraft([]);
     setDefaultProduct(null);
     setModalMode('create');
   };
 
   const handleSaveVariant = async (payload) => {
     try {
+      const { wholesaleTiers = [], ...variantPayload } = payload;
       const variantIdToUpdate =
         modalMode === 'edit'
           ? selectedVariant?.id || selectedVariant?.variante_id
           : null;
 
-      await saveVariant(payload, variantIdToUpdate);
+      const savedVariant = await saveVariant(variantPayload, variantIdToUpdate);
+      const savedVariantId = getSavedVariantId(savedVariant, variantIdToUpdate);
+
+      if (savedVariantId) {
+        await replaceWholesaleTiersForVariant(savedVariantId, wholesaleTiers);
+      }
+
       handleCloseModal();
     } catch (err) {
       console.error('Error guardando variante:', err);
@@ -650,6 +689,7 @@ export const ProductVariantsPage = () => {
         open={isModalOpen}
         variant={selectedVariant || variantDraft}
         defaultProduct={defaultProduct}
+        wholesaleTiers={wholesaleTierDraft}
         mode={modalMode}
         onClose={handleCloseModal}
         onSave={handleSaveVariant}

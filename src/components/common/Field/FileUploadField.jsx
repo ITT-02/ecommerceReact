@@ -18,6 +18,8 @@ import {
   Typography,
 } from '@mui/material';
 
+import { ConfirmDialog } from '../ConfirmDialog';
+
 export const FileUploadField = ({
   label = 'Archivo',
   accept = 'image/*',
@@ -31,6 +33,7 @@ export const FileUploadField = ({
   onRemove,
 }) => {
   const [previews, setPreviews] = useState([]);
+  const [removeCandidate, setRemoveCandidate] = useState(null);
 
   // Normaliza el value para trabajar igual con 1 archivo o varios.
   const files = useMemo(() => {
@@ -112,23 +115,36 @@ export const FileUploadField = ({
     event.target.value = '';
   };
 
-  // Quita un archivo sin abrir el selector.
-  const handleRemove = (event, index) => {
+  // Pide confirmación antes de quitar un archivo.
+  const requestRemove = (event, index) => {
     event.preventDefault();
     event.stopPropagation();
     document.activeElement?.blur();
 
+    setRemoveCandidate({ index, file: files[index] || previews[index] || null });
+  };
+
+  const handleCancelRemove = () => {
+    setRemoveCandidate(null);
+  };
+
+  const handleConfirmRemove = () => {
+    if (!removeCandidate) return;
+
+    const { index } = removeCandidate;
     const removedFile = files[index];
 
     if (multiple) {
       const nextFiles = files.filter((_, fileIndex) => fileIndex !== index);
       onChange(nextFiles);
       onRemove?.(index, removedFile);
+      setRemoveCandidate(null);
       return;
     }
 
     onChange(null);
     onRemove?.(index, removedFile);
+    setRemoveCandidate(null);
   };
 
   // Ícono inicial según el tipo permitido.
@@ -161,7 +177,7 @@ export const FileUploadField = ({
         sx={{
           position: 'relative',
           height,
-          borderRadius: 2,
+          borderRadius: (theme) => theme.palette.custom.radius.xs,
           overflow: 'hidden',
           bgcolor: 'action.hover',
           border: '1px solid',
@@ -214,7 +230,7 @@ export const FileUploadField = ({
         {/* Quitar archivo */}
         <IconButton
           size="small"
-          onClick={(event) => handleRemove(event, index)}
+          onClick={(event) => requestRemove(event, index)}
           sx={(theme) => ({
             position: 'absolute',
             top: 8,
@@ -290,7 +306,8 @@ export const FileUploadField = ({
     : previews.length === 0;
 
   return (
-    <FormControl fullWidth variant="outlined">
+    <>
+      <FormControl fullWidth variant="outlined">
       <InputLabel shrink>{label}</InputLabel>
 
       <Box
@@ -298,7 +315,7 @@ export const FileUploadField = ({
           mt: 1,
           border: '1px solid',
           borderColor: 'divider',
-          borderRadius: 1,
+          borderRadius: (theme) => theme.palette.custom.radius.xs,
           bgcolor: 'background.paper',
           p: 1.5,
           transition:
@@ -329,7 +346,7 @@ export const FileUploadField = ({
             <Box
               sx={{
                 minHeight: height,
-                borderRadius: 1,
+                borderRadius: (theme) => theme.palette.custom.radius.xs,
                 bgcolor: 'background.default',
                 display: 'grid',
                 placeItems: 'center',
@@ -348,7 +365,7 @@ export const FileUploadField = ({
                   component="label"
                   startIcon={<CloudUploadOutlined />}
                   sx={{
-                    borderRadius: 1,
+                    borderRadius: (theme) => theme.palette.custom.radius.xs,
                     textTransform: 'none',
                     fontWeight: 600,
                     px: 3.5,
@@ -374,6 +391,17 @@ export const FileUploadField = ({
         {helperText}
         {multiple && ` · Máximo ${maxFiles} archivos`}
       </FormHelperText>
-    </FormControl>
+      </FormControl>
+
+      <ConfirmDialog
+        open={Boolean(removeCandidate)}
+        action="delete"
+        title="Quitar archivo"
+        message="¿Deseas quitar este archivo del formulario?"
+        confirmText="Quitar"
+        onCancel={handleCancelRemove}
+        onConfirm={handleConfirmRemove}
+      />
+    </>
   );
 };

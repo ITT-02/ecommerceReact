@@ -2,8 +2,7 @@ import { INTERNAL_ROLES, ROLE_PRIORITY, ROLES } from './accessControl';
 
 /**
  * Normaliza roles para evitar errores por mayúsculas o espacios.
- *
- * Ejemplo:
+
  * [' Administrador '] => ['administrador']
  */
 const normalizeRoles = (roles = []) => {
@@ -12,8 +11,6 @@ const normalizeRoles = (roles = []) => {
 
 /**
  * Obtiene el rol principal del usuario según prioridad.
- *
- * Ejemplo:
  * roles = ['cliente', 'ventas']
  * Resultado: 'ventas'
  */
@@ -60,5 +57,14 @@ export const hasInternalRole = (roles = []) => {
  * Si no, entra a la tienda.
  */
 export const getDefaultPathByRoles = (roles = []) => {
+  const normalizedRoles = normalizeRoles(roles);
+
+  if (
+    normalizedRoles.includes(ROLES.SOCIO_COMERCIAL) &&
+    !normalizedRoles.some((role) => role !== ROLES.SOCIO_COMERCIAL && INTERNAL_ROLES.includes(role))
+  ) {
+    return '/admin/mis-productos-socio';
+  }
+
   return hasInternalRole(roles) ? '/admin/dashboard' : '/';
 };

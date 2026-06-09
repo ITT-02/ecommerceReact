@@ -177,7 +177,7 @@ export const OrderTrackingPage = () => {
                       variant="outlined"
                     />
                     {order.requiere_abastecimiento && (
-                      <Chip label="Requiere abastecimiento" color="warning" variant="outlined" />
+                      <Chip label="Preparación bajo pedido" color="warning" variant="outlined" />
                     )}
                   </Stack>
 
@@ -378,7 +378,7 @@ export const OrderTrackingPage = () => {
                                 </Typography>
                                 {item.requiere_abastecimiento && (
                                   <Typography variant="caption" color="warning.main">
-                                    Compra bajo pedido
+                                    Preparación bajo pedido
                                   </Typography>
                                 )}
                                 {Array.isArray(item.personalizaciones) && item.personalizaciones.length > 0 && (

@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
 import {
   Button,
-  Switch, // Cambiado aquí
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
+  Switch,
   FormControlLabel,
   FormGroup,
   MenuItem,
   TextField,
   Stack,
-  Typography
+  Typography,
 } from '@mui/material';
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
+
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 
 const TIPOS_DATO = ['texto', 'numero', 'booleano', 'color', 'lista'];
 
@@ -59,61 +58,68 @@ export const AtributoForm = ({ open, isEdit, atributoInicial, onClose, onSave })
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>{isEdit ? 'Editar Atributo' : 'Nuevo Atributo'}</DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={3}>
-            <TextField
-              label="Nombre"
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-            <TextField
-              select
-              label="Tipo de dato"
-              name="tipo_dato"
-              value={formData.tipo_dato}
-              onChange={handleChange}
-              fullWidth
-              required
-            >
-              {TIPOS_DATO.map((tipo) => (
-                <MenuItem key={tipo} value={tipo}>
-                  {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
-                </MenuItem>
-              ))}
-            </TextField>
+    <AdminDialog
+      open={open}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      title={isEdit ? 'Editar atributo' : 'Nuevo atributo'}
+      icon={<TuneOutlinedIcon />}
+      maxWidth="sm"
+      actions={
+        <>
+          <Button variant="outlined" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained">
+            Guardar
+          </Button>
+        </>
+      }
+    >
+      <Stack spacing={3}>
+        <TextField
+          label="Nombre"
+          name="nombre"
+          value={formData.nombre}
+          onChange={handleChange}
+          fullWidth
+          required
+        />
+        <TextField
+          select
+          label="Tipo de dato"
+          name="tipo_dato"
+          value={formData.tipo_dato}
+          onChange={handleChange}
+          fullWidth
+          required
+        >
+          {TIPOS_DATO.map((tipo) => (
+            <MenuItem key={tipo} value={tipo}>
+              {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
+            </MenuItem>
+          ))}
+        </TextField>
 
-            <Typography variant="subtitle2" sx={{ color: 'text.secondary', mb: -2 }}>
-              Configuraciones del atributo
-            </Typography>
+        <Typography variant="subtitle2" color="text.secondary">
+          Configuración
+        </Typography>
 
-            {/* AQUÍ REEMPLAZAMOS LOS CHECKBOXES POR SWITCHES ESCALADOS */}
-            <FormGroup sx={{ gap: 1.5, pl: 1 }}>
-              <FormControlLabel
-                control={<Switch color="success" sx={{ transform: 'scale(1.2)', mr: 1 }} name="se_usa_en_filtro" checked={formData.se_usa_en_filtro} onChange={handleChange} />}
-                label="Se usa en filtros"
-              />
-              <FormControlLabel
-                control={<Switch color="success" sx={{ transform: 'scale(1.2)', mr: 1 }} name="se_usa_en_variantes" checked={formData.se_usa_en_variantes} onChange={handleChange} />}
-                label="Se usa en variantes"
-              />
-              <FormControlLabel
-                control={<Switch color="warning" sx={{ transform: 'scale(1.2)', mr: 1 }} name="es_obligatorio" checked={formData.es_obligatorio} onChange={handleChange} />}
-                label="Es obligatorio"
-              />
-            </FormGroup>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} color="inherit">Cancelar</Button>
-          <Button type="submit" variant="contained">Guardar</Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+        <FormGroup sx={{ gap: 1.5, pl: 1 }}>
+          <FormControlLabel
+            control={<Switch color="success" name="se_usa_en_filtro" checked={formData.se_usa_en_filtro} onChange={handleChange} />}
+            label="Usar en filtros"
+          />
+          <FormControlLabel
+            control={<Switch color="success" name="se_usa_en_variantes" checked={formData.se_usa_en_variantes} onChange={handleChange} />}
+            label="Usar en variantes"
+          />
+          <FormControlLabel
+            control={<Switch color="warning" name="es_obligatorio" checked={formData.es_obligatorio} onChange={handleChange} />}
+            label="Obligatorio"
+          />
+        </FormGroup>
+      </Stack>
+    </AdminDialog>
   );
 };

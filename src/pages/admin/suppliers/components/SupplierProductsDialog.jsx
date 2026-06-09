@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Dialog,
@@ -18,6 +19,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 
+import { ConfirmDialog } from '../../../../components/common/ConfirmDialog';
 import { ErrorMessage } from '../../../../components/common/ErrorMessage';
 import { formatCurrency } from '../../../../utils/formatters';
 import { useSupplierProducts } from '../../../../hooks/procurement/useProcurement';
@@ -57,6 +59,7 @@ export const SupplierProductsDialog = ({
   // Mientras no edite, la lista se deriva de la consulta para evitar sincronizar estado con useEffect.
   const [draftItems, setDraftItems] = useState(null);
   const [notice, setNotice] = useState('');
+  const [removeItemIndex, setRemoveItemIndex] = useState(null);
 
   const items = useMemo(() => {
     return draftItems ?? (loadedItems || []).map(normalizeItem);
@@ -89,8 +92,15 @@ export const SupplierProductsDialog = ({
     );
   };
 
-  const removeItem = (index) => {
-    setDraftItems((current) => (current ?? items).filter((_, itemIndex) => itemIndex !== index));
+  const requestRemoveItem = (index) => {
+    setRemoveItemIndex(index);
+  };
+
+  const handleConfirmRemoveItem = () => {
+    if (removeItemIndex === null) return;
+
+    setDraftItems((current) => (current ?? items).filter((_, itemIndex) => itemIndex !== removeItemIndex));
+    setRemoveItemIndex(null);
   };
 
   const handleSubmit = async () => {
@@ -108,7 +118,8 @@ export const SupplierProductsDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
+    <>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <DialogTitle sx={{ pr: 6, fontWeight: 900 }}>
         Productos y costos del proveedor
         <IconButton
@@ -154,21 +165,19 @@ export const SupplierProductsDialog = ({
                     spacing={1.25}
                     sx={{ alignItems: { xs: 'stretch', md: 'center' } }}
                   >
-                    <TextField
-                      select
+                    <Autocomplete
                       size="small"
-                      label="Variante"
-                      value={item.variante_id || ''}
-                      onChange={(event) => updateItem(index, 'variante_id', event.target.value)}
+                      options={variants}
+                      value={selectedVariant || null}
+                      onChange={(_event, value) => updateItem(index, 'variante_id', value?.id || '')}
+                      getOptionLabel={(option) => option?.label || ''}
+                      isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                      noOptionsText="No se encontraron variantes"
                       sx={{ minWidth: { xs: '100%', md: 320 }, flex: 1 }}
-                    >
-                      <MenuItem value="">Seleccionar</MenuItem>
-                      {variants.map((variant) => (
-                        <MenuItem key={variant.id} value={variant.id}>
-                          {variant.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                      renderInput={(params) => (
+                        <TextField {...params} label="Variante" placeholder="Busca producto, codigo o variante" />
+                      )}
+                    />
 
                     <TextField
                       size="small"
@@ -217,7 +226,7 @@ export const SupplierProductsDialog = ({
                       <MenuItem value="true">Sí</MenuItem>
                     </TextField>
 
-                    <IconButton color="error" onClick={() => removeItem(index)} aria-label="Quitar producto">
+                    <IconButton color="error" onClick={() => requestRemoveItem(index)} aria-label="Quitar producto">
                       <DeleteOutlineRoundedIcon />
                     </IconButton>
                   </Stack>
@@ -251,6 +260,17 @@ export const SupplierProductsDialog = ({
           Guardar costos
         </Button>
       </DialogActions>
-    </Dialog>
+      </Dialog>
+
+      <ConfirmDialog
+        open={removeItemIndex !== null}
+        action="delete"
+        title="Quitar producto proveedor"
+        message="¿Deseas quitar esta configuración de costo del proveedor?"
+        confirmText="Quitar"
+        onCancel={() => setRemoveItemIndex(null)}
+        onConfirm={handleConfirmRemoveItem}
+      />
+    </>
   );
 };

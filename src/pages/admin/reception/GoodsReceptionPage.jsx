@@ -13,6 +13,7 @@ import {
   useProcurementOptions,
 } from '../../../hooks/procurement/useProcurement';
 import { getGoodsReceptionDetail } from '../../../services/procurement/procurementService';
+import { useDebouncedValue } from '../../../hooks/common/useDebouncedValue';
 import { normalizeApiError } from '../../../utils/api/normalizeApiError';
 import { formatCurrency, formatDate } from '../../../utils/formatters';
 import { CancelReceptionDialog } from './components/CancelReceptionDialog';
@@ -46,8 +47,11 @@ export const GoodsReceptionPage = () => {
   const [localError, setLocalError] = useState('');
   const [cancelError, setCancelError] = useState('');
   const [notice, setNotice] = useState('');
+  const [variantSearch, setVariantSearch] = useState('');
 
-  const { proveedores, almacenes, variantes } = useProcurementOptions('');
+  const debouncedVariantSearch = useDebouncedValue(variantSearch, 350);
+  const { proveedores, almacenes } = useProcurementOptions('');
+  const { variantes, loading: variantsLoading } = useProcurementOptions(debouncedVariantSearch);
   const { orders: pendingOrders } = usePendingPurchaseOrders('', formOpen);
 
   const {
@@ -189,6 +193,7 @@ export const GoodsReceptionPage = () => {
           primaryActionLabel="Nueva recepción"
           onPrimaryAction={() => {
             setLocalError('');
+            setVariantSearch('');
             setFormOpen(true);
           }}
           emptyTitle="Sin recepciones"
@@ -205,13 +210,16 @@ export const GoodsReceptionPage = () => {
           suppliers={proveedores}
           warehouses={almacenes}
           variants={variantes}
+          variantsLoading={variantsLoading}
           saving={saving}
           error={localError}
           onClose={() => {
             setFormOpen(false);
             setLocalError('');
+            setVariantSearch('');
           }}
           onSubmit={handleRegisterReception}
+          onVariantSearchChange={setVariantSearch}
         />
       )}
 

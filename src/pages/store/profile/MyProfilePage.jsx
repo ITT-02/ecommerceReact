@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Box, Typography, Paper, Divider, Button, CircularProgress,
   Avatar, useTheme, List, ListItemButton, ListItemText, ListItemIcon, alpha,
-  useMediaQuery,
+  useMediaQuery, Container, Stack, Alert,
 } from '@mui/material';
 
 import EditIcon         from '@mui/icons-material/Edit';
@@ -15,6 +15,7 @@ import {ProfileForm}       from './components/ProfileForm';
 import { AddressCard }   from './components/AddressCard';
 import { AddressDialog } from './components/AddressDialog';
 import { useMyProfile }  from '../../../hooks/store/useMyProfile';
+import { ErrorMessage } from '../../../components/common/ErrorMessage';
 
 export const MyProfilePage = () => {
   const theme    = useTheme();
@@ -24,6 +25,8 @@ export const MyProfilePage = () => {
 
   const [addressDialogOpen, setAddressDialogOpen] = useState(false);
   const [selectedAddress,   setSelectedAddress]   = useState(null);
+  const [error] = useState('');
+  const [notice, setNotice] = useState('');
 
   const handleOpen  = (address = null) => { setSelectedAddress(address); setAddressDialogOpen(true);  };
   const handleClose = ()               => { setAddressDialogOpen(false); setSelectedAddress(null);    };

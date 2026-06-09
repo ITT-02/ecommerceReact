@@ -3,10 +3,6 @@ import {
   Autocomplete,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
   FormControlLabel,
   Grid,
@@ -20,9 +16,11 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteIcon from '@mui/icons-material/Delete';
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 
+import { AdminDialog } from '../../common/adminDialog/AdminDialog';
+import { ConfirmDialog } from '../../common/ConfirmDialog';
 import {
   useProductOptions,
   useVariantAttributes,
@@ -181,6 +179,7 @@ export const VariantFormModal = ({
   open,
   variant = null,
   defaultProduct = null,
+  wholesaleTiers = [],
   mode = 'create',
   onClose,
   onSave,
@@ -200,7 +199,9 @@ export const VariantFormModal = ({
 
   const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
   const [dynamicAttributes, setDynamicAttributes] = useState([]);
+  const [tierRows, setTierRows] = useState([]);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [removeConfirm, setRemoveConfirm] = useState(null);
 
   useEffect(() => {
     if (!open) return;
@@ -211,6 +212,16 @@ export const VariantFormModal = ({
     if (variant) {
       setFormData(mapVariantToFormData({ variant, defaultProduct }));
       setDynamicAttributes(mapVariantAttributesToRows(variant));
+      setTierRows(
+        Array.isArray(wholesaleTiers)
+          ? wholesaleTiers.map((tier) => ({
+              id: tier.id || generateLocalId(),
+              cantidad_minima: tier.cantidad_minima ?? '',
+              precio_unitario: tier.precio_unitario ?? '',
+              es_activo: tier.es_activo ?? true,
+            }))
+          : []
+      );
       return;
     }
 
@@ -225,7 +236,17 @@ export const VariantFormModal = ({
         : null,
     });
     setDynamicAttributes([]);
-  }, [open, variant, defaultProduct]);
+    setTierRows(
+      Array.isArray(wholesaleTiers)
+        ? wholesaleTiers.map((tier) => ({
+            id: tier.id || generateLocalId(),
+            cantidad_minima: tier.cantidad_minima ?? '',
+            precio_unitario: tier.precio_unitario ?? '',
+            es_activo: tier.es_activo ?? true,
+          }))
+        : []
+    );
+  }, [open, variant, defaultProduct, wholesaleTiers]);
 
   const measureLabel = useMemo(() => {
     return buildMeasureLabel({
@@ -248,6 +269,13 @@ export const VariantFormModal = ({
   const priceError = submitAttempted && (formData.precio === '' || formData.precio === null);
   const incompleteAttributes = submitAttempted
     ? dynamicAttributes.some((item) => !item.atributoId || !item.valorId)
+    : false;
+  const incompleteTiers = submitAttempted
+    ? tierRows.some((item) => Number(item.cantidad_minima) <= 0 || Number(item.precio_unitario) < 0)
+    : false;
+  const duplicatedTierMinimums = submitAttempted
+    ? new Set(tierRows.map((item) => String(item.cantidad_minima).trim()).filter(Boolean)).size !==
+      tierRows.map((item) => String(item.cantidad_minima).trim()).filter(Boolean).length
     : false;
 
   const modalTitle = {
@@ -286,8 +314,44 @@ export const VariantFormModal = ({
     ]);
   };
 
-  const handleRemoveAttribute = (id) => {
-    setDynamicAttributes((prev) => prev.filter((item) => item.id !== id));
+  const requestRemoveAttribute = (id) => {
+    setRemoveConfirm({ type: 'attribute', id });
+  };
+
+  const handleAddTier = () => {
+    setTierRows((prev) => [
+      ...prev,
+      {
+        id: generateLocalId(),
+        cantidad_minima: '',
+        precio_unitario: '',
+        es_activo: true,
+      },
+    ]);
+  };
+
+  const handleTierChange = (id, field, value) => {
+    setTierRows((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const requestRemoveTier = (id) => {
+    setRemoveConfirm({ type: 'tier', id });
+  };
+
+  const handleConfirmRemove = () => {
+    if (!removeConfirm) return;
+
+    if (removeConfirm.type === 'attribute') {
+      setDynamicAttributes((prev) => prev.filter((item) => item.id !== removeConfirm.id));
+    }
+
+    if (removeConfirm.type === 'tier') {
+      setTierRows((prev) => prev.filter((item) => item.id !== removeConfirm.id));
+    }
+
+    setRemoveConfirm(null);
   };
 
   const handleAttributeChange = (id, field, value) => {
@@ -324,6 +388,10 @@ export const VariantFormModal = ({
     );
 
     if (hasIncompleteAttributes) return;
+    if (tierRows.some((item) => Number(item.cantidad_minima) <= 0 || Number(item.precio_unitario) < 0)) return;
+
+    const tierMinimums = tierRows.map((item) => String(item.cantidad_minima).trim()).filter(Boolean);
+    if (tierMinimums.length !== new Set(tierMinimums).size) return;
 
     const atributoIds = dynamicAttributes.map((item) => item.atributoId).filter(Boolean);
     if (atributoIds.length !== new Set(atributoIds).size) return;
@@ -353,40 +421,42 @@ export const VariantFormModal = ({
       attributes: dynamicAttributes
         .filter((item) => item.valorId)
         .map((item) => ({ atributo_valor_id: item.valorId })),
+      wholesaleTiers: tierRows
+        .filter((item) => Number(item.cantidad_minima) > 0 && Number(item.precio_unitario) >= 0)
+        .map((item) => ({
+          cantidad_minima: Number(item.cantidad_minima),
+          precio_unitario: Number(item.precio_unitario),
+          es_activo: Boolean(item.es_activo),
+        }))
+        .sort((a, b) => a.cantidad_minima - b.cantidad_minima),
     });
   };
 
   return (
-    <Dialog
+    <>
+      <AdminDialog
       open={open}
       onClose={handleClose}
+      title={modalTitle}
+      icon={<TuneOutlinedIcon />}
       maxWidth="md"
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: 3,
-            maxHeight: { xs: 'calc(100dvh - 16px)', sm: 'calc(100dvh - 48px)' },
-          },
-        },
-      }}
+      onSubmit={handleSubmit}
+      actions={(
+        <>
+          <Button
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={handleClose}
+          >
+            Cancelar
+          </Button>
+
+          <Button type="submit" variant="contained" color="primary">
+            {isDuplicate ? 'Crear variante similar' : 'Guardar'}
+          </Button>
+        </>
+      )}
     >
-      <Box component="form" onSubmit={handleSubmit} sx={{ minHeight: 0 }}>
-        <DialogTitle sx={{ pr: 6, fontWeight: 900 }}>
-          {modalTitle}
-        </DialogTitle>
-
-        <IconButton
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={handleClose}
-          size="small"
-          aria-label="Cerrar formulario de variante"
-          sx={{ position: 'absolute', right: 8, top: 8 }}
-        >
-          <CloseRoundedIcon fontSize="small" />
-        </IconButton>
-
-        <DialogContent dividers>
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <Autocomplete
@@ -613,6 +683,97 @@ export const VariantFormModal = ({
               >
                 <Box>
                   <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
+                    Precio mayorista por variante
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Estos tramos solo se aplican a clientes mayoristas aprobados.
+                  </Typography>
+                </Box>
+
+                <Button type="button" startIcon={<AddIcon />} variant="outlined" onClick={handleAddTier}>
+                  Agregar tramo
+                </Button>
+              </Stack>
+
+              {tierRows.map((tier, index) => {
+                const minimumError = submitAttempted && Number(tier.cantidad_minima) <= 0;
+                const priceTierError = submitAttempted && Number(tier.precio_unitario) < 0;
+
+                return (
+                  <Paper
+                    key={tier.id}
+                    variant="outlined"
+                    sx={(theme) => ({ p: 2, mb: 2, borderRadius: theme.palette.custom.radius.xs, bgcolor: 'background.default' })}
+                  >
+                    <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <TextField
+                          fullWidth
+                          label={`Cantidad mínima ${index + 1}`}
+                          type="number"
+                          value={tier.cantidad_minima}
+                          onChange={(event) => handleTierChange(tier.id, 'cantidad_minima', event.target.value)}
+                          error={minimumError}
+                          helperText={minimumError ? 'Debe ser mayor a cero.' : undefined}
+                          slotProps={{ htmlInput: { min: 1, step: 1 } }}
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <TextField
+                          fullWidth
+                          label={`Precio mayorista ${index + 1}`}
+                          type="number"
+                          value={tier.precio_unitario}
+                          onChange={(event) => handleTierChange(tier.id, 'precio_unitario', event.target.value)}
+                          error={priceTierError}
+                          helperText={priceTierError ? 'No puede ser negativo.' : undefined}
+                          slotProps={{
+                            htmlInput: { min: 0, step: '0.01' },
+                            input: { startAdornment: <InputAdornment position="start">S/</InputAdornment> },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 3 }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={Boolean(tier.es_activo)}
+                              onChange={(event) => handleTierChange(tier.id, 'es_activo', event.target.checked)}
+                              color="primary"
+                            />
+                          }
+                          label={tier.es_activo ? 'Activo' : 'Inactivo'}
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 1 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <IconButton color="error" onClick={() => requestRemoveTier(tier.id)} title="Eliminar tramo">
+                          <DeleteIcon />
+                        </IconButton>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                );
+              })}
+
+              {(incompleteTiers || duplicatedTierMinimums) && (
+                <Typography variant="caption" color="error">
+                  Revisa los tramos: la cantidad mínima debe ser unica y mayor a cero.
+                </Typography>
+              )}
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <Divider sx={{ my: 0.5 }} />
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1}
+                sx={{ justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 2 }}
+              >
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
                     Atributos dinámicos
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -649,32 +810,28 @@ export const VariantFormModal = ({
                   <Paper
                     key={attr.id}
                     variant="outlined"
-                    sx={{ p: 2, mb: 2, borderRadius: 2.5, bgcolor: 'background.default' }}
+                    sx={(theme) => ({ p: 2, mb: 2, borderRadius: theme.palette.custom.radius.xs, bgcolor: 'background.default' })}
                   >
                     <Grid container spacing={2} sx={{ alignItems: 'center' }}>
                       <Grid size={{ xs: 12, sm: 5 }}>
-                        <TextField
-                          select
-                          fullWidth
-                          label={`Atributo ${index + 1}`}
-                          value={attr.atributoId || ''}
-                          onChange={(event) => handleAttributeChange(attr.id, 'atributoId', event.target.value)}
-                          error={attributeError}
-                          helperText={attributeError ? 'Selecciona el atributo.' : undefined}
-                        >
-                          <MenuItem value="" disabled>
-                            Seleccione un atributo
-                          </MenuItem>
-                          {safeAttributes.map((item) => (
-                            <MenuItem
-                              key={item.id}
-                              value={item.id}
-                              disabled={usedElsewhere.has(item.id)}
-                            >
-                              {item.nombre}{usedElsewhere.has(item.id) ? ' (ya agregado)' : ''}
-                            </MenuItem>
-                          ))}
-                        </TextField>
+                        <Autocomplete
+                          options={safeAttributes}
+                          getOptionLabel={(option) => option?.nombre || ''}
+                          isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                          getOptionDisabled={(option) => usedElsewhere.has(option.id)}
+                          value={safeAttributes.find((item) => item.id === attr.atributoId) || null}
+                          onChange={(_event, newValue) => handleAttributeChange(attr.id, 'atributoId', newValue?.id || '')}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label={`Atributo ${index + 1}`}
+                              placeholder="Busca atributo"
+                              error={attributeError}
+                              helperText={attributeError ? 'Selecciona el atributo.' : undefined}
+                            />
+                          )}
+                          noOptionsText="No hay atributos configurados"
+                        />
                       </Grid>
 
                       <Grid size={{ xs: 12, sm: 6 }}>
@@ -708,7 +865,7 @@ export const VariantFormModal = ({
                       <Grid size={{ xs: 12, sm: 1 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <IconButton
                           color="error"
-                          onClick={() => handleRemoveAttribute(attr.id)}
+                          onClick={() => requestRemoveAttribute(attr.id)}
                           title="Eliminar este atributo"
                         >
                           <DeleteIcon />
@@ -726,22 +883,19 @@ export const VariantFormModal = ({
               )}
             </Grid>
           </Grid>
-        </DialogContent>
+      </AdminDialog>
 
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button
-            type="button"
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={handleClose}
-          >
-            Cancelar
-          </Button>
-
-          <Button type="submit" variant="contained" color="primary">
-            {isDuplicate ? 'Crear variante similar' : 'Guardar'}
-          </Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
+      <ConfirmDialog
+        open={Boolean(removeConfirm)}
+        action="delete"
+        title={removeConfirm?.type === 'tier' ? 'Eliminar tramo mayorista' : 'Eliminar atributo'}
+        message={removeConfirm?.type === 'tier'
+          ? '¿Deseas quitar este tramo mayorista del formulario?'
+          : '¿Deseas quitar este atributo de la variante?'}
+        confirmText="Quitar"
+        onCancel={() => setRemoveConfirm(null)}
+        onConfirm={handleConfirmRemove}
+      />
+    </>
   );
 };

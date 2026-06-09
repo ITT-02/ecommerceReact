@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   TextField,
   Select,
@@ -14,10 +10,10 @@ import {
   Typography,
   Alert,
   CircularProgress,
-  IconButton,
-   useTheme, alpha
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+
+import { AdminDialog } from '../../../../components/common/adminDialog/AdminDialog';
 
 export const InventoryAdjustDialog = ({ 
   open, 
@@ -26,7 +22,6 @@ export const InventoryAdjustDialog = ({
   onConfirm,
   loading 
 }) => {
-  const theme = useTheme();
   const [formData, setFormData] = useState({
     nuevoStockFinal: 0,
     referenciaTipo: 'conteo_fisico',
@@ -68,25 +63,24 @@ export const InventoryAdjustDialog = ({
   };
 
   return (
-   <Dialog 
-      open={open} 
-      onClose={handleClose} 
-      maxWidth="lg" 
-      fullWidth
+    <AdminDialog
+      open={open}
+      onClose={handleClose}
+      title="Ajustar stock"
+      icon={<Inventory2OutlinedIcon />}
+      maxWidth="lg"
+      loading={loading}
+      actions={
+        <>
+          <Button variant="outlined" onClick={handleClose} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} variant="contained" disabled={loading}>
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'Guardar'}
+          </Button>
+        </>
+      }
     >
-      <DialogTitle sx={{ pr: 6 }}>
-        Ajustar Stock
-        <IconButton
-          onClick={handleClose}
-          size="small"
-          aria-label="Cerrar diálogo de movimientos"
-          sx={{ position: 'absolute', right: 8, top: 8 }}
-        >
-          <CloseRoundedIcon fontSize="small" />
-        </IconButton>
-      </DialogTitle>
-      
-      <DialogContent dividers>
         <Box
           sx={{
             mb: 3,
@@ -158,22 +152,6 @@ export const InventoryAdjustDialog = ({
             disabled={loading}
           />
         </Box>
-      </DialogContent>
-      
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} disabled={loading} color="inherit">
-          Cancelar
-        </Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained" 
-          color="primary"
-          disabled={loading}
-          sx={{ minWidth: 120 }}
-        >
-          {loading ? <CircularProgress size={24} color="inherit" /> : 'Ajustar stock'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    </AdminDialog>
   );
 };

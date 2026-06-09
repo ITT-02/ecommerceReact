@@ -42,15 +42,21 @@ import { StoreCustomizationPage } from '../pages/admin/storeSettings/StoreCustom
 import { ContactMessagesPage } from '../pages/admin/contactMessages/ContactMessagesPage';
 import { SuppliersPage } from '../pages/admin/suppliers/SuppliersPage';
 import { ProductPersonalizationPage } from '../pages/admin/productsPersonalization/ProductPersonalizationPage';
+import { CommercialPartnerApprovalsPage } from '../pages/admin/commercialPartners/CommercialPartnerApprovalsPage';
+import { CommercialPartnerRequestsPage } from '../pages/admin/commercialPartners/CommercialPartnerRequestsPage';
+import { PartnerProductsPage } from '../pages/admin/commercialPartners/PartnerProductsPage';
+import { WholesaleManagementPage } from '../pages/admin/commercialPartners/WholesaleManagementPage';
 
 import { AddressesPage } from '../pages/store/AddressesPage';
 import { CartPage } from '../pages/store/CartPage';
 import { CatalogPage } from '../pages/store/CatalogPage';
 import { ContactPage } from '../pages/store/ContactPage';
+import { CommercialPartnerRequestPage } from '../pages/store/CommercialPartnerRequestPage';
 import { CheckoutPage } from '../pages/store/CheckoutPage';
 import { HomePage } from '../pages/store/HomePage';
 import { WholesalePage } from '../pages/store/WholesalePage';
 import { MyOrdersPage } from '../pages/store/MyOrdersPage';
+import { MyCommercialRequestsPage } from '../pages/store/MyCommercialRequestsPage';
 import { MyQuotesPage } from '../pages/store/MyQuotesPage';
 import { QuoteDetailPage } from '../pages/store/QuoteDetailPage';
 import { QuoteRequestPage } from '../pages/store/QuoteRequestPage';
@@ -63,6 +69,8 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
 import { RoleRoute } from './RoleRoute';
 import { ScrollToTop } from './ScrollToTop';
+import { useAuth } from '../hooks/auth/useAuth';
+import { hasAllowedRole } from '../utils/access/menuByRole';
 
 import {
   ADMIN_ROLES,
@@ -71,8 +79,20 @@ import {
   INVENTORY_ROLES,
   FINANCE_ROLES,
   MARKETING_ROLES,
+  PARTNER_REVIEW_ROLES,
+  PARTNER_ROLES,
   SALES_ROLES,
 } from '../utils/access/accessControl';
+
+const AdminIndexRedirect = () => {
+  const { roles } = useAuth();
+
+  if (hasAllowedRole(roles, PARTNER_ROLES) && !hasAllowedRole(roles, DASHBOARD_ROLES)) {
+    return <Navigate to="mis-productos-socio" replace />;
+  }
+
+  return <Navigate to="dashboard" replace />;
+};
 
 export const AppRouter = () => {
   return (
@@ -104,16 +124,18 @@ export const AppRouter = () => {
             <Route path="mis-cotizaciones" element={<MyQuotesPage />} />
             <Route path="mis-cotizaciones/:id" element={<QuoteDetailPage />} />
             <Route path="mis-pedidos" element={<MyOrdersPage />} />
+            <Route path="mis-solicitudes" element={<MyCommercialRequestsPage />} />
             <Route path="mis-pedidos/:id" element={<OrderTrackingPage />} />
             <Route path="perfil" element={<ProfilePage />} />
             <Route path="direcciones" element={<AddressesPage />} />
+            <Route path="solicitud-socio-comercial" element={<CommercialPartnerRequestPage />} />
           </Route>
         </Route>
 
         {/* Rutas protegidas del panel administrativo */}
         <Route element={<ProtectedRoute />}>
           <Route path="admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route index element={<AdminIndexRedirect />} />
 
             {/* Panel */}
             <Route path="dashboard" element={<RoleRoute allowedRoles={DASHBOARD_ROLES}><DashboardPage /></RoleRoute>} />
@@ -124,6 +146,10 @@ export const AppRouter = () => {
             <Route path="productos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductsPage /></RoleRoute>} />
             <Route path="variantes" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductVariantsPage /></RoleRoute>} />
             <Route path="personalizacion-productos" element={<RoleRoute allowedRoles={CATALOG_ROLES}><ProductPersonalizationPage /></RoleRoute>} />
+            <Route path="revision-socios" element={<RoleRoute allowedRoles={PARTNER_REVIEW_ROLES}><CommercialPartnerApprovalsPage /></RoleRoute>} />
+            <Route path="mis-productos-socio" element={<RoleRoute allowedRoles={PARTNER_ROLES}><PartnerProductsPage /></RoleRoute>} />
+            <Route path="solicitudes-socios" element={<RoleRoute allowedRoles={ADMIN_ROLES}><CommercialPartnerRequestsPage /></RoleRoute>} />
+            <Route path="mayoristas" element={<RoleRoute allowedRoles={ADMIN_ROLES}><WholesaleManagementPage /></RoleRoute>} />
 
             {/* Inventario */}
             <Route path="almacenes" element={<RoleRoute allowedRoles={INVENTORY_ROLES}><WarehousesPage /></RoleRoute>} />
