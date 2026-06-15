@@ -3,8 +3,13 @@ import {
   Alert,
   AlertTitle,
   Box,
+  Checkbox,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Container,
   Grid,
+  FormGroup,
   IconButton,
   InputAdornment,
   Paper,
@@ -20,6 +25,8 @@ import {
   Divider,
   LinearProgress,
   Grid as MuiGrid,
+  CircularProgress,
+  Tooltip,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
@@ -32,6 +39,13 @@ import EditOffOutlinedIcon from '@mui/icons-material/EditOffOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import SearchOffIcon from '@mui/icons-material/SearchOff';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 
 import { AdminDialog } from '../../../components/common/adminDialog/AdminDialog';
 import { PlaceholderPage } from '../../../components/common/PlaceholderPage';
@@ -57,6 +71,12 @@ export const RolesPage = () => {
   const [editRoleSaving, setEditRoleSaving] = useState(false);
   const [editRoleError, setEditRoleError] = useState(null);
   const [assignRole, setAssignRole] = useState(null);
+  const [assignRoleSelected, setAssignRoleSelected] = useState(new Set());
+  const [assignRoleFilter, setAssignRoleFilter] = useState('');
+  const [assignRoleLoading, setAssignRoleLoading] = useState(false);
+  const [assignRoleSaving, setAssignRoleSaving] = useState(false);
+  const [assignRoleError, setAssignRoleError] = useState(null);
+  const [assignRoleConfirmOpen, setAssignRoleConfirmOpen] = useState(false);
 
   const theme = useTheme();
 
@@ -140,6 +160,86 @@ export const RolesPage = () => {
       setEditRoleError(errorSave);
     } finally {
       setEditRoleSaving(false);
+    }
+  };
+
+  const closeAssignRole = () => {
+    setAssignRole(null);
+    setAssignRoleSelected(new Set());
+    setAssignRoleFilter('');
+    setAssignRoleLoading(false);
+    setAssignRoleSaving(false);
+    setAssignRoleError(null);
+    setAssignRoleConfirmOpen(false);
+  };
+
+  const handleAssignRole = async (role) => {
+    if (!role?.id) return;
+
+    setAssignRole(role);
+    setAssignRoleLoading(true);
+    setAssignRoleError(null);
+    setAssignRoleFilter('');
+    setAssignRoleSelected(new Set());
+
+    try {
+      const detail = await getRoleDetail(role.id);
+      setAssignRoleSelected(new Set((detail.permisos || []).map((p) => p.codigo)));
+    } catch (errorAssign) {
+      setAssignRoleError(errorAssign);
+    } finally {
+      setAssignRoleLoading(false);
+    }
+  };
+
+  const toggleAssignPermission = (codigo) => {
+    setAssignRoleSelected((prev) => {
+      const next = new Set(prev);
+
+      if (next.has(codigo)) {
+        next.delete(codigo);
+      } else {
+        next.add(codigo);
+      }
+
+      return next;
+    });
+  };
+
+  const toggleAssignModule = (items, allOn) => {
+    setAssignRoleSelected((prev) => {
+      const next = new Set(prev);
+
+      items.forEach((permission) => {
+        if (allOn) {
+          next.delete(permission.codigo);
+        } else {
+          next.add(permission.codigo);
+        }
+      });
+
+      return next;
+    });
+  };
+
+  const handleSaveAssignedPermissions = async () => {
+    setAssignRoleConfirmOpen(false);
+    setAssignRoleSaving(true);
+    setAssignRoleError(null);
+
+    try {
+      const permisos = permissionOptions.filter((permission) => assignRoleSelected.has(permission.codigo));
+
+      await assignRolePermissions({
+        id: assignRole.id,
+        permisos,
+      });
+
+      closeAssignRole();
+    } catch (errorAssignSave) {
+      setAssignRoleError(errorAssignSave);
+    } finally {
+      setAssignRoleSaving(false);
     }
   };
 
@@ -261,7 +361,7 @@ export const RolesPage = () => {
                     canManagePermissions={canManagePermissions}
                     onDetail={handleDetailRole}
                     onEdit={handleEditRole}
-                    onAssign={setAssignRole}
+                    onAssign={handleAssignRole}
                   />
                 </Grid>
               ))}
@@ -615,15 +715,329 @@ export const RolesPage = () => {
       >
       </AdminDialog>
 
-      <RoleAssignPermissionsDialog
+
+      {/* Modal para editar los permisos asignados a cada rol */}
+      <AdminDialog
         open={Boolean(assignRole)}
-        role={assignRole}
-        permissionOptions={permissionOptions}
-        getRoleDetail={getRoleDetail}
-        canManagePermissions={canManagePermissions}
-        onClose={() => setAssignRole(null)}
-        onSave={assignRolePermissions}
-      />
+        onClose={closeAssignRole}
+        maxWidth="md"
+        title="Permisos del rol"
+        loading={assignRoleLoading || assignRoleSaving}
+        children={
+          <>
+            {assignRole && (
+              <>
+                {assignRoleConfirmOpen && (
+                  <Alert severity="warning" sx={{ mb: 2 }} icon={<WarningAmberOutlinedIcon fontSize="inherit" />}>
+                    <AlertTitle>Confirmar cambios</AlertTitle>
+                    Vas a reemplazar todos los permisos asignados al rol <b>{assignRole.nombre}</b>.
+                  </Alert>
+                )}
+
+                {(assignRoleLoading || assignRoleSaving) && <LinearProgress />}
+
+                {assignRoleError && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    <AlertTitle>Error</AlertTitle>
+                    {backendMsg(assignRoleError)}
+                  </Alert>
+                )}
+
+                {(assignRole.codigo === 'super_admin' || assignRole.codigo === 'cliente' || !canManagePermissions) && (
+                  <Alert
+                    severity={assignRole.codigo === 'super_admin' || assignRole.codigo === 'cliente' ? 'warning' : 'info'}
+                    icon={<LockOutlinedIcon fontSize="inherit" />}
+                    sx={{ mb: 2 }}
+                  >
+                    <AlertTitle>Permisos bloqueados</AlertTitle>
+
+                    {assignRole.codigo === 'super_admin' && (
+                      <>
+                        El rol <b>super_admin</b> tiene todos los permisos por diseño y no puede modificarse.
+                      </>
+                    )}
+
+                    {assignRole.codigo === 'cliente' && (
+                      <>
+                        El rol <b>cliente</b> no recibe permisos administrativos.
+                      </>
+                    )}
+
+                    {!canManagePermissions && assignRole.codigo !== 'super_admin' && assignRole.codigo !== 'cliente' && (
+                      <>Este rol no acepta cambios de permisos en este momento.</>
+                    )}
+                  </Alert>
+                )}
+
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField fullWidth size="small" label="Rol" value={assignRole.nombre} disabled />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Código"
+                      value={assignRole.codigo}
+                      disabled
+                      slotProps={{
+                        input: {
+                          sx: {
+                            fontFamily:
+                              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                          },
+                        },
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+
+                <Stack
+                  direction={{ xs: 'column', md: 'row' }}
+                  spacing={2}
+                  sx={{ mb: 1.5, alignItems: { xs: 'stretch', md: 'center' } }}
+                >
+                  <TextField
+                    size="small"
+                    placeholder="Filtrar permisos…"
+                    value={assignRoleFilter}
+                    onChange={(e) => setAssignRoleFilter(e.target.value)}
+                    sx={{ flex: 1, maxWidth: { md: 360 } }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchOutlinedIcon fontSize="small" />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+
+                  <Box sx={{ flex: 1, display: { xs: 'none', md: 'block' } }} />
+
+                  <Typography variant="body2" color="text.secondary">
+                    <Box component="b" sx={{ color: 'text.primary' }}>
+                      {assignRoleSelected.size}
+                    </Box>{' '}
+                    de {permissionOptions.length} permisos seleccionados
+                  </Typography>
+                </Stack>
+
+                {assignRoleLoading && (
+                  <Stack spacing={1}>
+                    <Skeleton variant="rounded" height={64} />
+                    <Skeleton variant="rounded" height={64} />
+                    <Skeleton variant="rounded" height={64} />
+                  </Stack>
+                )}
+
+                {!assignRoleLoading && (() => {
+                  const query = assignRoleFilter.trim().toLowerCase();
+
+                  const filteredPermissions = query
+                    ? permissionOptions.filter((permission) =>
+                        [permission.codigo, permission.nombre, permission.descripcion].join(' ').toLowerCase().includes(query)
+                      )
+                    : permissionOptions;
+
+                  const groupedPermissions = groupByModule(filteredPermissions);
+
+                  return (
+                    <>
+                      {groupedPermissions.map((g) => {
+                        const c = getModuleColor(g.modulo, theme);
+                        const allOn = g.items.every((permission) => assignRoleSelected.has(permission.codigo));
+                        const someOn = g.items.some((permission) => assignRoleSelected.has(permission.codigo));
+
+                        return (
+                          <Accordion
+                            key={g.modulo}
+                            defaultExpanded
+                            disableGutters
+                            sx={{
+                              mb: 1,
+                              border: '1px solid',
+                              borderColor: c.border || 'divider',
+                              borderRadius: 1.5,
+                              '&:before': { display: 'none' },
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <AccordionSummary
+                              expandIcon={<ExpandMoreIcon sx={{ color: c.fg }} />}
+                              sx={{
+                                bgcolor: c.bg,
+                                '& .MuiAccordionSummary-content': {
+                                  alignItems: 'center',
+                                  gap: 1,
+                                },
+                              }}
+                            >
+                              <Checkbox
+                                size="small"
+                                disabled={!canManagePermissions || assignRole.codigo === 'super_admin' || assignRole.codigo === 'cliente'}
+                                checked={allOn}
+                                indeterminate={!allOn && someOn}
+                                onClick={(event) => event.stopPropagation()}
+                                onChange={() => toggleAssignModule(g.items, allOn)}
+                                sx={{
+                                  p: 0.5,
+                                  color: c.fg,
+                                  '&.Mui-checked, &.MuiCheckbox-indeterminate': {
+                                    color: c.fg,
+                                  },
+                                }}
+                              />
+
+                              <Typography
+                                sx={{
+                                  fontWeight: 500,
+                                  color: c.fg,
+                                  textTransform: 'capitalize',
+                                }}
+                              >
+                                {g.modulo}
+                              </Typography>
+
+                              <Chip
+                                size="small"
+                                label={`${g.items.filter((permission) => assignRoleSelected.has(permission.codigo)).length}/${g.items.length}`}
+                                sx={{
+                                  height: 20,
+                                  bgcolor: (muiTheme) =>
+                                    muiTheme.palette.custom.semantic.dataTable?.rowBg ||
+                                    muiTheme.palette.background.paper,
+                                  color: c.fg,
+                                  border: '1px solid',
+                                  borderColor: c.border || 'divider',
+                                  fontWeight: 500,
+                                }}
+                              />
+                            </AccordionSummary>
+
+                            <AccordionDetails sx={{ p: 0 }}>
+                              <FormGroup>
+                                {g.items.map((permission, index) => (
+                                  <Box
+                                    key={permission.codigo}
+                                    sx={{
+                                      px: 2,
+                                      py: 1.25,
+                                      borderTop: index === 0 ? 'none' : '1px solid',
+                                      borderColor: 'divider',
+                                      display: 'flex',
+                                      alignItems: 'flex-start',
+                                      gap: 1.5,
+                                    }}
+                                  >
+                                    <Checkbox
+                                      size="small"
+                                      disabled={!canManagePermissions || assignRole.codigo === 'super_admin' || assignRole.codigo === 'cliente'}
+                                      checked={assignRoleSelected.has(permission.codigo)}
+                                      onChange={() => toggleAssignPermission(permission.codigo)}
+                                      sx={{ p: 0.5, mt: -0.25 }}
+                                    />
+
+                                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                                      <Stack
+                                        direction="row"
+                                        spacing={1}
+                                        sx={{ mb: 0.25, alignItems: 'center' }}
+                                      >
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                          {permission.nombre}
+                                        </Typography>
+
+                                        <Chip
+                                          size="small"
+                                          label={permission.codigo}
+                                          sx={{
+                                            height: 20,
+                                            fontFamily:
+                                              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                                            bgcolor:
+                                              theme.palette.custom.semantic.dataTable?.codeBg ||
+                                              theme.palette.action.selected,
+                                            color:
+                                              theme.palette.custom.semantic.dataTable?.codeText ||
+                                              theme.palette.text.secondary,
+                                            border: '1px solid',
+                                            borderColor:
+                                              theme.palette.custom.semantic.dataTable?.codeBorder ||
+                                              theme.palette.divider,
+                                            fontWeight: 500,
+                                          }}
+                                        />
+                                      </Stack>
+
+                                      <Typography variant="caption" color="text.secondary">
+                                        {permission.descripcion}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+                                ))}
+                              </FormGroup>
+                            </AccordionDetails>
+                          </Accordion>
+                        );
+                      })}
+
+                      {!groupedPermissions.length && (
+                        <Box
+                          sx={{
+                            p: 4,
+                            textAlign: 'center',
+                            color: 'text.disabled',
+                            border: '1px dashed',
+                            borderColor: 'divider',
+                            borderRadius: 1.5,
+                          }}
+                        >
+                          <SearchOffIcon sx={{ fontSize: 28 }} />
+
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            No hay permisos que coincidan con &quot;{assignRoleFilter}&quot;
+                          </Typography>
+                        </Box>
+                      )}
+                    </>
+                  );
+                })()}
+              </>
+            )}
+          </>
+        }
+        actions={(
+          <>
+            <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
+              Se reemplazarán todos los permisos del rol al guardar.
+            </Typography>
+
+            <Button onClick={closeAssignRole} color="inherit" disabled={assignRoleSaving}>
+              Cancelar
+            </Button>
+
+            <Button
+              onClick={handleSaveAssignedPermissions}
+              variant="contained"
+              disabled={!assignRole || assignRoleLoading || assignRoleSaving || !canManagePermissions}
+              startIcon={
+                assignRoleSaving ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <SaveOutlinedIcon fontSize="small" />
+                )
+              }
+              sx={{ minWidth: 180 }}
+            >
+              {assignRoleSaving ? 'Guardando…' : 'Guardar permisos'}
+            </Button>
+          </>
+        )}
+      >
+      </AdminDialog>
     </PlaceholderPage>
   );
 };
