@@ -129,6 +129,7 @@ export const CatalogPage = () => {
   const [filters, setFilters] = useState(() => readInitialFilters(searchParams));
   const [visibleProducts, setVisibleProducts] = useState([]);
   const [actionError, setActionError] = useState('');
+  const [addingVariantId, setAddingVariantId] = useState(null);
 
   const debouncedSearch = useDebouncedValue(filters.searchInput, 500);
   const selectedCategoryIds = useMemo(
@@ -258,17 +259,29 @@ export const CatalogPage = () => {
     setSearchParams({}, { replace: true });
   };
 
-  const handleDirectAdd = async (product) => {
-    if (!product.variante_predeterminada_id) return;
+    const handleDirectAdd = async (product) => {
+      const variantId = product.variante_predeterminada_id;
 
-    setActionError('');
+      if (!variantId) return;
 
-    try {
-      await addToCart({ varianteId: product.variante_predeterminada_id, cantidad: 1 });
-    } catch (err) {
-      setActionError(err?.response?.data?.message || err.message || 'No se pudo agregar el producto al carrito.');
-    }
-  };
+      setActionError('');
+      setAddingVariantId(String(variantId));
+
+      try {
+        await addToCart({
+          varianteId: variantId,
+          cantidad: 1,
+        });
+      } catch (err) {
+        setActionError(
+          err?.response?.data?.message ||
+            err.message ||
+            'No se pudo agregar el producto al carrito.',
+        );
+      } finally {
+        setAddingVariantId(null);
+      }
+    };
 
   if (loading && !visibleProducts.length) return <LoadingScreen message="Cargando catálogo..." />;
 
@@ -303,7 +316,11 @@ export const CatalogPage = () => {
             <Grid container spacing={2.5}>
               {visibleProducts.map((product) => (
                 <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                  <StoreProductCard product={product} adding={adding} onAdd={handleDirectAdd} />
+                  <StoreProductCard
+                    product={product}
+                    adding={String(addingVariantId) === String(product.variante_predeterminada_id)}
+                    onAdd={handleDirectAdd}
+                  />
                 </Grid>
               ))}
             </Grid>

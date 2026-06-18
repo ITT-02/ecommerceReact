@@ -20,6 +20,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 
 import { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -34,6 +35,30 @@ import { hasFieldErrors, sanitizePhoneInput } from '../../utils/validators';
 
 import { AuthFormTextField } from './components/AuthFormTextField';
 import { AuthPageShell } from './components/AuthPageShell';
+
+const getRegisterPalette = (theme) => {
+  const colors = theme.palette.custom.colors;
+  const isDark = theme.palette.mode === 'dark';
+
+  return {
+    title: isDark ? colors.metal.silver100 : colors.emerald[900],
+
+    muted: isDark
+      ? alpha(colors.warm.ivory, 0.68)
+      : alpha(colors.emerald[900], 0.68),
+
+    link: isDark
+      ? alpha(colors.warm.ivory, 0.78)
+      : colors.emerald[900],
+
+    linkHover: isDark ? colors.gold[550] : colors.gold[700],
+
+    buttonBg: colors.emerald[900],
+    buttonHover: isDark ? colors.emerald[800] : colors.emerald[950],
+    buttonText: colors.warm.ivory,
+    buttonBorder: isDark ? colors.gold[650] : colors.gold[700],
+  };
+};
 
 export const RegisterPage = () => {
   const [formData, setFormData] = useState(initialRegisterFormData);
@@ -97,11 +122,7 @@ export const RegisterPage = () => {
   };
 
   return (
-    <AuthPageShell
-      sideTitle="Crea tu cuenta y gestiona tus pedidos con facilidad"
-      sideDescription="Regístrate para solicitar cotizaciones, comprar empaques y revisar el estado de tus envíos."
-      maxWidth={460}
-    >
+    <AuthPageShell maxWidth={500}>
       <Box
         component="form"
         onSubmit={handleSubmit}
@@ -110,24 +131,36 @@ export const RegisterPage = () => {
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          gap: 3,
+          gap: 2,
         }}
       >
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography
+            variant="h4"
+            sx={(theme) => ({
+              fontWeight: 850,
+              letterSpacing: '-0.04em',
+              color: getRegisterPalette(theme).title,
+            })}
+          >
             Crear cuenta
-          </Typography>
-
-          <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>
-            Regístrate con tus datos de contacto.
           </Typography>
         </Box>
 
-        {error && <Alert severity="error">{error}</Alert>}
-        {success && <Alert severity="success">{success}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ borderRadius: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-        <Stack spacing={2.25}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        {success && (
+          <Alert severity="success" sx={{ borderRadius: 2 }}>
+            {success}
+          </Alert>
+        )}
+
+        <Stack spacing={1.5}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <AuthFormTextField
               name="nombres"
               label="Nombres"
@@ -160,10 +193,7 @@ export const RegisterPage = () => {
             onChange={handleChange}
             icon={PhoneOutlinedIcon}
             error={Boolean(fieldErrors.telefono)}
-            helperText={
-              fieldErrors.telefono ||
-              ''
-            }
+            helperText={fieldErrors.telefono}
             disabled={loading}
             slotProps={{
               htmlInput: {
@@ -203,6 +233,7 @@ export const RegisterPage = () => {
                   onClick={() => setShowPassword((prev) => !prev)}
                   edge="end"
                   aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  disabled={loading}
                 >
                   {showPassword ? (
                     <VisibilityOffIcon fontSize="small" />
@@ -235,6 +266,7 @@ export const RegisterPage = () => {
                       ? 'Ocultar confirmación de contraseña'
                       : 'Mostrar confirmación de contraseña'
                   }
+                  disabled={loading}
                 >
                   {showConfirmPassword ? (
                     <VisibilityOffIcon fontSize="small" />
@@ -246,13 +278,72 @@ export const RegisterPage = () => {
             }
           />
 
-          <Button type="submit" variant="contained" size="large" disabled={loading}>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            disabled={loading}
+            disableElevation
+            sx={(theme) => {
+              const p = getRegisterPalette(theme);
+
+              return {
+                minHeight: 50,
+                borderRadius: theme.palette.custom.radius.xs,
+                bgcolor: p.buttonBg,
+                color: p.buttonText,
+                fontWeight: 850,
+                textTransform: 'none',
+                border: `1px solid ${alpha(p.buttonBorder, 0.38)}`,
+                boxShadow: `0 18px 34px ${alpha(
+                  theme.palette.custom.colors.emerald[950],
+                  0.28,
+                )}`,
+                '&:hover': {
+                  bgcolor: p.buttonHover,
+                  boxShadow: `0 20px 38px ${alpha(
+                    theme.palette.custom.colors.emerald[950],
+                    0.34,
+                  )}`,
+                },
+                '&.Mui-disabled': {
+                  bgcolor: theme.palette.action.disabledBackground,
+                  color: theme.palette.action.disabled,
+                  boxShadow: 'none',
+                },
+              };
+            }}
+          >
             {loading ? 'Creando cuenta...' : 'Crear cuenta'}
           </Button>
 
-          <Typography variant="body2" color="text.secondary" align="center">
+          <Typography
+            variant="body2"
+            align="center"
+            sx={(theme) => ({
+              color: getRegisterPalette(theme).muted,
+            })}
+          >
             ¿Ya tienes cuenta?{' '}
-            <Link component={RouterLink} to="/login" underline="hover" sx={{ fontWeight: 700 }}>
+            <Link
+              component={RouterLink}
+              to="/login"
+              underline="none"
+              sx={(theme) => {
+                const p = getRegisterPalette(theme);
+
+                return {
+                  fontWeight: 800,
+                  color: p.linkHover,
+                  transition: theme.transitions.create(['color'], {
+                    duration: theme.transitions.duration.short,
+                  }),
+                  '&:hover': {
+                    color: p.link,
+                  },
+                };
+              }}
+            >
               Inicia sesión
             </Link>
           </Typography>
