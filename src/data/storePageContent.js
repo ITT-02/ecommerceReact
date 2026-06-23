@@ -92,34 +92,46 @@ export const storyPageContent = {
   },
   timeline: [
     {
-      year: '2017',
-      title: 'El comienzo',
+      year: '1 de diciembre de 2019',
+      title: 'Fundación de Aliqora',
       description:
-        'Iniciamos atendiendo pedidos pequeños para negocios locales que necesitaban empaques resistentes y mejor presentados.',
+        'Inicio de actividades con la venta de productos naturales, especialmente alimentos artesanales y ecológicos.',
     },
     {
-      year: '2019',
-      title: 'Expansión de catálogo',
+      year: '2020',
+      title: 'Producto estrella: Granolas',
       description:
-        'Ampliamos líneas de cajas, bolsas y empaques por medida, material y tipo de uso comercial.',
+        'Durante la pandemia, la empresa destacó con la comercialización de granolas saludables, ganando reconocimiento entre sus clientes.',
+    },
+    {
+      year: '2020 - 2021',
+      title: 'Diversificación de productos',
+      description:
+        'Ampliación del catálogo con envases ecológicos y cajas de distintos materiales y tamaños, enfocados en apoyar a nuevos emprendedores.',
     },
     {
       year: '2021',
-      title: 'Crecimiento digital',
+      title: 'Inicio en importaciones',
       description:
-        'Organizamos el catálogo para que los clientes puedan revisar productos, disponibilidad, pedidos y cotizaciones desde la tienda.',
+        'Expansión al mercado de importación con productos variados como utensilios de cocina, artículos de escritorio y bisutería.',
     },
     {
-      year: '2024',
-      title: 'Seguimiento logístico',
+      year: '2021 - 2022',
+      title: 'Especialización en accesorios y bisutería',
       description:
-        'Integramos estados de pedido, pagos y envío con transportistas externos para informar al cliente cada avance.',
+        'Identificación de la alta demanda en accesorios y joyería, consolidándose en este rubro con más de 100 artículos.',
     },
     {
-      year: '2026',
-      title: 'Aliqora Empaques',
+      year: '2022 - Actualidad (2026)',
+      title: 'Expansión digital y apoyo a emprendedores',
       description:
-        'Consolidamos una experiencia de compra más moderna, clara y preparada para clientes finales y mayoristas.',
+        'Fortalecimiento de su presencia en plataformas como TikTok para llegar a más clientes y brindar asesoría a emprendedores en sus primeras importaciones.',
+    },
+        {
+      year: 'Actualidad (2026)',
+      title: 'Consolidación de la marca',
+      description:
+        'Aliqora SAC cuenta con más de 150 modelos de joyería y ofrece soluciones de packaging para emprendedores, posicionándose como aliado estratégico en moda y negocios.',
     },
   ],
   values: [
