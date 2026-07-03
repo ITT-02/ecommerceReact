@@ -20,6 +20,8 @@ import { TeamSection } from '../../components/store/marketing/TeamSection';
 import { TimelineSection } from '../../components/store/marketing/TimelineSection';
 import { storyPageContent } from '../../data/storePageContent';
 
+import nuestrahistoria from '../../../src/assets/nuestrahistoria/anny-aliquora.png';
+
 export const StoryPage = () => {
   const { hero, intro, timeline, values, team } = storyPageContent;
 
@@ -110,25 +112,22 @@ export const StoryPage = () => {
 
             <Grid size={{ xs: 12, md: 5 }}>
               <Box
-                sx={(theme) => {
-                  const m = theme.palette.custom.semantic.storeMarketing;
-
-                  return {
-                    minHeight: { xs: 190, md: 260 },
-                    borderRadius: theme.palette.custom.radius.xs,
-                    border: `1px solid ${m.freshBorder}`,
-                    bgcolor: m.freshBgAlt,
-                    display: 'grid',
-                    placeItems: 'center',
-                    boxShadow: theme.palette.custom.shadows.sm,
-                  };
+                component="img"
+                src={nuestrahistoria}
+                alt="Nuestra Historia"
+                sx={{
+                  width: '100%',
+                  maxWidth: 380,
+                  height: 'auto',
+                  display: 'block',
+                  margin: '0 auto',
+                  borderRadius: 3,
+                  boxShadow: 2,
                 }}
-              >
-                <Inventory2OutlinedIcon sx={(theme) => ({ fontSize: { xs: 58, md: 78 }, color: theme.palette.custom.semantic.storeMarketing.freshAccent })} />
-              </Box>
+              />
             </Grid>
           </Grid>
-        </Container>
+        </Container>    
       </Box>
 
       {/* =========================================================
