@@ -17,7 +17,11 @@ import {
   Chip,
   Container,
   Divider,
+  FormControl,
   Grid,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   TextField,
   Typography,
@@ -234,6 +238,27 @@ export const ProductDetailPage = () => {
   }, [activeVariants, selectedOptions, selectableGroups, fallbackVariantId]);
 
   const previewVariant = selectedVariant || defaultVariant;
+
+  const quantitySaleMode = selectedVariant?.modo_cantidad_venta === 'lista' ? 'lista' : 'libre';
+  const quantityOptions = useMemo(() => {
+    if (quantitySaleMode !== 'lista') return [];
+
+    const values = Array.isArray(selectedVariant?.opciones_cantidad_venta)
+      ? selectedVariant.opciones_cantidad_venta
+      : [];
+
+    return values
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value) && value > 0)
+      .sort((a, b) => a - b);
+  }, [quantitySaleMode, selectedVariant]);
+
+  useEffect(() => {
+    if (quantitySaleMode === 'lista' && quantityOptions.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setQuantity((current) => (quantityOptions.includes(current) ? current : quantityOptions[0]));
+    }
+  }, [quantitySaleMode, quantityOptions]);
 
   const galleryMedia = useMemo(() => {
     const productMedia = Array.isArray(product?.multimedia) ? product.multimedia : [];
@@ -579,17 +604,38 @@ export const ProductDetailPage = () => {
                   )}
 
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                    <TextField
-                      label="Cantidad"
-                      type="number"
-                      value={quantity}
-                      onChange={(event) => {
-                        setQuantity(Math.max(1, Number(event.target.value || 1)));
-                        setActionError('');
-                      }}
-                      sx={{ maxWidth: { sm: 150 } }}
-                      slotProps={{ htmlInput: { min: 1 } }}
-                    />
+                    {quantitySaleMode === 'lista' ? (
+                      <FormControl sx={{ minWidth: { sm: 180 } }}>
+                        <InputLabel id="cantidad-select-label">Cantidad</InputLabel>
+                        <Select
+                          labelId="cantidad-select-label"
+                          label="Cantidad"
+                          value={quantityOptions.includes(quantity) ? quantity : ''}
+                          onChange={(event) => {
+                            setQuantity(Number(event.target.value));
+                            setActionError('');
+                          }}
+                        >
+                          {quantityOptions.map((option) => (
+                            <MenuItem key={option} value={option}>
+                              {option} unidades
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      <TextField
+                        label="Cantidad"
+                        type="number"
+                        value={quantity}
+                        onChange={(event) => {
+                          setQuantity(Math.max(1, Number(event.target.value || 1)));
+                          setActionError('');
+                        }}
+                        sx={{ maxWidth: { sm: 150 } }}
+                        slotProps={{ htmlInput: { min: 1 } }}
+                      />
+                    )}
 
                     <Button
                       variant="contained"

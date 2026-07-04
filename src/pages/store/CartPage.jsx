@@ -17,6 +17,7 @@ import {
   Divider,
   Grid,
   IconButton,
+  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -347,15 +348,33 @@ const CartItemCard = memo(({ item, onUpdateItem, onAskRemove, isRemoving }) => {
             )}
           </Box>
 
-          <QuantityControl
-            value={draftQuantity}
-            disabled={isBusy}
-            onChange={handleQuantityChange}
-            onCommit={() => commitQuantity(draftQuantity)}
-            onCancel={handleCancelQuantity}
-            onDecrease={handleDecrease}
-            onIncrease={handleIncrease}
-          />
+          {item.modo_cantidad_venta === 'lista' && Array.isArray(item.opciones_cantidad_venta) && item.opciones_cantidad_venta.length > 0 ? (
+            <TextField
+              select
+              size="small"
+              label="Cantidad"
+              value={savedQuantity}
+              disabled={isBusy}
+              onChange={(event) => void commitQuantity(String(event.target.value))}
+              sx={{ width: { xs: '100%', sm: 152 } }}
+            >
+              {item.opciones_cantidad_venta.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option} unidades
+                </MenuItem>
+              ))}
+            </TextField>
+          ) : (
+            <QuantityControl
+              value={draftQuantity}
+              disabled={isBusy}
+              onChange={handleQuantityChange}
+              onCommit={() => commitQuantity(draftQuantity)}
+              onCancel={handleCancelQuantity}
+              onDecrease={handleDecrease}
+              onIncrease={handleIncrease}
+            />
+          )}
 
           <Typography
             variant="subtitle1"

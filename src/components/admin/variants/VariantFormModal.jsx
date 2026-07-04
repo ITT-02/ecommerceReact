@@ -3,13 +3,18 @@ import {
   Autocomplete,
   Box,
   Button,
+  Chip,
   Divider,
+  FormControl,
   FormControlLabel,
+  FormLabel,
   Grid,
   IconButton,
   InputAdornment,
   MenuItem,
   Paper,
+  Radio,
+  RadioGroup,
   Stack,
   Switch,
   TextField,
@@ -40,6 +45,8 @@ const DEFAULT_FORM_DATA = {
   stock_minimo: 5,
   es_predeterminada: false,
   es_activa: true,
+  modo_cantidad_venta: 'libre',
+  opciones_cantidad_venta: [],
 };
 
 const generateLocalId = () => {
@@ -111,6 +118,10 @@ const mapVariantToFormData = ({ variant, defaultProduct }) => {
     stock_minimo: variant?.stock_minimo ?? 5,
     es_predeterminada: Boolean(variant?.es_predeterminada),
     es_activa: variant?.es_activa ?? true,
+    modo_cantidad_venta: variant?.modo_cantidad_venta === 'lista' ? 'lista' : 'libre',
+    opciones_cantidad_venta: Array.isArray(variant?.opciones_cantidad_venta)
+      ? variant.opciones_cantidad_venta.map((value) => Number(value)).filter((value) => Number.isFinite(value) && value > 0)
+      : [],
   };
 };
 
@@ -202,12 +213,14 @@ export const VariantFormModal = ({
   const [tierRows, setTierRows] = useState([]);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [removeConfirm, setRemoveConfirm] = useState(null);
+  const [newQuantityOption, setNewQuantityOption] = useState('');
 
   useEffect(() => {
     if (!open) return;
 
     setSubmitAttempted(false);
     setProductSearch('');
+    setNewQuantityOption('');
 
     if (variant) {
       setFormData(mapVariantToFormData({ variant, defaultProduct }));
@@ -340,6 +353,39 @@ export const VariantFormModal = ({
     setRemoveConfirm({ type: 'tier', id });
   };
 
+  const handleQuantityModeChange = (event) => {
+    const value = event.target.value === 'lista' ? 'lista' : 'libre';
+
+    setFormData((prev) => ({
+      ...prev,
+      modo_cantidad_venta: value,
+    }));
+  };
+
+  const handleAddQuantityOption = () => {
+    const parsed = Number(newQuantityOption);
+
+    if (!Number.isFinite(parsed) || parsed <= 0 || !Number.isInteger(parsed)) return;
+
+    setFormData((prev) => {
+      if (prev.opciones_cantidad_venta.includes(parsed)) return prev;
+
+      return {
+        ...prev,
+        opciones_cantidad_venta: [...prev.opciones_cantidad_venta, parsed].sort((a, b) => a - b),
+      };
+    });
+
+    setNewQuantityOption('');
+  };
+
+  const handleRemoveQuantityOption = (value) => {
+    setFormData((prev) => ({
+      ...prev,
+      opciones_cantidad_venta: prev.opciones_cantidad_venta.filter((item) => item !== value),
+    }));
+  };
+
   const handleConfirmRemove = () => {
     if (!removeConfirm) return;
 
@@ -389,6 +435,7 @@ export const VariantFormModal = ({
 
     if (hasIncompleteAttributes) return;
     if (tierRows.some((item) => Number(item.cantidad_minima) <= 0 || Number(item.precio_unitario) < 0)) return;
+    if (formData.modo_cantidad_venta === 'lista' && formData.opciones_cantidad_venta.length === 0) return;
 
     const tierMinimums = tierRows.map((item) => String(item.cantidad_minima).trim()).filter(Boolean);
     if (tierMinimums.length !== new Set(tierMinimums).size) return;
@@ -414,6 +461,10 @@ export const VariantFormModal = ({
       stock_minimo: Number(formData.stock_minimo || 5),
       es_predeterminada: Boolean(formData.es_predeterminada),
       es_activa: Boolean(formData.es_activa),
+      modo_cantidad_venta: formData.modo_cantidad_venta === 'lista' ? 'lista' : 'libre',
+      opciones_cantidad_venta: formData.modo_cantidad_venta === 'lista'
+        ? formData.opciones_cantidad_venta
+        : [],
     };
 
     onSave?.({
@@ -672,6 +723,82 @@ export const VariantFormModal = ({
                   label={formData.es_activa ? 'Estado activo' : 'Estado inactivo'}
                 />
               </Stack>
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <Divider sx={{ my: 0.5 }} />
+              <Typography variant="subtitle1" sx={{ fontWeight: 900, mb: 0.5 }}>
+                Cantidad en el catálogo
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                Define cómo el cliente indica la cantidad de esta variante en la página de producto.
+              </Typography>
+
+              <FormControl>
+                <RadioGroup
+                  row
+                  name="modo_cantidad_venta"
+                  value={formData.modo_cantidad_venta}
+                  onChange={handleQuantityModeChange}
+                >
+                  <FormControlLabel
+                    value="libre"
+                    control={<Radio />}
+                    label="Numérico libre"
+                  />
+                  <FormControlLabel
+                    value="lista"
+                    control={<Radio />}
+                    label="Selector fijo"
+                  />
+                </RadioGroup>
+              </FormControl>
+
+              {formData.modo_cantidad_venta === 'lista' && (
+                <Box sx={{ mt: 1.5 }}>
+                  <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
+                    <TextField
+                      label="Nueva cantidad"
+                      type="number"
+                      size="small"
+                      value={newQuantityOption}
+                      onChange={(event) => setNewQuantityOption(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          handleAddQuantityOption();
+                        }
+                      }}
+                      slotProps={{ htmlInput: { min: 1, step: 1 } }}
+                      sx={{ maxWidth: 180 }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      startIcon={<AddIcon />}
+                      onClick={handleAddQuantityOption}
+                    >
+                      Agregar
+                    </Button>
+                  </Stack>
+
+                  <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                    {formData.opciones_cantidad_venta.map((value) => (
+                      <Chip
+                        key={value}
+                        label={`${value} unidades`}
+                        onDelete={() => handleRemoveQuantityOption(value)}
+                      />
+                    ))}
+                  </Stack>
+
+                  {submitAttempted && formData.opciones_cantidad_venta.length === 0 && (
+                    <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
+                      Agrega al menos una cantidad (por ejemplo 50 y 100).
+                    </Typography>
+                  )}
+                </Box>
+              )}
             </Grid>
 
             <Grid size={{ xs: 12 }}>
