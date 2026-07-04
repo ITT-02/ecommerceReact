@@ -731,7 +731,7 @@ export const VariantFormModal = ({
                 Cantidad en el catálogo
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Define cómo el cliente indica la cantidad de esta variante en la página de producto.
+                 Método para elegir cantidad
               </Typography>
 
               <FormControl>
@@ -778,7 +778,7 @@ export const VariantFormModal = ({
                       startIcon={<AddIcon />}
                       onClick={handleAddQuantityOption}
                     >
-                      Agregar
+                      Agregar cantidad
                     </Button>
                   </Stack>
 
@@ -813,12 +813,12 @@ export const VariantFormModal = ({
                     Precio mayorista por variante
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Estos tramos solo se aplican a clientes mayoristas aprobados.
+                    Solo visible para clientes mayoristas aprobados.
                   </Typography>
                 </Box>
 
                 <Button type="button" startIcon={<AddIcon />} variant="outlined" onClick={handleAddTier}>
-                  Agregar tramo
+                  Agregar rango
                 </Button>
               </Stack>
 
@@ -876,7 +876,7 @@ export const VariantFormModal = ({
                       </Grid>
 
                       <Grid size={{ xs: 12, sm: 1 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <IconButton color="error" onClick={() => requestRemoveTier(tier.id)} title="Eliminar tramo">
+                        <IconButton color="error" onClick={() => requestRemoveTier(tier.id)} title="Eliminar rango">
                           <DeleteIcon />
                         </IconButton>
                       </Grid>
@@ -887,7 +887,7 @@ export const VariantFormModal = ({
 
               {(incompleteTiers || duplicatedTierMinimums) && (
                 <Typography variant="caption" color="error">
-                  Revisa los tramos: la cantidad mínima debe ser unica y mayor a cero.
+                  Revisa los rangos: la cantidad mínima debe ser unica y mayor a cero.
                 </Typography>
               )}
             </Grid>
@@ -1015,9 +1015,9 @@ export const VariantFormModal = ({
       <ConfirmDialog
         open={Boolean(removeConfirm)}
         action="delete"
-        title={removeConfirm?.type === 'tier' ? 'Eliminar tramo mayorista' : 'Eliminar atributo'}
+        title={removeConfirm?.type === 'tier' ? 'Eliminar rango mayorista' : 'Eliminar atributo'}
         message={removeConfirm?.type === 'tier'
-          ? '¿Deseas quitar este tramo mayorista del formulario?'
+          ? '¿Deseas quitar este rango mayorista del formulario?'
           : '¿Deseas quitar este atributo de la variante?'}
         confirmText="Quitar"
         onCancel={() => setRemoveConfirm(null)}
